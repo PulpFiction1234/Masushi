@@ -5,7 +5,7 @@ import * as turf from "@turf/turf";
 import mapboxgl from "mapbox-gl";
 
 interface AddressSearchProps {
-  polygonCoords: number[][];
+  polygonCoords: number[][]; // Coordenadas del polígono
   onValidAddress: (address: string, coords: [number, number]) => void;
 }
 
@@ -90,10 +90,20 @@ const AddressSearch: React.FC<AddressSearchProps> = ({
     setQuery(place.place_name);
     setSuggestions([]);
 
-    const coords: [number, number] = [
-      place.geometry.coordinates[0],
-      place.geometry.coordinates[1],
-    ];
+    // Validar que coordinates sea exactamente [number, number]
+    const rawCoords = place.geometry?.coordinates;
+    if (
+      !Array.isArray(rawCoords) ||
+      rawCoords.length < 2 ||
+      typeof rawCoords[0] !== "number" ||
+      typeof rawCoords[1] !== "number"
+    ) {
+      setStatus("⚠️ Dirección inválida");
+      return;
+    }
+
+    const coords: [number, number] = [rawCoords[0], rawCoords[1]];
+
     const point = turf.point(coords);
     const polygon = turf.polygon([[...polygonCoords, polygonCoords[0]]]);
     const isInside = turf.booleanPointInPolygon(point, polygon);

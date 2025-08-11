@@ -1,4 +1,5 @@
 // src/components/AddressSearch.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import * as turf from "@turf/turf";

@@ -98,7 +98,7 @@ export default function Checkout() {
         `\nTotal: $${totalFinal}`
     );
 
-    window.open(`https://wa.me/56954188248?text=${mensaje}`, "_blank");
+    window.open(`https://wa.me/56951869402?text=${mensaje}`, "_blank");
   };
 
   return (

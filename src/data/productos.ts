@@ -10,40 +10,41 @@ export interface Producto {
 }
 
 export const productos: Producto[] = [
-  {
-    id: 1,
-    codigo: "S001",
-    nombre: "Sushi roll clásico",
-    descripcion: "Rollo tradicional de salmón, palta y queso crema.",
-    valor: 5000,
-    imagen: "/images/sushi-clasico.jpg",
-    categoria: "Roll premium"
-  },
-  {
-    id: 2,
-    codigo: "S002",
-    nombre: "Sushi roll tempura",
-    descripcion: "Rollo empanizado y frito, relleno de camarón y queso crema.",
-    valor: 5500,
-    imagen: "/images/sushi-tempura.jpg",
-    categoria: "Hot rolls"
-  },
-  {
-    id: 3,
-    codigo: "S003",
-    nombre: "Sashimi salmón",
-    descripcion: "Finas láminas de salmón fresco de la mejor calidad.",
-    valor: 7000,
-    imagen: "/images/sashimi-salmon.jpg",
-    categoria: "Sashimi"
-  },
-  {
-    id: 4,
-    codigo: "S004",
-    nombre: "Nigiri mixto",
-    descripcion: "Bocados de arroz con pescado fresco surtido.",
-    valor: 6000,
-    imagen: "/images/nigiri-mixto.jpg",
-    categoria: "Nigiri"
-  }
+    {
+    id: 58,
+    codigo: "058",
+    nombre: "Hosmaki queso crema",
+    descripcion: "Queso crema/Arroz/Nori.",
+    valor: 3500,
+    imagen: "/images/Hosomaki queso.png",
+    categoria: "Hosomaki"
+    },
+        {
+    id: 59,
+    codigo: "059",
+    nombre: "Hosmaki teri",
+    descripcion: "Pollo/Palta/Arroz/Nori.",
+    valor: 3600,
+    imagen: "/images/Hosomaki teri.png",
+    categoria: "Hosomaki"
+    },  
+    {
+    id: 60,
+    codigo: "060",
+    nombre: "Hosmaki sake",
+    descripcion: "Salmon/Palta/Arroz/Nori.",
+    valor: 3900,
+    imagen: "/images/Hosomaki sake.png",
+    categoria: "Hosomaki"
+    },
+
+    {
+    id: 61,
+    codigo: "061",
+    nombre: "Hosmaki ebi",
+    descripcion: "Camaron/Palta/Arroz/Nori.",
+    valor: 3900,
+    imagen: "/images/Hosomaki ebi.png",
+    categoria: "Hosomaki"
+    }
 ];

@@ -1,0 +1,117 @@
+// src/components/HeroCarousel.tsx
+"use client";
+
+import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+interface HeroCarouselProps {
+  slides?: string[];
+  intervalMs?: number;
+  heightClass?: string; // para ajustar altura si quieres
+}
+
+export default function HeroCarousel({
+  slides = [
+    "/images/hero-sushi.jpg",
+    "/images/hero-gyozas.jpg",
+    "/images/hero-camarones.jpg",
+  ],
+  intervalMs = 5000,
+  heightClass = "h-[500px] md:h-[600px]",
+}: HeroCarouselProps) {
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clear = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  };
+
+  const next = useCallback(() => {
+    setIndex((i) => (i + 1) % slides.length);
+  }, [slides.length]);
+
+  const prev = () => setIndex((i) => (i - 1 + slides.length) % slides.length);
+  const goTo = (i: number) => setIndex(i);
+
+  useEffect(() => {
+    if (paused) return;
+    clear();
+    timerRef.current = setTimeout(next, intervalMs);
+    return clear;
+  }, [index, paused, next, intervalMs]);
+
+  return (
+    <section
+      className={`relative ${heightClass} overflow-hidden`}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      aria-roledescription="carousel"
+    >
+      {/* Slides como fondos */}
+      <div className="absolute inset-0">
+        {slides.map((src, i) => (
+          <div
+            key={src}
+            className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+              i === index ? "opacity-100" : "opacity-0"
+            }`}
+            style={{
+              backgroundImage: `url('${src}')`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+            aria-hidden={i !== index}
+          />
+        ))}
+        {/* Oscurecedor para legibilidad */}
+        <div className="absolute inset-0 bg-black/40" />
+      </div>
+
+      {/* Contenido centrado (lo mismo que tenías) */}
+      <div className="relative z-10 h-full flex items-center justify-center text-center px-4">
+        <div className="bg-black/50 backdrop-blur-sm p-6 rounded text-white max-w-xl">
+          <h1 className="text-4xl font-bold mb-4">¡Bienvenido a Masushi!</h1>
+          <p className="text-lg mb-6">
+            Sushi fresco y delicioso, directo a tu puerta.
+          </p>
+          <Link href="/menu" className="inline-block">
+            <button className="bg-red-500 hover:bg-red-600 px-6 py-3 rounded text-white font-semibold">
+              Ver Menú
+            </button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Controles */}
+      <button
+        aria-label="Anterior"
+        onClick={prev}
+        className="absolute left-3 top-1/2 -translate-y-1/2 z-20 bg-black/40 hover:bg-black/60 text-white rounded-full w-10 h-10 grid place-items-center"
+      >
+        ‹
+      </button>
+      <button
+        aria-label="Siguiente"
+        onClick={next}
+        className="absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-black/40 hover:bg-black/60 text-white rounded-full w-10 h-10 grid place-items-center"
+      >
+        ›
+      </button>
+
+      {/* Indicadores */}
+      <div className="absolute bottom-4 inset-x-0 flex items-center justify-center gap-2 z-20">
+        {slides.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => goTo(i)}
+            aria-label={`Ir al slide ${i + 1}`}
+            className={`h-2.5 w-2.5 rounded-full ring-1 ring-white/60 ${
+              i === index ? "bg-white" : "bg-white/50"
+            }`}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}

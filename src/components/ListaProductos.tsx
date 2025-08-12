@@ -25,11 +25,11 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
           <img
             src={prod.imagen}
             alt={prod.nombre}
-            className="w-full h-40 object-cover rounded"
+            className="w-150 h-100 object-cover rounded"
           />
-          <h3 className="text-lg font-semibold mt-2">{prod.nombre}</h3>
+          <h3 className="text-lg text-gray-400 font-semibold mt-2">{prod.nombre}</h3>
           <p className="text-sm text-gray-400">{prod.descripcion}</p>
-          <p className="font-bold mt-2">${prod.valor}</p>
+          <p className="font-bold text-gray-400 mt-2">${prod.valor}</p>
           <button
             onClick={() => addToCart(prod)}
             className="bg-green-500 text-white px-4 py-2 mt-3 rounded hover:bg-green-600 w-full"

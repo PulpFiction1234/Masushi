@@ -16,7 +16,7 @@ export const productos: Producto[] = [
     nombre: "Hosmaki queso crema",
     descripcion: "Queso crema/Arroz/Nori.",
     valor: 3500,
-    imagen: "/images/Hosomaki queso.png",
+    imagen: "/images/Hosomaki Queso.png",
     categoria: "Hosomaki"
     },
         {

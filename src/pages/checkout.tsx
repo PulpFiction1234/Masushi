@@ -63,6 +63,14 @@ export default function Checkout() {
         alert("Ingrese una dirección válida.");
         return;
       }
+
+      // Nueva validación: dirección con numeración
+      const regexNumeroCalle = /\s\d{1,5}(?:\s|,|$)/;
+      if (!regexNumeroCalle.test(address)) {
+        alert("Debe ingresar un número de domicilio junto a la calle.");
+        return;
+      }
+
       const polygon = turf.polygon([[...polygonCoords, polygonCoords[0]]]);
       const point = turf.point(coords);
       if (!turf.booleanPointInPolygon(point, polygon)) {
@@ -106,7 +114,6 @@ export default function Checkout() {
       {/* Navbar visible en checkout */}
       <Navbar />
 
-      {/* Contenido del checkout */}
       <div className="flex justify-center p-4 antialiased">
         <form
           onSubmit={handleSubmit}
@@ -172,7 +179,7 @@ export default function Checkout() {
                   />
                 </div>
               </div>
-
+              
               <div className="mt-3 flex gap-4">
                 <label className="flex items-center gap-2 text-sm text-gray-800">
                   <input
@@ -204,7 +211,7 @@ export default function Checkout() {
               </div>
             </div>
           )}
-
+          <p className="text-lg font-bold text-gray-900">Total final: ${totalFinal}</p>
           <div>
             <label className="block font-semibold mb-1 text-gray-900">Nombre</label>
             <input
@@ -253,9 +260,7 @@ export default function Checkout() {
               </div>
             </div>
           )}
-
-          <p className="text-lg font-bold text-gray-900">Total final: ${totalFinal}</p>
-
+        
           <button
             type="submit"
             className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full"

@@ -1,4 +1,3 @@
-// src/components/AddressSearch.tsx
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useState, useEffect, useRef } from "react";
@@ -103,8 +102,15 @@ const AddressSearch: React.FC<AddressSearchProps> = ({
       return;
     }
 
-    const coords: [number, number] = [rawCoords[0], rawCoords[1]];
+    // Solo válido si hay un número después de la calle, antes de la coma
+    const regexNumeroCalle = /\s\d{1,5}(?:\s|,|$)/;
+    if (!regexNumeroCalle.test(place.place_name)) {
+      setStatus("⚠️ Debe ingresar número de domicilio junto a la calle");
+      return;
+}
 
+
+    const coords: [number, number] = [rawCoords[0], rawCoords[1]];
     const point = turf.point(coords);
     const polygon = turf.polygon([[...polygonCoords, polygonCoords[0]]]);
     const isInside = turf.booleanPointInPolygon(point, polygon);
@@ -134,7 +140,7 @@ const AddressSearch: React.FC<AddressSearchProps> = ({
       <input
         value={query}
         onChange={(e) => handleSearch(e.target.value)}
-        placeholder="Ingresa tu dirección"
+        placeholder="Ingresa tu dirección (con número)"
         className="border p-2 w-full"
       />
       {suggestions.length > 0 && (

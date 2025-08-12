@@ -1,32 +1,34 @@
 // src/components/Navbar.tsx
 "use client";
+import Link from "next/link";
 import React from "react";
-import { useCart } from "@/context/CartContext";
 
 interface Props {
-  onCartOpen: () => void;
+  onMenuToggle?: () => void; // opcional, solo en menu.tsx
 }
 
-const Navbar: React.FC<Props> = ({ onCartOpen }) => {
-  const { cart } = useCart();
-
+const Navbar: React.FC<Props> = ({ onMenuToggle }) => {
   return (
     <nav className="bg-gray-950 shadow-md px-6 py-3 flex justify-between items-center sticky top-0 z-50 text-white">
-      {/* Logo o nombre */}
+      {/* Logo */}
       <div className="text-xl font-bold text-blue-600">Mazushi</div>
 
-      {/* Botón del carrito */}
-      <button
-        onClick={onCartOpen}
-        className="relative bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-      >
-        🛒 Carrito
-        {cart.length > 0 && (
-          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-            {cart.length}
-          </span>
-        )}
-      </button>
+      {/* Links visibles en móvil y desktop */}
+      <div className="flex space-x-6">
+        <Link href="/" className="hover:text-blue-400">Inicio</Link>
+        <Link href="/menu" className="hover:text-blue-400">Productos</Link>
+        <Link href="/contacto" className="hover:text-blue-400">Contacto</Link>
+      </div>
+
+      {/* Botón hamburguesa SOLO si onMenuToggle existe */}
+      {onMenuToggle && (
+        <button
+          className="md:hidden bg-gray-800 text-white p-2 rounded"
+          onClick={onMenuToggle}
+        >
+          ☰
+        </button>
+      )}
     </nav>
   );
 };

@@ -9,7 +9,7 @@ export default function Home() {
   return (
     <div className="bg-gray-950 text-white">
       {/* Navbar con el botón que abre el carrito */}
-      <Navbar onCartOpen={() => setIsCartOpen(true)} />
+      <Navbar />
 
       {/* Carrito */}
       <CarritoPanel open={isCartOpen} onClose={() => setIsCartOpen(false)} />

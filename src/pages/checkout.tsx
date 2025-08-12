@@ -3,6 +3,7 @@ import { useState } from "react";
 import AddressSearch from "../components/AddressSearch";
 import * as turf from "@turf/turf";
 import { useCart } from "@/context/CartContext";
+import Navbar from "@/components/Navbar";
 
 const polygonCoords = [
   [-70.55333580871932, -33.55164650027345],
@@ -32,20 +33,15 @@ export default function Checkout() {
   const [address, setAddress] = useState("");
   const [coords, setCoords] = useState<[number, number] | null>(null);
 
-  // Salsas y extras
   const [soya, setSoya] = useState<number | null>(null);
   const [teriyaki, setTeriyaki] = useState<number | null>(null);
   const [acevichada, setAcevichada] = useState<number | null>(null);
   const [palitos, setPalitos] = useState<number | null>(null);
 
-  // Nuevos: gengibre y wasabi
   const [jengibre, setGengibre] = useState(false);
   const [wasabi, setWasabi] = useState(false);
-
-  // Observaciones
   const [observacion, setObservacion] = useState("");
 
-  // Cálculos
   const totalProductos = carritoTotal;
   const totalSalsasSeleccionadas = (soya || 0) + (teriyaki || 0);
   const salsasGratis = cart.reduce((sum, item) => sum + item.cantidad, 0);
@@ -76,11 +72,11 @@ export default function Checkout() {
     }
 
     const productosTexto = cart
-  .map(
-    (item) =>
-      ` ${item.codigo} | ${item.nombre} x${item.cantidad} — $${item.valor * item.cantidad}`
-  )
-  .join("\n");
+      .map(
+        (item) =>
+          ` ${item.codigo} | ${item.nombre} x${item.cantidad} — $${item.valor * item.cantidad}`
+      )
+      .join("\n");
 
     const extrasTexto = [
       `Soya: ${soya || 0}`,
@@ -106,177 +102,168 @@ export default function Checkout() {
   };
 
   return (
-    <div className="flex justify-center p-4">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white w-full max-w-lg p-4 rounded-lg shadow space-y-4"
-      >
-        {cart.length > 0 && (
-          <div className="border p-3 rounded bg-gray-50">
-            <h3 className="font-bold mb-2">Tu carrito</h3>
-            {cart.map((item) => (
-              <div key={item.id} className="mb-1 text-sm">
-                {item.nombre} (x{item.cantidad}) — ${item.valor * item.cantidad}
-              </div>
-            ))}
-            <p className="mt-2 font-bold text-sm">
-              Subtotal productos: ${totalProductos}
-            </p>
+    <>
+      {/* Navbar visible en checkout */}
+      <Navbar />
 
-            {/* Nota sobre salsas */}
-            <p className="text-xs text-gray-600 mt-3 mb-2">
-              Incluye 1 salsa por producto. Costo adicional por cada salsa extra: ${PRECIO_SALSA_EXTRA}.
-            </p>
-
-            {/* Salsas y extras */}
-            <div className="mt-1 grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-sm font-medium">Soya</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={soya ?? ""}
-                  onChange={(e) =>
-                    setSoya(e.target.value === "" ? null : Number(e.target.value))
-                  }
-                  className="border rounded w-16 p-1 text-center text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Teriyaki</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={teriyaki ?? ""}
-                  onChange={(e) =>
-                    setTeriyaki(e.target.value === "" ? null : Number(e.target.value))
-                  }
-                  className="border rounded w-16 p-1 text-center text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium">
-                  Acevichada ($500)
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={acevichada ?? ""}
-                  onChange={(e) =>
-                    setAcevichada(e.target.value === "" ? null : Number(e.target.value))
-                  }
-                  className="border rounded w-16 p-1 text-center text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium">Palitos</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={palitos ?? ""}
-                  onChange={(e) =>
-                    setPalitos(e.target.value === "" ? null : Number(e.target.value))
-                  }
-                  className="border rounded w-16 p-1 text-center text-sm"
-                />
-              </div>
-            </div>
-
-            {/* Checkboxes para gengibre y wasabi */}
-            <div className="mt-3 flex gap-4">
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={jengibre}
-                  onChange={(e) => setGengibre(e.target.checked)}
-                />
-                Jengibre
-              </label>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={wasabi}
-                  onChange={(e) => setWasabi(e.target.checked)}
-                />
-                Wasabi
-              </label>
-            </div>
-
-            {/* Observaciones */}
-            <div className="mt-2">
-              <label className="block text-sm font-medium">Observaciones</label>
-              <textarea
-                rows={2}
-                className="border rounded w-full p-2 text-sm"
-                placeholder="Ej: sin cebollín, sin nori, etc."
-                value={observacion}
-                onChange={(e) => setObservacion(e.target.value)}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Datos del cliente */}
-        <div>
-          <label className="block font-semibold mb-1">Nombre</label>
-          <input
-            type="text"
-            className="border rounded w-full p-2"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block font-semibold mb-1">Teléfono</label>
-          <input
-            type="tel"
-            className="border rounded w-full p-2"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block font-semibold mb-1">Tipo de entrega</label>
-          <select
-            className="border rounded w-full p-2"
-            value={deliveryType}
-            onChange={(e) =>
-              setDeliveryType(e.target.value as "retiro" | "delivery")
-            }
-          >
-            <option value="retiro">Retiro en tienda</option>
-            <option value="delivery">Delivery</option>
-          </select>
-        </div>
-
-        {deliveryType === "delivery" && (
-          <div>
-            <label className="block font-semibold mb-1">Dirección</label>
-            <div className="w-full">
-              <AddressSearch
-                polygonCoords={polygonCoords}
-                onValidAddress={(addr, crds) => {
-                  setAddress(addr);
-                  setCoords(crds);
-                }}
-              />
-            </div>
-          </div>
-        )}
-
-        <p className="text-lg font-bold">Total final: ${totalFinal}</p>
-
-        <button
-          type="submit"
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full"
+      {/* Contenido del checkout */}
+      <div className="flex justify-center p-4 antialiased">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white w-full max-w-lg p-4 rounded-lg shadow space-y-4"
         >
-          Hacer pedido
-        </button>
-      </form>
-    </div>
+          {cart.length > 0 && (
+            <div className="border p-3 rounded bg-gray-50">
+              <h3 className="font-bold mb-2 text-gray-900">Tu carrito</h3>
+              {cart.map((item) => (
+                <div key={item.id} className="mb-1 text-sm text-gray-800">
+                  {item.nombre} (x{item.cantidad}) — ${item.valor * item.cantidad}
+                </div>
+              ))}
+              <p className="mt-2 font-bold text-sm text-gray-900">
+                Subtotal productos: ${totalProductos}
+              </p>
+
+              <p className="text-xs text-gray-700 mt-3 mb-2">
+                Incluye 1 salsa por producto. Costo adicional por cada salsa extra: ${PRECIO_SALSA_EXTRA}.
+              </p>
+
+              <div className="mt-1 grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-800">Soya</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={soya ?? ""}
+                    onChange={(e) => setSoya(e.target.value === "" ? null : Number(e.target.value))}
+                    className="border rounded w-16 p-1 text-center text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-800">Teriyaki</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={teriyaki ?? ""}
+                    onChange={(e) => setTeriyaki(e.target.value === "" ? null : Number(e.target.value))}
+                    className="border rounded w-16 p-1 text-center text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-800">
+                    Acevichada ($500)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={acevichada ?? ""}
+                    onChange={(e) => setAcevichada(e.target.value === "" ? null : Number(e.target.value))}
+                    className="border rounded w-16 p-1 text-center text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-800">Palitos</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={palitos ?? ""}
+                    onChange={(e) => setPalitos(e.target.value === "" ? null : Number(e.target.value))}
+                    className="border rounded w-16 p-1 text-center text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-3 flex gap-4">
+                <label className="flex items-center gap-2 text-sm text-gray-800">
+                  <input
+                    type="checkbox"
+                    checked={jengibre}
+                    onChange={(e) => setGengibre(e.target.checked)}
+                  />
+                  Jengibre
+                </label>
+                <label className="flex items-center gap-2 text-sm text-gray-800">
+                  <input
+                    type="checkbox"
+                    checked={wasabi}
+                    onChange={(e) => setWasabi(e.target.checked)}
+                  />
+                  Wasabi
+                </label>
+              </div>
+
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-gray-800">Observaciones</label>
+                <textarea
+                  rows={2}
+                  className="border rounded w-full p-2 text-sm"
+                  placeholder="Ej: sin cebollín, sin nori, etc."
+                  value={observacion}
+                  onChange={(e) => setObservacion(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className="block font-semibold mb-1 text-gray-900">Nombre</label>
+            <input
+              type="text"
+              className="border rounded w-full p-2 text-gray-900"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold mb-1 text-gray-900">Teléfono</label>
+            <input
+              type="tel"
+              className="border rounded w-full p-2 text-gray-900"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold mb-1 text-gray-900">Tipo de entrega</label>
+            <select
+              className="border rounded w-full p-2 text-gray-900"
+              value={deliveryType}
+              onChange={(e) => setDeliveryType(e.target.value as "retiro" | "delivery")}
+            >
+              <option value="retiro">Retiro en tienda</option>
+              <option value="delivery">Delivery</option>
+            </select>
+          </div>
+
+          {deliveryType === "delivery" && (
+            <div>
+              <label className="block font-semibold mb-1 text-gray-900">Dirección</label>
+              <div className="w-full">
+                <AddressSearch
+                  polygonCoords={polygonCoords}
+                  onValidAddress={(addr, crds) => {
+                    setAddress(addr);
+                    setCoords(crds);
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          <p className="text-lg font-bold text-gray-900">Total final: ${totalFinal}</p>
+
+          <button
+            type="submit"
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full"
+          >
+            Hacer pedido
+          </button>
+        </form>
+      </div>
+    </>
   );
 }

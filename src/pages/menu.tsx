@@ -9,7 +9,7 @@ const categorias = [
   "Roll premium", "Roll sin arroz", "Rolls envueltos en queso crema",
   "Rolls envueltos en palta", "Rolls envueltos en salmon", "California rolls",
   "Rolls vegetarianos", "Hot rolls", "Handrolls", "Hosomaki", "Sashimi",
-  "Ceviche", "Nigiri", "Chirashi", "Para picar", "Bebidas",
+  "Ceviche", "Nigiri", "Chirashi", "Para picar", "Bebidas","Promociones"
 ];
 
 export default function MenuPage() {

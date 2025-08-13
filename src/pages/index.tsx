@@ -85,32 +85,59 @@ export default function Home() {
       </section>
 
       {/* Promociones */}
-      <section className="py-12">
+      <section className="py-12  text-gray-100">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-2xl font-bold text-center mb-8">Promociones</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {[1, 2, 3].map((promo) => (
-              <div
-                key={promo}
-                className="border border-gray-800 rounded-lg overflow-hidden shadow hover:shadow-lg transition bg-gray-900"
-              >
-                <img
-                  src={`/images/promo-${promo}.jpg`}
-                  alt={`Promoción ${promo}`}
-                  className="w-full h-40 object-cover"
-                />
-                <div className="p-4">
-                  <h3 className="font-semibold mb-2">Promo {promo}</h3>
-                  <p className="text-sm text-gray-400">
-                    Disfruta esta increíble promoción a un precio especial.
-                  </p>
-                  <button className="mt-3 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-sm">
-                    Agregar al carrito
-                  </button>
-                </div>
+
+          {(() => {
+            // <-- IDs de los productos destacados (ajusta estos valores)
+            const TOP_IDS = [201, , , ];
+
+            const topRolls: Producto[] = TOP_IDS
+              .map((id) => productos.find((p) => p.id === id))
+              .filter((p): p is Producto => Boolean(p));
+
+            return (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+                {topRolls.map((p) => (
+                  <div
+                    key={p.id}
+                    className="bg-gray-800 rounded-lg overflow-hidden shadow"
+                  >
+                    <img
+                      src={p.imagen}
+                      alt={p.nombre}
+                      className="w-full h-32 object-cover"
+                    />
+                    <div className="p-3">
+                      <h3 className="font-semibold text-sm">{p.nombre}</h3>
+                      <p className="text-xs text-gray-300 line-clamp-2">
+                        {p.descripcion}
+                      </p>
+
+                      <div className="mt-2 flex items-center justify-between">
+                        <span className="font-bold">${p.valor}</span>
+                        <button
+                          onClick={() => addToCart(p)}
+                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs"
+                        >
+                          Agregar
+                        </button>
+                      </div>
+
+                      {/* Link opcional para “ver en menú” ese producto */}
+                      <a
+                        href={`/menu?producto=${p.id}`}
+                        className="text-blue-400 text-xs hover:underline mt-2 inline-block"
+                      >
+                        Ver en menú
+                      </a>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            );
+          })()}
         </div>
       </section>
 

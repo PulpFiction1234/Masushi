@@ -74,5 +74,14 @@ export const productos: Producto[] = [
     imagen: "/images/Nigiri tako.png",
     categoria: "Nigiri"
     },
+    {
+    id: 201,
+    codigo: "201",
+    nombre: "Promo mixta (36 piezas)",
+    descripcion: "California kani cheese en sesamo - Ebi cheese roll - Ebi cheese panko - Teri Tori",
+    valor: 18900,
+    imagen: "/images/promo 36piezas.png",
+    categoria: "Promociones"
+    },
     
 ];

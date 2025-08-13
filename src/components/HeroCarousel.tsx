@@ -14,7 +14,7 @@ export default function HeroCarousel({
   slides = [
     "/images/hero-sushi.jpg",
     "/images/hero-gyozas.jpg",
-    "/images/hero-camarones.jpg",
+    "/images/hero-gohan.jpg",
   ],
   intervalMs = 5000,
   heightClass = "h-[500px] md:h-[600px]",

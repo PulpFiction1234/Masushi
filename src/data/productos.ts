@@ -46,5 +46,33 @@ export const productos: Producto[] = [
     valor: 3900,
     imagen: "/images/Hosomaki ebi.png",
     categoria: "Hosomaki"
-    }
+    },
+    {
+    id: 66,
+    codigo: "066",
+    nombre: "Nigiri sake",
+    descripcion: "Bolita de arroz/Salmon.",
+    valor: 3400,
+    imagen: "/images/Nigiri sake.png",
+    categoria: "Nigiri"
+    },
+    {
+    id: 67,
+    codigo: "067",
+    nombre: "Nigiri ebi",
+    descripcion: "Bolita de arroz/Camaron.",
+    valor: 3400,
+    imagen: "/images/Nigiri ebi.png",
+    categoria: "Nigiri"
+    },
+    {
+    id: 68,
+    codigo: "068",
+    nombre: "Nigiri tako",
+    descripcion: "Bolita de arroz/Pulpo.",
+    valor: 3600,
+    imagen: "/images/Nigiri tako.png",
+    categoria: "Nigiri"
+    },
+    
 ];

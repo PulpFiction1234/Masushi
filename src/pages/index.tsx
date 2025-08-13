@@ -23,7 +23,7 @@ export default function Home() {
       <HeroCarousel
         // opcional: personaliza las imágenes/intervalo/altura
         // slides={["/images/hero-sushi.jpg","/images/hero-gyoza.jpg","/images/hero-camarones.jpg"]}
-        // intervalMs={5000}
+         intervalMs={9000}
         // heightClass="h-[500px] md:h-[600px]"
       />
 
@@ -125,30 +125,30 @@ export default function Home() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram de Masushi"
-                className="transition hover:scale-110 hover:text-pink-500"
+                className="transition hover:scale-110 "
                 title="Instagram"
               >
-                <FaInstagram className="text-2xl" />
+                <FaInstagram className="text-2xl text-pink-500 hover:text-gray-100" />
               </a>
               <a
                 href="https://www.facebook.com/mazushiltda"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook de Masushi"
-                className="transition hover:scale-110 hover:text-blue-500"
+                className="transition hover:scale-110 "
                 title="Facebook"
               >
-                <FaFacebook className="text-2xl" />
+                <FaFacebook className="text-2xl text-blue-500 hover:text-gray-100" />
               </a>
               <a
                 href="https://wa.me/56912345678"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp de Masushi"
-                className="transition hover:scale-110 hover:text-green-500"
+                className="transition hover:scale-110 "
                 title="WhatsApp"
               >
-                <FaWhatsapp className="text-2xl" />
+                <FaWhatsapp className="text-2xl text-green-500 hover:text-gray-100" />
               </a>
             </div>
 

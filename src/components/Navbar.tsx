@@ -17,9 +17,9 @@ const Navbar: React.FC<Props> = ({ onMenuToggle }) => {
           src="/images/logo-masushi.png"   // pon aquí tu archivo dentro de /public
           alt="Masushi"
           width={240}               // tamaño base (puedes ajustarlo)
-          height={32}
+          height={30}
           priority                  // carga primero para que no parpadee
-          className="h-25 w-40"    // controla alto con Tailwind; mantiene proporción
+          className="h-15 w-30"    // controla alto con Tailwind; mantiene proporción
         />
       </Link>
 

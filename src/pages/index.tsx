@@ -50,7 +50,7 @@ export default function Home() {
                     <img
                       src={p.imagen}
                       alt={p.nombre}
-                      className="w-full h-32 object-cover"
+                      className="w-full h-50 object-cover"
                     />
                     <div className="p-3">
                       <h3 className="font-semibold text-sm">{p.nombre}</h3>
@@ -86,19 +86,19 @@ export default function Home() {
 
       {/* Promociones */}
       <section className="py-12  text-gray-100">
-        <div className="max-w-6xl mx-auto px-4">
+        <div className="w-full max-w-none px-10">
           <h2 className="text-2xl font-bold text-center mb-8">Promociones</h2>
 
           {(() => {
             // <-- IDs de los productos destacados (ajusta estos valores)
-            const TOP_IDS = [201, , , ];
+            const TOP_IDS = [201,201,201,201,201 ];
 
             const topRolls: Producto[] = TOP_IDS
               .map((id) => productos.find((p) => p.id === id))
               .filter((p): p is Producto => Boolean(p));
 
             return (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
                 {topRolls.map((p) => (
                   <div
                     key={p.id}
@@ -107,7 +107,7 @@ export default function Home() {
                     <img
                       src={p.imagen}
                       alt={p.nombre}
-                      className="w-full h-32 object-cover"
+                      className="w-full h-50 object-cover"
                     />
                     <div className="p-3">
                       <h3 className="font-semibold text-sm">{p.nombre}</h3>

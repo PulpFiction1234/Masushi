@@ -38,14 +38,14 @@ export default function MenuPage() {
         <aside
           className={`
             /* MÓVIL: panel deslizable debajo del navbar (~56px) */
-            fixed left-0 top-29 h-[calc(100vh-56px)] w-64
+            fixed left-0 top-19 h-[calc(100vh-56px)] w-64
             bg-gray-900 text-white rounded-r-2xl shadow-lg
             transform transition-transform duration-300 z-40
             flex flex-col
             ${menuAbierto ? "translate-x-0" : "-translate-x-full"}
 
             /* DESKTOP: fijo, más angosto y siempre visible */
-            md:translate-x-0 md:top-29 md:left-0 md:fixed md:w-56 md:h-[calc(100vh-56px)]
+            md:translate-x-0 md:top-19 md:left-0 md:fixed md:w-56 md:h-[calc(100vh-56px)]
           `}
         >
           <h2 className="text-base font-bold text-center mt-4 mb-3">Categorías</h2>

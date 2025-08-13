@@ -27,15 +27,14 @@ const AddressSearch: React.FC<AddressSearchProps> = ({
 
     const map = new mapboxgl.Map({
       container: mapContainerRef.current!,
-      style: "mapbox://styles/mapbox/streets-v11",
+      // Tema oscuro para que se vea bien con tu página
+      style: "mapbox://styles/mapbox/dark-v11",
       center: [polygonCoords[0][0], polygonCoords[0][1]] as [number, number],
       zoom: 13,
     });
 
     map.on("load", () => {
-      const polygonFeature = turf.polygon([
-        [...polygonCoords, polygonCoords[0]],
-      ]);
+      const polygonFeature = turf.polygon([[...polygonCoords, polygonCoords[0]]]);
 
       map.addSource("delivery-zone", {
         type: "geojson",
@@ -50,8 +49,8 @@ const AddressSearch: React.FC<AddressSearchProps> = ({
         type: "fill",
         source: "delivery-zone",
         paint: {
-          "fill-color": "#0080ff",
-          "fill-opacity": 0.2,
+          "fill-color": "#22c55e", // verde suave
+          "fill-opacity": 0.18,
         },
       });
 
@@ -60,31 +59,41 @@ const AddressSearch: React.FC<AddressSearchProps> = ({
         type: "line",
         source: "delivery-zone",
         paint: {
-          "line-color": "#0070cc",
+          "line-color": "#22c55e",
           "line-width": 2,
         },
       });
     });
 
     mapRef.current = map;
-
-    return () => {
-      map.remove();
-    };
+    return () => map.remove();
   }, [MAPBOX_TOKEN, polygonCoords]);
 
-  const handleSearch = async (value: string) => {
-    setQuery(value);
-    if (value.length < 3) return;
+  // Pequeño debounce para no spamear la API
+  useEffect(() => {
+    const t = setTimeout(() => {
+      void fetchSuggestions(query);
+    }, 200);
+    return () => clearTimeout(t);
+  }, [query]);
 
-    const res = await fetch(
-      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-        value
-      )}.json?access_token=${MAPBOX_TOKEN}&autocomplete=true&limit=5&country=CL`
-    );
-    const data = await res.json();
-    setSuggestions(data.features || []);
-  };
+  async function fetchSuggestions(value: string) {
+    if (value.trim().length < 3) {
+      setSuggestions([]);
+      return;
+    }
+    try {
+      const res = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+          value
+        )}.json?access_token=${MAPBOX_TOKEN}&autocomplete=true&limit=5&country=CL`
+      );
+      const data = await res.json();
+      setSuggestions(data.features || []);
+    } catch {
+      setSuggestions([]);
+    }
+  }
 
   const handleSelect = (place: any) => {
     setQuery(place.place_name);
@@ -107,8 +116,7 @@ const AddressSearch: React.FC<AddressSearchProps> = ({
     if (!regexNumeroCalle.test(place.place_name)) {
       setStatus("⚠️ Debe ingresar número de domicilio junto a la calle");
       return;
-}
-
+    }
 
     const coords: [number, number] = [rawCoords[0], rawCoords[1]];
     const point = turf.point(coords);
@@ -124,44 +132,56 @@ const AddressSearch: React.FC<AddressSearchProps> = ({
 
     if (mapRef.current) {
       mapRef.current.flyTo({ center: coords, zoom: 15 });
-
-      if (markerRef.current) {
-        markerRef.current.remove();
-      }
-
-      markerRef.current = new mapboxgl.Marker()
-        .setLngLat(coords)
-        .addTo(mapRef.current);
+      if (markerRef.current) markerRef.current.remove();
+      markerRef.current = new mapboxgl.Marker().setLngLat(coords).addTo(mapRef.current);
     }
   };
 
+  // Estilo de estado
+  const statusClass =
+    status.startsWith("✅")
+      ? "text-green-400"
+      : status.startsWith("❌")
+      ? "text-red-400"
+      : status.startsWith("⚠️")
+      ? "text-yellow-300"
+      : "text-neutral-300";
+
   return (
-    <div>
+    <div className="relative">
+      {/* INPUT oscuro */}
       <input
         value={query}
-        onChange={(e) => handleSearch(e.target.value)}
+        onChange={(e) => setQuery(e.target.value)}
         placeholder="Ingresa tu dirección (con número)"
-        className="border p-2 w-full"
+        className="w-full rounded-xl border border-white/10 bg-neutral-800/90 px-3 py-2 text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
       />
+
+      {/* SUGERENCIAS oscuras (dropdown absoluto) */}
       {suggestions.length > 0 && (
-        <ul className="border bg-white">
+        <ul
+          className="absolute left-0 right-0 z-50 mt-2 max-h-64 overflow-auto rounded-xl border border-white/10 bg-neutral-900/95 text-neutral-100 shadow-xl backdrop-blur-sm"
+          role="listbox"
+        >
           {suggestions.map((sug) => (
             <li
               key={sug.id}
+              role="option"
               onClick={() => handleSelect(sug)}
-              className="p-2 hover:bg-gray-200 cursor-pointer"
+              className="cursor-pointer px-3 py-2 text-sm hover:bg-white/10"
             >
               {sug.place_name}
             </li>
           ))}
         </ul>
       )}
-      {status && <p className="mt-2">{status}</p>}
+
+      {status && <p className={`mt-2 text-sm ${statusClass}`}>{status}</p>}
 
       <div
         ref={mapContainerRef}
         className="mt-4"
-        style={{ width: "100%", height: "400px", borderRadius: "8px" }}
+        style={{ width: "100%", height: "400px", borderRadius: "12px", overflow: "hidden" }}
       />
     </div>
   );

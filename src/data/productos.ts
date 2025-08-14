@@ -19,6 +19,19 @@ export interface Producto {
 // Definición normal (IDs y códigos únicos)
 const _productos: Producto[] = [
    {
+    id: 57-1,
+    codigo: "057",
+    nombre: "Handroll",
+    descripcion: "Elige el relleno",
+    valor: 5500, // ajusta si corresponde
+    imagen: "/images/Handroll.png",
+    categoria: "Handrolls",
+    opciones: [
+      { id: "pollo",   label: " pollo" },
+      { id: "camaron", label: "camarón" },
+    ],
+    },
+   {
     id: 57-2,
     codigo: "0057",
     nombre: "Promo handrolls",

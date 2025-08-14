@@ -110,7 +110,11 @@ export default function MenuPage() {
 
         {/* Contenido: en desktop le damos margen para que no quede bajo el sidebar fijo */}
         <main className="min-h-screen p-6 text-center bg-gray-950 md:ml-56">
-          <ListaProductos categoriaSeleccionada={categoriaSeleccionada} />
+          {/* ⬇️ clave para FORZAR REMOUNT al cambiar de categoría */}
+          <ListaProductos
+            key={`cat-${categoriaSeleccionada ?? "todas"}`}
+            categoriaSeleccionada={categoriaSeleccionada}
+          />
         </main>
       </div>
 

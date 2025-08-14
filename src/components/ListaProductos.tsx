@@ -26,7 +26,7 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {productosOrdenados.map((prod) => (
-        <div key={prod.id} className="bg-gray-900 rounded-lg shadow p-4 flex flex-col">
+  <div key={prod.id} className="bg-gray-900 rounded-lg shadow p-4 flex flex-col">
           <img src={prod.imagen} alt={prod.nombre} className="w-full h-70 object-cover rounded" />
           <h3 className="text-lg text-gray-400 font-semibold mt-2">{prod.nombre}</h3>
           <p className="text-sm text-gray-400">{prod.descripcion}</p>

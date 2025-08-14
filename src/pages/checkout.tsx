@@ -1,4 +1,3 @@
-// src/pages/Checkout.tsx
 import { useMemo, useState } from "react";
 import AddressSearch from "../components/AddressSearch";
 import { useCart } from "@/context/CartContext";
@@ -58,6 +57,14 @@ const isValidChileanMobile = (raw: string) => {
   return /^(\+?56)?9\d{8}$/.test(compact) || /^569\d{8}$/.test(digits) || /^9\d{8}$/.test(digits);
 };
 
+// Nuevo: tipo para método de pago (en local)
+type PaymentMethod = "" | "efectivo" | "debito" | "credito" | "transferencia";
+const paymentLabel = (pm: PaymentMethod) =>
+  pm === "efectivo" ? "Efectivo" :
+  pm === "debito" ? "Débito" :
+  pm === "credito" ? "Crédito" :
+  pm === "transferencia" ? "Transferencia" : "";
+
 export default function Checkout() {
   const { cart, total: carritoTotal } = useCart();
 
@@ -81,6 +88,9 @@ export default function Checkout() {
   const [extraWasabi, setExtraWasabi] = useState<number | "">("");
 
   const [observacion, setObservacion] = useState("");
+
+  // Nuevo: método de pago en local
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("");
 
   // Polígono zona
   const zonaPolygon = useMemo(() => turfPolygon([[...polygonCoords, polygonCoords[0]]]), []);
@@ -154,14 +164,12 @@ export default function Checkout() {
     name.trim().length > 1 &&
     lastName.trim().length > 1 &&
     isValidChileanMobile(phone) &&
+    paymentMethod !== "" &&
     (deliveryType === "retiro" || (coords && REGEX_NUMERO_CALLE.test(address)));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (cart.length === 0) {
-      alert("Tu carrito está vacío");
-      return;
-    }
+    if (cart.length === 0) { alert("Tu carrito está vacío"); return; }
     if (deliveryType === "delivery") {
       if (!coords) { alert("Ingrese una dirección válida."); return; }
       if (!REGEX_NUMERO_CALLE.test(address)) { alert("Debe ingresar un número de domicilio (ej.: N° 1234 o #1234)."); return; }
@@ -195,6 +203,7 @@ export default function Checkout() {
       (deliveryType === "delivery" ? `Dirección: ${shortAddress}\n` : "") +
       `Nombre: ${name} ${lastName}\n` +
       `Teléfono: ${phone}\n` +
+      `Método de pago (en local): ${paymentLabel(paymentMethod)}\n` +
       `\n--- Productos ---\n${productosTexto}\n` +
       `\n--- Extras ---\n${extrasTexto}\n` +
       `\nTotal: ${fmt(totalFinal)}`;
@@ -335,6 +344,25 @@ export default function Checkout() {
                   <option value="retiro">Retiro en tienda</option>
                   <option value="delivery">Delivery</option>
                 </select>
+              </div>
+
+              {/* NUEVO: Método de pago en local */}
+              <div>
+                <label htmlFor="paymethod" className="block font-medium mb-1 text-neutral-200">Método de pago (en local)</label>
+                <select
+                  id="paymethod"
+                  className={inputBase}
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
+                  required
+                >
+                  <option value="">Selecciona una opción…</option>
+                  <option value="efectivo">Efectivo</option>
+                  <option value="debito">Débito</option>
+                  <option value="credito">Crédito</option>
+                  <option value="transferencia">Transferencia</option>
+                </select>
+                <p className="text-xs text-neutral-400 mt-1">Solo informativo — el pago se realiza en el local.</p>
               </div>
 
               {deliveryType === "delivery" && (

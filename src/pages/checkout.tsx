@@ -1,3 +1,4 @@
+"use client";
 import { useMemo, useState } from "react";
 import AddressSearch from "../components/AddressSearch";
 import { useCart } from "@/context/CartContext";
@@ -58,15 +59,46 @@ const isValidChileanMobile = (raw: string) => {
 };
 
 // Nuevo: tipo para método de pago (en local)
-type PaymentMethod = "" | "efectivo" | "debito" | "credito" | "transferencia";
+type PaymentMethod = "" | "efectivo" | "Tarjeta" | "transferencia";
 const paymentLabel = (pm: PaymentMethod) =>
   pm === "efectivo" ? "Efectivo" :
-  pm === "debito" ? "Débito" :
-  pm === "credito" ? "Crédito" :
+  pm === "Tarjeta" ? "Tarjeta" :
   pm === "transferencia" ? "Transferencia" : "";
 
+// ====== Fallbacks para compatibilidad con carritos “legacy” ======
+type CartItemLike = {
+  cartKey?: string;
+  id: number;
+  nombre: string;
+  imagen: string;
+  cantidad: number;
+  precioUnit?: number;        // NUEVO
+  opcion?: { id: string; label: string }; // NUEVO
+  // legacy:
+  codigo?: string;
+  valor?: number;
+};
+
+const priceOf = (item: CartItemLike) =>
+  typeof item.precioUnit === "number" ? item.precioUnit :
+  typeof item.valor === "number" ? item.valor : 0;
+
+const keyOf = (item: CartItemLike) =>
+  item.cartKey ?? `${item.id}:${item.opcion?.id ?? "base"}`;
+
+const codePartOf = (item: CartItemLike) =>
+  item.codigo ? `${item.codigo} | ` : "";
+
+const nameWithTipo = (item: CartItemLike) =>
+  item.opcion?.label ? `${item.nombre} — ${item.opcion.label}` : item.nombre;
+
 export default function Checkout() {
-  const { cart, total: carritoTotal } = useCart();
+  const { cart } = useCart();
+  // NOTA: calculamos el subtotal desde el carrito para soportar ítems legacy
+  const subtotalProductos = useMemo(
+    () => cart.reduce((acc, it) => acc + priceOf(it as CartItemLike) * (it as CartItemLike).cantidad, 0),
+    [cart]
+  );
 
   const [name, setName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -127,8 +159,8 @@ export default function Checkout() {
     deliveryFee,
     totalFinal,
   } = useMemo(() => {
-    const prod = carritoTotal;
-    const gratis = cart.reduce((sum, item) => sum + item.cantidad, 0);
+    const prod = subtotalProductos; // robusto para legacy y nuevo carrito
+    const gratis = cart.reduce((sum, item: any) => sum + item.cantidad, 0);
     const soyaCount = Number(soya || 0);
     const teriCount = Number(teriyaki || 0);
     const { freeSoya, freeTeri } = splitFreeEvenly(soyaCount, teriCount, gratis);
@@ -158,7 +190,7 @@ export default function Checkout() {
       deliveryFee: fee,
       totalFinal: prod + costoBasicas + ace + mar + eJen + eWas + fee,
     };
-  }, [carritoTotal, cart, soya, teriyaki, acevichada, maracuya, extraJengibre, extraWasabi, deliveryType]);
+  }, [subtotalProductos, cart, soya, teriyaki, acevichada, maracuya, extraJengibre, extraWasabi, deliveryType]);
 
   const canSubmit =
     name.trim().length > 1 &&
@@ -177,7 +209,14 @@ export default function Checkout() {
       if (!inside) { alert("Lo sentimos, tu dirección está fuera de la zona de reparto."); return; }
     }
 
-    const productosTexto = cart.map((item) => ` ${item.codigo} | ${item.nombre} x${item.cantidad} — ${fmt(item.valor * item.cantidad)}`).join("\n");
+    // Texto de productos para WhatsApp (incluye tipo y soporta legacy)
+    const productosTexto = (cart as unknown as CartItemLike[])
+      .map((item) => {
+        const lineaNombre = `${codePartOf(item)}${nameWithTipo(item)}`;
+        const totalLinea = fmt(priceOf(item) * item.cantidad);
+        return ` ${lineaNombre} x${item.cantidad} — ${totalLinea}`;
+      })
+      .join("\n");
 
     const extrasBasicasLineas = [
       `Soya: ${Number(soya || 0)} (gratis: ${freeOnSoya}, pagas: ${paidSoya} = ${fmt(paidSoya * PRECIO_SOYA_EXTRA)})`,
@@ -203,7 +242,7 @@ export default function Checkout() {
       (deliveryType === "delivery" ? `Dirección: ${shortAddress}\n` : "") +
       `Nombre: ${name} ${lastName}\n` +
       `Teléfono: ${phone}\n` +
-      `Método de pago (en local): ${paymentLabel(paymentMethod)}\n` +
+      `Método de pago: ${paymentLabel(paymentMethod)}\n` +
       `\n--- Productos ---\n${productosTexto}\n` +
       `\n--- Extras ---\n${extrasTexto}\n` +
       `\nTotal: ${fmt(totalFinal)}`;
@@ -231,10 +270,13 @@ export default function Checkout() {
                 <div className={`${card} p-4 bg-neutral-900`}>
                   <h3 className="font-bold mb-3 text-neutral-50">Tu carrito</h3>
                   <div className="space-y-1">
-                    {cart.map((item) => (
-                      <div key={item.id} className="text-sm text-neutral-200 flex items-center justify-between">
-                        <span>{item.nombre} (x{item.cantidad})</span>
-                        <span className="font-mono">{fmt(item.valor * item.cantidad)}</span>
+                    {(cart as unknown as CartItemLike[]).map((item) => (
+                      <div key={keyOf(item)} className="text-sm text-neutral-200 flex items-center justify-between">
+                        <span>
+                          {nameWithTipo(item)}{" "}
+                          <span className="text-neutral-400">(x{item.cantidad})</span>
+                        </span>
+                        <span className="font-mono">{fmt(priceOf(item) * item.cantidad)}</span>
                       </div>
                     ))}
                   </div>
@@ -296,15 +338,13 @@ export default function Checkout() {
                       </div>
                     </div>
                   </div>
-
                   <div className="mt-3">
-                    <label htmlFor="obs" className="block text-sm font-medium text-neutral-200 mb-1">Observaciones</label>
-                    <textarea id="obs" rows={2} className={`${inputBase} resize-none`} placeholder="Ej: sin cebollín, sin nori, etc." value={observacion} onChange={(e) => setObservacion(e.target.value)} />
-                    <div className="mt-2 text-xs bg-yellow-500/10 border border-yellow-500/30 text-yellow-200 rounded p-2">
-                      Todo cambio puede llevar un valor extra dependiendo del requerimiento.
-                    </div>
+                      <label htmlFor="obs" className="block text-sm font-medium text-neutral-200 mb-1">Observaciones</label>
+                      <textarea id="obs" rows={2} className={`${inputBase} resize-none`} placeholder="Ej: sin cebollín, sin nori, etc." value={observacion} onChange={(e) => setObservacion(e.target.value)} />
+                      <div className="mt-2 text-xs bg-yellow-500/10 border border-yellow-500/30 text-yellow-200 rounded p-2">
+                        Todo cambio puede llevar un valor extra dependiendo del requerimiento.
+                      </div>
                   </div>
-
                   {deliveryType === "delivery" && (
                     <div className="mt-3 flex items-center justify-between text-sm">
                       <span className="text-neutral-300">Delivery</span>
@@ -358,11 +398,10 @@ export default function Checkout() {
                 >
                   <option value="">Selecciona una opción…</option>
                   <option value="efectivo">Efectivo</option>
-                  <option value="debito">Débito</option>
-                  <option value="credito">Crédito</option>
+                  <option value="tarjeta">Crédito</option>
                   <option value="transferencia">Transferencia</option>
                 </select>
-                <p className="text-xs text-neutral-400 mt-1">Solo informativo — el pago se realiza en el local.</p>
+                <p className="text-xs text-neutral-400 mt-1">Solo informativo </p>
               </div>
 
               {deliveryType === "delivery" && (
@@ -374,13 +413,13 @@ export default function Checkout() {
                       onValidAddress={(addr, crds) => {
                         setAddress(addr);
                         setCoords(crds);
-                        // Para guardar ya corta:
-                        // setAddress(toShortCLAddress(addr));
                       }}
                     />
                   </div>
                 </div>
               )}
+
+
 
               <button
                 type="submit"

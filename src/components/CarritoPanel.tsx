@@ -1,3 +1,6 @@
+// components/CarritoPanel.tsx
+"use client";
+
 import React from "react";
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
@@ -19,10 +22,7 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
   return (
     <>
       {open && (
-        <div
-          className="fixed inset-0 bg-transparent z-40"
-          onClick={onClose}
-        />
+        <div className="fixed inset-0 bg-transparent z-40" onClick={onClose} />
       )}
 
       <div
@@ -44,10 +44,7 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
             <p className="text-gray-100">Tu carrito está vacío</p>
           ) : (
             cart.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between mb-3"
-              >
+              <div key={item.cartKey} className="flex items-center justify-between mb-3">
                 <img
                   src={item.imagen}
                   alt={item.nombre}
@@ -55,26 +52,30 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
                 />
                 <div className="flex-1 ml-3">
                   <p className="font-semibold">{item.nombre}</p>
+                  {/* Muestra el tipo elegido si existe */}
+                  {item.opcion?.label && (
+                    <p className="text-xs text-gray-400">Tipo: {item.opcion.label}</p>
+                  )}
                   <p className="text-sm">
-                    ${item.valor} x {item.cantidad}
+                    ${item.precioUnit} x {item.cantidad}
                   </p>
                 </div>
                 <div className="flex items-center gap-1">
                   <button
-                    onClick={() => updateQuantity(item.id, item.cantidad - 1)}
+                    onClick={() => updateQuantity(item.cartKey, item.cantidad - 1)}
                     className="px-2 py-1 border border-gray-500 rounded"
                   >
                     -
                   </button>
                   <span>{item.cantidad}</span>
                   <button
-                    onClick={() => updateQuantity(item.id, item.cantidad + 1)}
+                    onClick={() => updateQuantity(item.cartKey, item.cantidad + 1)}
                     className="px-2 py-1 border border-gray-500 rounded"
                   >
                     +
                   </button>
                   <button
-                    onClick={() => removeFromCart(item.id)}
+                    onClick={() => removeFromCart(item.cartKey)}
                     className="text-red-400 text-sm ml-2"
                   >
                     Eliminar

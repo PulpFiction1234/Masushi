@@ -1,15 +1,37 @@
+// data/productos.ts
+export interface ProductoOpcion {
+  id: string;      // clave estable (ej: "2pollo", "2camaron", "1y1")
+  label: string;   // texto visible para el usuario
+  precio?: number; // opcional: si alguna opción cambia el precio
+}
+
 export interface Producto {
   id: number;
   codigo: string;
   nombre: string;
   descripcion: string;
-  valor: number;
+  valor: number;          // precio base
   imagen: string;
   categoria: string;
+  opciones?: ProductoOpcion[]; // ← SOLO si el producto tiene variantes
 }
 
 // Definición normal (IDs y códigos únicos)
 const _productos: Producto[] = [
+   {
+    id: 57-2,
+    codigo: "0057",
+    nombre: "Promo handrolls",
+    descripcion: "Elige la combinación:",
+    valor: 10000, // ajusta si corresponde
+    imagen: "/images/Promo handroll.png",
+    categoria: "Handrolls",
+    opciones: [
+      { id: "2pollo",   label: "2 de pollo" },
+      { id: "2camaron", label: "2 de camarón" },
+      { id: "1y1",      label: "1 de pollo y 1 de camarón" },
+    ],
+  },
   { id: 58, codigo: "058", nombre: "Hosmaki queso crema", descripcion: "Queso crema/Arroz/Nori.", valor: 3500, imagen: "/images/Hosomaki Queso.png", categoria: "Hosomaki" },
   { id: 59, codigo: "059", nombre: "Hosmaki teri", descripcion: "Pollo/Palta/Arroz/Nori.", valor: 3600, imagen: "/images/Hosomaki teri.png", categoria: "Hosomaki" },
   { id: 60, codigo: "060", nombre: "Hosmaki sake", descripcion: "Salmon/Palta/Arroz/Nori.", valor: 3900, imagen: "/images/Hosomaki sake.png", categoria: "Hosomaki" },
@@ -31,6 +53,9 @@ const _productos: Producto[] = [
   { id: 79, codigo: "079", nombre: "Gyozas camaron", descripcion: "5 unidades", valor: 4900, imagen: "/images/Gyozas.png", categoria: "Para picar" },
 
   { id: 201, codigo: "201", nombre: "Promo mixta (36 piezas)", descripcion: "California kani cheese en sesamo - Ebi cheese roll - Ebi cheese panko - Teri Tori", valor: 18900, imagen: "/images/promo 36piezas.png", categoria: "Promociones" },
+
+
+ 
 ];
 
 // ❄️ congela cada item y luego el array (inmutabilidad defensiva)

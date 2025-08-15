@@ -1,4 +1,3 @@
-// components/ListaProductos.tsx
 "use client";
 import React, { useMemo, useEffect, useState } from "react";
 import Image from "next/image";
@@ -59,24 +58,29 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 min-[2000px]:grid-cols-5 gap-4 items-stretch">
       {productosOrdenados.map((prod) => {
         const tieneOpciones = !!prod.opciones?.length;
         const seleccionActual = seleccion[prod.id] ?? "";
 
         return (
           <div
-            key={`${prod.id}-${prod.codigo}`} // clave única y estable
-            className="bg-gray-900 rounded-lg shadow p-4 flex flex-col"
+            key={`${prod.id}-${prod.codigo ?? "sin-codigo"}`} // clave única y estable
+            className="bg-gray-900 rounded-lg shadow p-4 flex flex-col h-full"
           >
-            <Image
-              src={prod.imagen}
-              alt={prod.nombre}
-              width={500}
-              height={500}
-              className="w-full h-70 object-cover rounded"
-            />
-            <h3 className="text-lg text-gray-400 font-semibold mt-2">{prod.nombre}</h3>
+            {/* Imagen cuadrada y responsiva */}
+            <div className="relative aspect-square w-full overflow-hidden rounded">
+              <Image
+                src={prod.imagen}
+                alt={prod.nombre}
+                fill
+                sizes="(min-width:2000px) 20vw, (min-width:1024px) 25vw, (min-width:640px) 50vw, 100vw"
+                className="object-cover"
+                priority={false}
+              />
+            </div>
+
+            <h3 className="text-lg text-gray-200 font-semibold mt-2">{prod.nombre}</h3>
             <p className="text-sm text-gray-400">{prod.descripcion}</p>
 
             {/* Selector de opciones SOLO si el producto las tiene */}
@@ -109,37 +113,38 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
               </fieldset>
             )}
 
-            <p className="font-bold text-gray-400 mt-3">
-              $
-              {tieneOpciones
-                ? (() => {
-                    const optSel = prod.opciones!.find((o) => o.id === seleccionActual);
-                    return (optSel?.precio ?? prod.valor) || 0;
-                  })()
-                : prod.valor}
-            </p>
+            {/* Bloque pegado al fondo: precio + botón */}
+            <div className="mt-auto">
+              <p className="font-bold text-gray-200 mt-3">
+                $
+                {tieneOpciones
+                  ? (() => {
+                      const optSel = prod.opciones!.find((o) => o.id === seleccionActual);
+                      return (optSel?.precio ?? prod.valor) || 0;
+                    })()
+                  : prod.valor}
+              </p>
 
-            <button
-              type="button"
-              onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-                const ok = onAdd(prod);
-                if (ok) animateToCart(e.nativeEvent as MouseEvent);
-              }}
-              className="bg-green-500 text-white px-4 py-2 mt-3 rounded hover:bg-green-600 w-full disabled:opacity-50 disabled:cursor-not-allowed"
-              // si tiene opciones y no hay selección, desactiva el botón
-              disabled={tieneOpciones && !seleccionActual}
-              aria-disabled={tieneOpciones && !seleccionActual}
-            >
-              Agregar al carrito
-            </button>
+              <button
+                type="button"
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  const ok = onAdd(prod);
+                  if (ok) animateToCart(e.nativeEvent as unknown as MouseEvent);
+                }}
+                className="bg-green-500 text-white px-4 py-2 mt-3 rounded hover:bg-green-600 w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                // si tiene opciones y no hay selección, desactiva el botón
+                disabled={tieneOpciones && !seleccionActual}
+                aria-disabled={tieneOpciones && !seleccionActual}
+              >
+                Agregar al carrito
+              </button>
+            </div>
           </div>
         );
       })}
 
       {productosOrdenados.length === 0 && (
-        <div className="col-span-full text-gray-400">
-          No hay productos en esta categoría.
-        </div>
+        <div className="col-span-full text-gray-400">No hay productos en esta categoría.</div>
       )}
     </div>
   );

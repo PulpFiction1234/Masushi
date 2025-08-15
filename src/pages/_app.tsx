@@ -12,7 +12,8 @@ function FloatingCartButton({ onClick }: { onClick: () => void }) {
   const totalItems = cart.reduce((sum, item) => sum + item.cantidad, 0);
 
   return (
-    <button
+    <button  
+      data-cart-anchor
       onClick={onClick}
       className="fixed bottom-6 right-6 bg-red-500 text-white w-14 h-14 rounded-full shadow-lg hover:bg-gray-600 transition z-50 flex items-center justify-center"
       aria-label={`Abrir carrito${totalItems ? `, ${totalItems} items` : ""}`}
@@ -20,7 +21,7 @@ function FloatingCartButton({ onClick }: { onClick: () => void }) {
       <div className="relative flex items-center justify-center">
         <RiShoppingBag4Fill className="text-[32px] leading-none" />
         {totalItems > 0 && (
-          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full px-2 py-0.5 shadow-lg">
+          <span className="absolute -top-2 -right-2 bg-gray-900 text-white text-xs font-bold rounded-full px-2 py-0.5 shadow-lg">
             {totalItems}
           </span>
         )}

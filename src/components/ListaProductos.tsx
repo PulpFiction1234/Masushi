@@ -3,6 +3,7 @@
 import React, { useMemo, useEffect, useState } from "react";
 import Image from "next/image";
 import { productos, type Producto, type ProductoOpcion } from "../data/productos";
+import { animateToCart } from "@/utils/animateToCart";
 import { useCart } from "@/context/CartContext";
 
 interface ListaProductosProps {
@@ -35,7 +36,8 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
     // console.log("Categoria:", categoriaSeleccionada, "=>", productosOrdenados.length, "items");
   }, [categoriaSeleccionada, productosOrdenados.length]);
 
-  const onAdd = (prod: Producto) => {
+  // Devuelve true si se agregó correctamente (para disparar la animación)
+  const onAdd = (prod: Producto): boolean => {
     let opt: ProductoOpcion | undefined;
 
     // Si el producto tiene opciones, obligar selección
@@ -44,7 +46,7 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
       opt = prod.opciones.find((o) => o.id === selId);
       if (!opt) {
         alert("Por favor, elige una opción antes de agregar al carrito.");
-        return;
+        return false;
       }
     }
 
@@ -53,6 +55,7 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
 
     // Pasamos la opción elegida para que el carrito la guarde y la muestre
     addToCart(prod, { opcion: opt ? { id: opt.id, label: opt.label } : undefined, precioUnit });
+    return true;
   };
 
   return (
@@ -66,7 +69,7 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
             key={`${prod.id}-${prod.codigo}`} // clave única y estable
             className="bg-gray-900 rounded-lg shadow p-4 flex flex-col"
           >
-             <Image
+            <Image
               src={prod.imagen}
               alt={prod.nombre}
               width={500}
@@ -117,7 +120,11 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
             </p>
 
             <button
-              onClick={() => onAdd(prod)}
+              type="button"
+              onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                const ok = onAdd(prod);
+                if (ok) animateToCart(e.nativeEvent as MouseEvent);
+              }}
               className="bg-green-500 text-white px-4 py-2 mt-3 rounded hover:bg-green-600 w-full disabled:opacity-50 disabled:cursor-not-allowed"
               // si tiene opciones y no hay selección, desactiva el botón
               disabled={tieneOpciones && !seleccionActual}

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import * as turf from "@turf/turf";
 import mapboxgl from "mapbox-gl";
 
@@ -55,6 +55,25 @@ const AddressSearch: React.FC<AddressSearchProps> = ({ polygonCoords, onValidAdd
     return () => map.remove();
   }, [MAPBOX_TOKEN, polygonCoords]);
 
+const fetchSuggestions = useCallback(
+    async (value: string) => {
+      if (value.trim().length < 3) {
+        setSuggestions([]);
+        return;
+      }
+      try {
+        const res = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(value)}.json?access_token=${MAPBOX_TOKEN}&autocomplete=true&limit=5&country=CL`
+        );
+        const data = await res.json();
+        setSuggestions(data.features || []);
+      } catch {
+        setSuggestions([]);
+      }
+    },
+    [MAPBOX_TOKEN]
+  );
+
   // Debounce + respeto del flag de supresión
   useEffect(() => {
     const t = setTimeout(() => {
@@ -66,23 +85,7 @@ const AddressSearch: React.FC<AddressSearchProps> = ({ polygonCoords, onValidAdd
       void fetchSuggestions(query);
     }, 200);
     return () => clearTimeout(t);
-  }, [query]);
-
-  async function fetchSuggestions(value: string) {
-    if (value.trim().length < 3) {
-      setSuggestions([]);
-      return;
-    }
-    try {
-      const res = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(value)}.json?access_token=${MAPBOX_TOKEN}&autocomplete=true&limit=5&country=CL`
-      );
-      const data = await res.json();
-      setSuggestions(data.features || []);
-    } catch {
-      setSuggestions([]);
-    }
-  }
+  }, [query, fetchSuggestions]);
 
   // Opcional: acortar "Calle 1234, Comuna"
   const toShortCLAddress = (full: string) => {
@@ -167,9 +170,10 @@ const AddressSearch: React.FC<AddressSearchProps> = ({ polygonCoords, onValidAdd
           role="listbox"
         >
           {suggestions.map((sug) => (
-            <li
+                 <li
               key={sug.id}
               role="option"
+              aria-selected={false}
               // onMouseDown evita que el blur del input cancele el click (mejor UX)
               onMouseDown={() => handleSelect(sug)}
               className="cursor-pointer px-3 py-2 text-sm hover:bg-white/10"

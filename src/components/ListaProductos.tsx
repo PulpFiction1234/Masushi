@@ -1,6 +1,7 @@
 // components/ListaProductos.tsx
 "use client";
 import React, { useMemo, useEffect, useState } from "react";
+import Image from "next/image";
 import { productos, type Producto, type ProductoOpcion } from "../data/productos";
 import { useCart } from "@/context/CartContext";
 
@@ -65,9 +66,11 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
             key={`${prod.id}-${prod.codigo}`} // clave única y estable
             className="bg-gray-900 rounded-lg shadow p-4 flex flex-col"
           >
-            <img
+             <Image
               src={prod.imagen}
               alt={prod.nombre}
+              width={500}
+              height={500}
               className="w-full h-70 object-cover rounded"
             />
             <h3 className="text-lg text-gray-400 font-semibold mt-2">{prod.nombre}</h3>

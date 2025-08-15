@@ -159,8 +159,8 @@ export default function Checkout() {
     deliveryFee,
     totalFinal,
   } = useMemo(() => {
-    const prod = subtotalProductos; // robusto para legacy y nuevo carrito
-    const gratis = cart.reduce((sum, item: any) => sum + item.cantidad, 0);
+    const prod = subtotalProductos; // robusto para legacy y nuevo carrito␊
+    const gratis = cart.reduce((sum, item: CartItemLike) => sum + item.cantidad, 0);
     const soyaCount = Number(soya || 0);
     const teriCount = Number(teriyaki || 0);
     const { freeSoya, freeTeri } = splitFreeEvenly(soyaCount, teriCount, gratis);

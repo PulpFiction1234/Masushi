@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
-import Link from "next/link";
+import Image from "next/image";
 import CarritoPanel from "@/components/CarritoPanel";
 import { FaInstagram, FaFacebook, FaWhatsapp } from "react-icons/fa";
 import { productos, type Producto } from "@/data/productos";
@@ -47,9 +47,11 @@ export default function Home() {
                     key={p.id}
                     className="bg-gray-800 rounded-lg overflow-hidden shadow"
                   >
-                    <img
+                    <Image
                       src={p.imagen}
                       alt={p.nombre}
+                      width={500}
+                      height={200}
                       className="w-full h-50 object-cover"
                     />
                     <div className="p-3">
@@ -104,9 +106,11 @@ export default function Home() {
                     key={p.id}
                     className="bg-gray-800 rounded-lg overflow-hidden shadow"
                   >
-                    <img
+                    <Image
                       src={p.imagen}
                       alt={p.nombre}
+                      width={500}
+                      height={200}
                       className="w-full h-50 object-cover"
                     />
                     <div className="p-3">

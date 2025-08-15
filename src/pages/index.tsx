@@ -93,7 +93,7 @@ export default function Home() {
 
           {(() => {
             // <-- IDs de los productos destacados (ajusta estos valores)
-            const TOP_IDS = [201,201,201,201,201 ];
+            const TOP_IDS = [200,201,202,201,201 ];
 
             const topRolls: Producto[] = TOP_IDS
               .map((id) => productos.find((p) => p.id === id))

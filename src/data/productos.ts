@@ -18,7 +18,77 @@ export interface Producto {
 
 // Definición normal (IDs y códigos únicos)
 const _productos: Producto[] = [
-   {
+    {
+      id: 32,
+      codigo: "032",
+      nombre: "California kani cheese",
+      descripcion: "Kanikama/Queso crema/Palta",
+      valor: 5300, // ajusta si corresponde
+      imagen: "/images/California kani cheese.png",
+      categoria: "California rolls",
+      opciones: [
+        { id: "Sesamo",   label: "Sesamo" },
+        { id: "Cibullete", label: "Cibullete" },
+        { id: "Masago",      label: "Masago" },
+      ],
+    },   
+    {
+      id: 33,
+      codigo: "033",
+      nombre: "California teri",
+      descripcion: "Pollo teriyaki/Palta",
+      valor: 5400, // ajusta si corresponde
+      imagen: "/images/California teri.png",
+      categoria: "California rolls",
+      opciones: [
+        { id: "Sesamo",   label: "Sesamo" },
+        { id: "Cibullete", label: "Cibullete" },
+        { id: "Masago",      label: "Masago" },
+      ],
+    },
+    {
+    id: 34,
+    codigo: "034",
+    nombre: "California teri cheese",
+    descripcion: "Pollo teriyaki/Queso crema/Palta",
+    valor: 5600, // ajusta si corresponde
+    imagen: "/images/California teri cheese.png",
+    categoria: "California rolls",
+    opciones: [
+      { id: "Sesamo",   label: "Sesamo" },
+      { id: "Cibullete", label: "Cibullete" },
+      { id: "Masago",      label: "Masago" },
+    ],
+    },
+    {
+    id: 35,
+    codigo: "035",
+    nombre: "California ebi",
+    descripcion: "Camaron/Palta",
+    valor: 5600, // ajusta si corresponde
+    imagen: "/images/California ebi.png",
+    categoria: "California rolls",
+    opciones: [
+      { id: "Sesamo",   label: "Sesamo" },
+      { id: "Cibullete", label: "Cibullete" },
+      { id: "Masago",      label: "Masago" },
+    ],
+    },
+     {
+    id: 36,
+    codigo: "036",
+    nombre: "California ebi cheese",
+    descripcion: "Camaron/Queso crema/Palta",
+    valor: 5600, // ajusta si corresponde
+    imagen: "/images/California ebi cheese.png",
+    categoria: "California rolls",
+    opciones: [
+      { id: "Sesamo",   label: "Sesamo" },
+      { id: "Cibullete", label: "Cibullete" },
+      { id: "Masago",      label: "Masago" },
+    ],
+    },
+  {
     id: 57-1,
     codigo: "057",
     nombre: "Handroll",
@@ -45,10 +115,10 @@ const _productos: Producto[] = [
       { id: "1y1",      label: "1 de pollo y 1 de camarón" },
     ],
   },
-  { id: 58, codigo: "058", nombre: "Hosmaki queso crema", descripcion: "Queso crema/Arroz/Nori.", valor: 3500, imagen: "/images/Hosomaki Queso.png", categoria: "Hosomaki" },
-  { id: 59, codigo: "059", nombre: "Hosmaki teri", descripcion: "Pollo/Palta/Arroz/Nori.", valor: 3600, imagen: "/images/Hosomaki teri.png", categoria: "Hosomaki" },
-  { id: 60, codigo: "060", nombre: "Hosmaki sake", descripcion: "Salmon/Palta/Arroz/Nori.", valor: 3900, imagen: "/images/Hosomaki sake.png", categoria: "Hosomaki" },
-  { id: 61, codigo: "061", nombre: "Hosmaki ebi", descripcion: "Camaron/Palta/Arroz/Nori.", valor: 3900, imagen: "/images/Hosomaki ebi.png", categoria: "Hosomaki" },
+  { id: 58, codigo: "058", nombre: "Hosomaki queso crema", descripcion: "Queso crema/Arroz/Nori.", valor: 3500, imagen: "/images/Hosomaki Queso.png", categoria: "Hosomaki" },
+  { id: 59, codigo: "059", nombre: "Hosomaki teri", descripcion: "Pollo/Palta/Arroz/Nori.", valor: 3600, imagen: "/images/Hosomaki teri.png", categoria: "Hosomaki" },
+  { id: 60, codigo: "060", nombre: "Hosomaki sake", descripcion: "Salmon/Palta/Arroz/Nori.", valor: 3900, imagen: "/images/Hosomaki sake.png", categoria: "Hosomaki" },
+  { id: 61, codigo: "061", nombre: "Hosomaki ebi", descripcion: "Camaron/Palta/Arroz/Nori.", valor: 3900, imagen: "/images/Hosomaki ebi.png", categoria: "Hosomaki" },
 
   { id: 65, codigo: "065", nombre: "Ceviche mixto", descripcion: "Salmon/Camaron/Pimenton/Cebolla morada/Leche de tigre/Palta.", valor: 12900, imagen: "/images/Ceviche mixto.png", categoria: "Ceviche" },
 
@@ -64,8 +134,8 @@ const _productos: Producto[] = [
   { id: 77, codigo: "077", nombre: "Gyozas pollo", descripcion: "5 unidades", valor: 4800, imagen: "/images/Gyozas.png", categoria: "Para picar" },
   { id: 78, codigo: "078", nombre: "Gyozas cerdo", descripcion: "5 unidades", valor: 4800, imagen: "/images/Gyozas.png", categoria: "Para picar" },
   { id: 79, codigo: "079", nombre: "Gyozas camaron", descripcion: "5 unidades", valor: 4900, imagen: "/images/Gyozas.png", categoria: "Para picar" },
-
-  { id: 201, codigo: "201", nombre: "Promo mixta (36 piezas)", descripcion: "California kani cheese en sesamo - Ebi cheese roll - Ebi cheese panko - Teri Tori", valor: 18900, imagen: "/images/promo 36piezas.png", categoria: "Promociones" },
+  { id: 200, codigo: "200", nombre: "Promo uno (18 piezas)", descripcion: "Ebi cheese roll - California teri cheese", valor: 10900, imagen: "/images/promo 18piezas.png", categoria: "Promociones" },
+  { id: 202, codigo: "202", nombre: "Promo mixta (36 piezas)", descripcion: "California kani cheese en sesamo - Ebi cheese roll - Ebi cheese panko - Teri Tori", valor: 18900, imagen: "/images/promo 36piezas.png", categoria: "Promociones" },
 
 
  

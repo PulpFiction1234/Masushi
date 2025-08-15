@@ -58,7 +58,13 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
   };
 
   return (
-    <div className="grid [grid-template-columns:repeat(auto-fit,minmax(320px,1fr))] gap-4 items-stretch">
+    <div
+      className="
+        grid
+        [grid-template-columns:repeat(auto-fit,minmax(300px,360px))]
+        gap-4 items-stretch justify-start
+      "
+    >
       {productosOrdenados.map((prod) => {
         const tieneOpciones = !!prod.opciones?.length;
         const seleccionActual = seleccion[prod.id] ?? "";
@@ -66,7 +72,7 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
         return (
           <div
             key={`${prod.id}-${prod.codigo ?? "sin-codigo"}`} // clave única y estable
-            className="bg-gray-900 rounded-lg shadow p-4 flex flex-col h-full max-w-[395px]"
+            className="bg-gray-900 rounded-lg shadow p-4 flex flex-col h-full"
           >
             {/* Imagen cuadrada y responsiva */}
             <div className="relative aspect-square w-full overflow-hidden rounded">

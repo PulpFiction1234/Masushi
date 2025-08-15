@@ -66,7 +66,7 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
         return (
           <div
             key={`${prod.id}-${prod.codigo ?? "sin-codigo"}`} // clave única y estable
-            className="bg-gray-900 rounded-lg shadow p-4 flex flex-col h-full max-w-[340px]"
+            className="bg-gray-900 rounded-lg shadow p-4 flex flex-col h-full max-w-[395px]"
           >
             {/* Imagen cuadrada y responsiva */}
             <div className="relative aspect-square w-full overflow-hidden rounded">

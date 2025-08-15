@@ -61,7 +61,7 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
     <div
       className="
         grid
-        [grid-template-columns:repeat(auto-fit,minmax(300px,360px))]
+        [grid-template-columns:repeat(auto-fit,minmax(300px,380px))]
         gap-4 items-stretch justify-start
       "
     >

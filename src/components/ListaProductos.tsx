@@ -58,7 +58,7 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 min-[2000px]:grid-cols-5 gap-4 items-stretch">
+    <div className="grid [grid-template-columns:repeat(auto-fit,minmax(350px,1fr))] gap-4 items-stretch">
       {productosOrdenados.map((prod) => {
         const tieneOpciones = !!prod.opciones?.length;
         const seleccionActual = seleccion[prod.id] ?? "";

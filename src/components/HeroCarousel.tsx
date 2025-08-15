@@ -65,24 +65,17 @@ export default function HeroCarousel({
           />
         ))}
         {/* Oscurecedor para legibilidad */}
-        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 " />
       </div>
 
       {/* Contenido centrado (lo mismo que tenías) */}
-      <div className="relative z-10 h-full flex items-center justify-center text-center px-4">
-        <div className="bg-black/50 backdrop-blur-sm p-6 rounded text-white max-w-xl">
-          <h1 className="text-4xl font-bold mb-4">¡Bienvenido a Masushi!</h1>
-          <p className="text-lg mb-6">
-            Sushi fresco y delicioso, directo a tu puerta.
-          </p>
+      <div className="relative z-10 h-full bottom-15 flex items-end justify-center text-center px-4">
           <Link href="/menu" className="inline-block">
             <button className="bg-red-500 hover:bg-red-600 px-6 py-3 rounded text-white font-semibold">
-              Ver Menú
+              Ver Carta
             </button>
-          </Link>
-        </div>
+          </Link>        
       </div>
-
       {/* Controles */}
       <button
         aria-label="Anterior"

@@ -2,6 +2,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
 
@@ -44,10 +45,12 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
             <p className="text-gray-100">Tu carrito está vacío</p>
           ) : (
             cart.map((item) => (
-              <div key={item.cartKey} className="flex items-center justify-between mb-3">
-                <img
+               <div key={item.cartKey} className="flex items-center justify-between mb-3">
+                <Image
                   src={item.imagen}
                   alt={item.nombre}
+                  width={48}
+                  height={48}
                   className="w-12 h-12 object-cover rounded"
                 />
                 <div className="flex-1 ml-3">

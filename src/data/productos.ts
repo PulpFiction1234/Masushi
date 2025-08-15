@@ -134,7 +134,8 @@ const _productos: Producto[] = [
   { id: 77, codigo: "077", nombre: "Gyozas pollo", descripcion: "5 unidades", valor: 4800, imagen: "/images/Gyozas.png", categoria: "Para picar" },
   { id: 78, codigo: "078", nombre: "Gyozas cerdo", descripcion: "5 unidades", valor: 4800, imagen: "/images/Gyozas.png", categoria: "Para picar" },
   { id: 79, codigo: "079", nombre: "Gyozas camaron", descripcion: "5 unidades", valor: 4900, imagen: "/images/Gyozas.png", categoria: "Para picar" },
-  { id: 200, codigo: "200", nombre: "Promo uno (18 piezas)", descripcion: "Ebi cheese roll - California teri cheese", valor: 10900, imagen: "/images/promo 18piezas.png", categoria: "Promociones" },
+  { id: 200, codigo: "200", nombre: "Promo uno (18 piezas)", descripcion: "Ebi cheese roll - California teri cheese", valor: 10900, imagen: "/images/Promo 18piezas.png", categoria: "Promociones" },
+  { id: 202, codigo: "202", nombre: "Promo mixta (36 piezas)", descripcion: "California kani cheese en sesamo - Ebi cheese roll - Ebi cheese panko - Teri Tori", valor: 18900, imagen: "/images/promo 36piezas.png", categoria: "Promociones" },
   { id: 202, codigo: "202", nombre: "Promo mixta (36 piezas)", descripcion: "California kani cheese en sesamo - Ebi cheese roll - Ebi cheese panko - Teri Tori", valor: 18900, imagen: "/images/promo 36piezas.png", categoria: "Promociones" },
 
 

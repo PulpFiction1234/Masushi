@@ -13,6 +13,12 @@ interface ListaProductosProps {
 const normalize = (s: string) =>
   s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
 
+// Formateador con separador de miles para Chile (sin decimales)
+const fmtMiles = new Intl.NumberFormat("es-CL", {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+});
+
 const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }) => {
   const { addToCart } = useCart();
   const selected = categoriaSeleccionada ? normalize(categoriaSeleccionada) : "";
@@ -53,7 +59,10 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
     const precioUnit = opt?.precio ?? prod.valor;
 
     // Pasamos la opción elegida para que el carrito la guarde y la muestre
-    addToCart(prod, { opcion: opt ? { id: opt.id, label: opt.label } : undefined, precioUnit });
+    addToCart(
+      prod,
+      { opcion: opt ? { id: opt.id, label: opt.label } : undefined, precioUnit }
+    );
     return true;
   };
 
@@ -110,7 +119,7 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
                       <span className="text-sm text-gray-200">
                         {o.label}
                         {typeof o.precio === "number" && o.precio !== prod.valor
-                          ? ` — $${o.precio}`
+                          ? ` — $${fmtMiles.format(o.precio)}`
                           : ""}
                       </span>
                     </label>
@@ -122,13 +131,15 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
             {/* Bloque pegado al fondo: precio + botón */}
             <div className="mt-auto">
               <p className="font-bold text-gray-200 mt-3">
-                $
-                {tieneOpciones
-                  ? (() => {
-                      const optSel = prod.opciones!.find((o) => o.id === seleccionActual);
-                      return (optSel?.precio ?? prod.valor) || 0;
-                    })()
-                  : prod.valor}
+                {"$"}
+                {fmtMiles.format(
+                  tieneOpciones
+                    ? (() => {
+                        const optSel = prod.opciones!.find((o) => o.id === seleccionActual);
+                        return (optSel?.precio ?? prod.valor) || 0;
+                      })()
+                    : prod.valor
+                )}
               </p>
 
               <button

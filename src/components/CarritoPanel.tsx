@@ -1,10 +1,10 @@
-// components/CarritoPanel.tsx
 "use client";
 
 import React from "react";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation";
+import { formatCLP } from "@/utils/format";
 
 interface Props {
   open: boolean;
@@ -45,7 +45,7 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
             <p className="text-gray-100">Tu carrito está vacío</p>
           ) : (
             cart.map((item) => (
-               <div key={item.cartKey} className="flex items-center justify-between mb-3">
+              <div key={item.cartKey} className="flex items-center justify-between mb-3">
                 <Image
                   src={item.imagen}
                   alt={item.nombre}
@@ -60,7 +60,7 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
                     <p className="text-xs text-gray-400">Tipo: {item.opcion.label}</p>
                   )}
                   <p className="text-sm">
-                    ${item.precioUnit} x {item.cantidad}
+                    {formatCLP(item.precioUnit)} x {item.cantidad}
                   </p>
                 </div>
                 <div className="flex items-center gap-1">
@@ -92,7 +92,7 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
         {/* FOOTER FIJO */}
         {cart.length > 0 && (
           <div className="p-4 border-t border-gray-700 space-y-2 bg-gray-900 flex-shrink-0">
-            <p className="font-bold">Total: ${total}</p>
+            <p className="font-bold">Total: {formatCLP(total)}</p>
             <button
               onClick={handlePedido}
               className="bg-green-500 text-white w-full py-2 rounded hover:bg-green-600"

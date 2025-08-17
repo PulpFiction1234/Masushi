@@ -19,12 +19,19 @@ const fmtMiles = new Intl.NumberFormat("es-CL", {
   maximumFractionDigits: 0,
 });
 
+// Cambia este umbral si quieres ser más/menos permisivo con "contain"
+type FitMode = "cover" | "contain";
+const WIDE_THRESHOLD = 1.5; // 1.6–1.9 suele ir bien para promos muy anchas
+
 const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }) => {
   const { addToCart } = useCart();
   const selected = categoriaSeleccionada ? normalize(categoriaSeleccionada) : "";
 
   // Opción elegida POR producto (id -> opcionId)
   const [seleccion, setSeleccion] = useState<Record<number, string>>({});
+
+  // Modo de ajuste por producto (id -> "cover"/"contain")
+  const [fitMap, setFitMap] = useState<Record<number, FitMode>>({});
 
   // 1) Filtra sin mutar (usando coincidencia normalizada)
   const productosFiltrados = useMemo(() => {
@@ -77,21 +84,32 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
       {productosOrdenados.map((prod) => {
         const tieneOpciones = !!prod.opciones?.length;
         const seleccionActual = seleccion[prod.id] ?? "";
+        const objectFitClass = fitMap[prod.id] === "contain" ? "object-contain" : "object-cover";
 
         return (
           <div
             key={`${prod.id}-${prod.codigo ?? "sin-codigo"}`} // clave única y estable
             className="bg-gray-900 rounded-lg shadow p-4 flex flex-col h-full"
           >
-            {/* Imagen cuadrada y responsiva */}
-            <div className="relative aspect-square w-full overflow-hidden rounded">
+            {/* Imagen: cuadrado como en la 1ª imagen; cambia a contain si es muy ancha */}
+            <div className="relative aspect-square w-full overflow-hidden rounded bg-white">
               <Image
                 src={prod.imagen}
                 alt={prod.nombre}
                 fill
                 sizes="(min-width:2000px) 20vw, (min-width:1024px) 25vw, (min-width:640px) 50vw, 100vw"
-                className="object-cover"
+                className={objectFitClass}
                 priority={false}
+                onLoadingComplete={(img) => {
+                  const ratio = img.naturalWidth / img.naturalHeight;
+                  if (ratio >= WIDE_THRESHOLD) {
+                    // solo actualiza si cambia a 'contain' para evitar renders innecesarios
+                    setFitMap((m) => (m[prod.id] === "contain" ? m : { ...m, [prod.id]: "contain" }));
+                  } else {
+                    // asegura cover en el resto
+                    setFitMap((m) => (m[prod.id] === "cover" || m[prod.id] === undefined ? m : { ...m, [prod.id]: "cover" }));
+                  }
+                }}
               />
             </div>
 

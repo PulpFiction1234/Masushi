@@ -88,7 +88,7 @@ export default function Home() {
           <h2 className="text-2xl font-bold text-center mb-8">Promociones</h2>
 
           {(() => {
-            const TOP_IDS = [200, 201, 202, 201, 201];
+            const TOP_IDS = [200, 201, 202, 203, 204];
 
             const topRolls: Producto[] = TOP_IDS
               .map((id) => productos.find((p) => p.id === id))

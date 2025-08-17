@@ -148,11 +148,11 @@ const _productos: Producto[] = [
   { id: 77, codigo: "077", nombre: "Gyozas pollo", descripcion: "5 unidades", valor: 4800, imagen: "/images/Gyozas.png", categoria: "Para picar" },
   { id: 78, codigo: "078", nombre: "Gyozas cerdo", descripcion: "5 unidades", valor: 4800, imagen: "/images/Gyozas.png", categoria: "Para picar" },
   { id: 79, codigo: "079", nombre: "Gyozas camaron", descripcion: "5 unidades", valor: 4900, imagen: "/images/Gyozas.png", categoria: "Para picar" },
-  { id: 200, codigo: "200", nombre: "Promo uno (18 piezas)", descripcion: "Ebi cheese roll - California teri cheese", valor: 10900, imagen: "/images/promo uno.png", categoria: "Promociones" },
+  { id: 200, codigo: "200", nombre: "Promo uno (18 piezas)", descripcion: "Ebi cheese roll en palta - California teri cheese", valor: 10900, imagen: "/images/promo uno.png", categoria: "Promociones" },
   { id: 201, codigo: "201", nombre: "Promo HOT (36 piezas)", descripcion: "Teri tori - Ebi cheese panko - Funji cheese panko- Kani cheese panko", valor: 18900, imagen: "/images/promo hot.png", categoria: "Promociones" },
-  { id: 202, codigo: "202", nombre: "Promo mixta (36 piezas)", descripcion: "California kani cheese en sesamo - Ebi cheese roll - Ebi cheese panko - Teri Tori", valor: 18900, imagen: "/images/promo 36piezas.png", categoria: "Promociones" },
-  { id: 203, codigo: "203", nombre: "Promo mixta (54 piezas)", descripcion: "California teri cheese en sesamo - California sake cheese en ciboullete - Ebi cheese roll - Fuji cheese panko - Ebi cheese panko - Teri Tori", valor: 27900, imagen: "/images/promo 54piezas.png", categoria: "Promociones" },
-  { id: 204, codigo: "204", nombre: "Promo vip (72 piezas)", descripcion: "Ebi cheese roll - Teri roll en queso - Sake cheese roll en salmon - California ebi cheese en sesamo - Mechada panko - Sake cheese panko - Teri tori - Ebi cheese Panko", valor: 38900, imagen: "/images/promo vip.png", categoria: "Promociones" },
+  { id: 202, codigo: "202", nombre: "Promo mixta (36 piezas)", descripcion: "California kani cheese en sesamo - Ebi cheese roll en palta - Ebi cheese panko - Teri Tori", valor: 18900, imagen: "/images/promo 36piezas.png", categoria: "Promociones" },
+  { id: 203, codigo: "203", nombre: "Promo mixta (54 piezas)", descripcion: "California teri cheese en sesamo - California sake cheese en ciboullete - Ebi cheese roll en palta - Fuji cheese panko - Ebi cheese panko - Teri Tori", valor: 27900, imagen: "/images/promo 54piezas.png", categoria: "Promociones" },
+  { id: 204, codigo: "204", nombre: "Promo vip (72 piezas)", descripcion: "Ebi cheese roll en palta - Teri roll en queso - Sake cheese roll en salmon - California ebi cheese en sesamo - Mechada panko - Sake cheese panko - Teri tori - Ebi cheese Panko", valor: 38900, imagen: "/images/promo vip.png", categoria: "Promociones" },
 
 
 

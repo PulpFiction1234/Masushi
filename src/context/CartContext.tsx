@@ -1,7 +1,14 @@
-// context/CartContext.tsx
 "use client";
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+  useState,
+} from "react";
 import type { Producto } from "@/data/productos";
 
 export type CartOpcion = { id: string; label: string };
@@ -9,17 +16,35 @@ export type CartOpcion = { id: string; label: string };
 export type CartItem = {
   cartKey: string;   // prodId + opcionId (p.ej., "210:2pollo")
   id: number;
-  codigo?: string;   // guardar el código del producto
+  codigo?: string;
   nombre: string;
   imagen: string;
   precioUnit: number;
   cantidad: number;
-  opcion?: CartOpcion; // para mostrar "Tipo: ..."
+  opcion?: CartOpcion;
 };
+
+// === Acciones ===
+export const ADD_ITEM = "ADD_ITEM";
+export const UPDATE_QUANTITY = "UPDATE_QUANTITY";
+export const REMOVE_ITEM = "REMOVE_ITEM";
+export const CLEAR_CART = "CLEAR_CART";
+export const SET_CART = "SET_CART";
+
+export type CartAction =
+  | {
+      type: typeof ADD_ITEM;
+      payload: { prod: Producto; opcion?: CartOpcion; precioUnit: number };
+    }
+  | { type: typeof UPDATE_QUANTITY; payload: { cartKey: string; cantidad: number } }
+  | { type: typeof REMOVE_ITEM; payload: { cartKey: string } }
+  | { type: typeof CLEAR_CART }
+  | { type: typeof SET_CART; payload: CartItem[] };
 
 type CartContextType = {
   cart: CartItem[];
   total: number;
+  ready: boolean; // ← NUEVO: indica si ya hidratamos desde storage
   addToCart: (prod: Producto, opts?: { opcion?: CartOpcion; precioUnit?: number }) => void;
   updateQuantity: (cartKey: string, cantidad: number) => void;
   removeFromCart: (cartKey: string) => void;
@@ -33,13 +58,12 @@ const STORAGE_KEY = "mazushi_cart_v1";
 
 function loadCartFromStorage(): CartItem[] {
   try {
+    if (typeof window === "undefined") return [];
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    // Acepta {items: CartItem[]} o CartItem[] por compatibilidad
     const items = Array.isArray(parsed?.items) ? parsed.items : Array.isArray(parsed) ? parsed : [];
     if (!Array.isArray(items)) return [];
-    // Validación mínima
     return items.filter(
       (it) =>
         typeof it?.cartKey === "string" &&
@@ -55,18 +79,73 @@ function loadCartFromStorage(): CartItem[] {
 
 function saveCartToStorage(items: CartItem[]) {
   try {
+    if (typeof window === "undefined") return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ items, updatedAt: Date.now() }));
   } catch {
     // almacenamiento lleno o bloqueado -> ignorar
   }
 }
 
-export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [cart, setCart] = useState<CartItem[]>([]);
+export function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
+  switch (action.type) {
+    case ADD_ITEM: {
+      const { prod, opcion, precioUnit } = action.payload;
+      const cartKey = `${prod.id}:${opcion?.id ?? "base"}`;
+      const idx = state.findIndex((it) => it.cartKey === cartKey);
+      if (idx >= 0) {
+        const copy = [...state];
+        copy[idx] = {
+          ...copy[idx],
+          cantidad: copy[idx].cantidad + 1,
+          precioUnit,
+        };
+        return copy;
+      }
+      return [
+        ...state,
+        {
+          cartKey,
+          id: prod.id,
+          codigo: prod.codigo,
+          nombre: prod.nombre,
+          imagen: prod.imagen,
+          precioUnit,
+          cantidad: 1,
+          opcion,
+        },
+      ];
+    }
+    case UPDATE_QUANTITY: {
+      const { cartKey, cantidad } = action.payload;
+      return state
+        .map((it) =>
+          it.cartKey === cartKey ? { ...it, cantidad: Math.max(0, Math.floor(cantidad)) } : it
+        )
+        .filter((it) => it.cantidad > 0);
+    }
+    case REMOVE_ITEM:
+      return state.filter((it) => it.cartKey !== action.payload.cartKey);
+    case CLEAR_CART:
+      return [];
+    case SET_CART:
+      return action.payload;
+    default:
+      return state;
+  }
+}
 
-  // Cargar carrito al montar
+export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // ⚠️ Inicializamos SIEMPRE vacío para que SSR y primer render del cliente coincidan
+  const [cart, dispatch] = useReducer(cartReducer, []);
+  const [ready, setReady] = useState(false);
+
+  // Hidratar desde localStorage **después** del mount
   useEffect(() => {
-    setCart(loadCartFromStorage());
+    const items = loadCartFromStorage();
+    if (items.length) {
+      dispatch({ type: SET_CART, payload: items });
+    }
+    setReady(true);
   }, []);
 
   // Guardar en storage cuando cambie
@@ -81,7 +160,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const parsed = JSON.parse(e.newValue);
         const items = Array.isArray(parsed?.items) ? parsed.items : [];
-        setCart(items);
+        dispatch({ type: SET_CART, payload: items });
       } catch {}
     };
     window.addEventListener("storage", onStorage);
@@ -93,54 +172,37 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [cart]
   );
 
-  const addToCart: CartContextType["addToCart"] = (prod, opts) => {
-    const precioUnit = typeof opts?.precioUnit === "number" ? opts.precioUnit : prod.valor;
-    const opcion = opts?.opcion;
-    const cartKey = `${prod.id}:${opcion?.id ?? "base"}`;
+  const addToCart = useCallback<CartContextType["addToCart"]>(
+    (prod, opts) => {
+      const precioUnit = typeof opts?.precioUnit === "number" ? opts.precioUnit : prod.valor;
+      const opcion = opts?.opcion;
+      dispatch({ type: ADD_ITEM, payload: { prod, opcion, precioUnit } });
+    },
+    []
+  );
 
-    setCart((prev) => {
-      const idx = prev.findIndex((it) => it.cartKey === cartKey);
-      if (idx >= 0) {
-        const copy = [...prev];
-        // suma cantidad y (opcional) actualiza precioUnit por si cambió
-        copy[idx] = { ...copy[idx], cantidad: copy[idx].cantidad + 1, precioUnit };
-        return copy;
-      }
-      return [
-        ...prev,
-        {
-          cartKey,
-          id: prod.id,
-          codigo: prod.codigo,
-          nombre: prod.nombre,
-          imagen: prod.imagen,
-          precioUnit,
-          cantidad: 1,
-          opcion,
-        },
-      ];
-    });
-  };
+  const updateQuantity = useCallback<CartContextType["updateQuantity"]>(
+    (cartKey, cantidad) => {
+      dispatch({ type: UPDATE_QUANTITY, payload: { cartKey, cantidad } });
+    },
+    []
+  );
 
-  const updateQuantity: CartContextType["updateQuantity"] = (cartKey, cantidad) => {
-    setCart((prev) =>
-      prev
-        .map((it) =>
-          it.cartKey === cartKey ? { ...it, cantidad: Math.max(0, Math.floor(cantidad)) } : it
-        )
-        .filter((it) => it.cantidad > 0)
-    );
-  };
+  const removeFromCart = useCallback<CartContextType["removeFromCart"]>(
+    (cartKey) => {
+      dispatch({ type: REMOVE_ITEM, payload: { cartKey } });
+    },
+    []
+  );
 
-  const removeFromCart: CartContextType["removeFromCart"] = (cartKey) => {
-    setCart((prev) => prev.filter((it) => it.cartKey !== cartKey));
-  };
-
-  const clearCart: CartContextType["clearCart"] = () => setCart([]);
+  const clearCart = useCallback<CartContextType["clearCart"]>(
+    () => dispatch({ type: CLEAR_CART }),
+    []
+  );
 
   return (
     <CartContext.Provider
-      value={{ cart, total, addToCart, updateQuantity, removeFromCart, clearCart }}
+      value={{ cart, total, ready, addToCart, updateQuantity, removeFromCart, clearCart }}
     >
       {children}
     </CartContext.Provider>

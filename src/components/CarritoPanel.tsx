@@ -1,9 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router"; // ← usa pages router aquí
 import { formatCLP } from "@/utils/format";
 
 interface Props {
@@ -12,8 +12,19 @@ interface Props {
 }
 
 const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
-  const { cart, total, removeFromCart, updateQuantity, clearCart } = useCart();
+  const { cart, total, removeFromCart, updateQuantity, clearCart, ready } = useCart();
   const router = useRouter();
+
+  // Usamos una vista "segura" para el primer render: mientras no esté listo el provider,
+  // mostramos carrito vacío para coincidir con el SSR.
+  const safeCart = ready ? cart : [];
+  const hasItems = safeCart.length > 0;
+
+  // Evita diferencias de formateo del total antes de estar "ready"
+  const safeTotal = useMemo(
+    () => (ready ? total : 0),
+    [ready, total]
+  );
 
   const handlePedido = () => {
     onClose();
@@ -31,7 +42,7 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        {/* HEADER */}
+        {/* HEADER (siempre igual) */}
         <div className="flex justify-between items-center p-4 border-b border-gray-700 flex-shrink-0">
           <h2 className="text-xl font-bold">Carrito</h2>
           <button onClick={onClose} className="text-gray-300 hover:text-gray-100">
@@ -39,12 +50,10 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
           </button>
         </div>
 
-        {/* LISTA CON SCROLL */}
+        {/* LISTA CON SCROLL (contenedor estable) */}
         <div className="flex-1 overflow-y-auto p-4">
-          {cart.length === 0 ? (
-            <p className="text-gray-100">Tu carrito está vacío</p>
-          ) : (
-            cart.map((item) => (
+          {hasItems ? (
+            safeCart.map((item) => (
               <div key={item.cartKey} className="flex items-center justify-between mb-3">
                 <Image
                   src={item.imagen}
@@ -55,7 +64,6 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
                 />
                 <div className="flex-1 ml-3">
                   <p className="font-semibold">{item.nombre}</p>
-                  {/* Muestra el tipo elegido si existe */}
                   {item.opcion?.label && (
                     <p className="text-xs text-gray-400">Tipo: {item.opcion.label}</p>
                   )}
@@ -86,13 +94,17 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
                 </div>
               </div>
             ))
+          ) : (
+            <p className="text-gray-100">Tu carrito está vacío</p>
           )}
         </div>
 
-        {/* FOOTER FIJO */}
-        {cart.length > 0 && (
+        {/* FOOTER FIJO (aparece solo si hay items; es ok post-hidratación) */}
+        {hasItems && (
           <div className="p-4 border-t border-gray-700 space-y-2 bg-gray-900 flex-shrink-0">
-            <p className="font-bold">Total: {formatCLP(total)}</p>
+            <p className="font-bold">
+              Total: <span suppressHydrationWarning>{formatCLP(safeTotal)}</span>
+            </p>
             <button
               onClick={handlePedido}
               className="bg-green-500 text-white w-full py-2 rounded hover:bg-green-600"

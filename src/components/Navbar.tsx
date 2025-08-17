@@ -1,19 +1,24 @@
-// src/components/Navbar.tsx
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { RiShoppingBag4Fill } from "react-icons/ri";
 import { useRouter } from "next/router";
 
 const Navbar: React.FC = () => {
   const { cart } = useCart();
+
+  // ← Flag de montaje: evita diferir del SSR en el primer render
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const totalItems = cart.reduce((sum, item) => sum + item.cantidad, 0);
+  const safeCount = mounted ? totalItems : 0;
+
   const router = useRouter();
 
   const openCart = () => {
-    // Dispara el evento que escucha _app.tsx
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("open-cart"));
     }
@@ -45,12 +50,13 @@ const Navbar: React.FC = () => {
           <button
             onClick={openCart}
             className="relative inline-flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/40"
-            aria-label={`Abrir carrito${totalItems ? `, ${totalItems} items` : ""}`}
+            aria-label={safeCount ? `Abrir carrito, ${safeCount} items` : "Abrir carrito"}
+            suppressHydrationWarning
           >
             <RiShoppingBag4Fill className="text-2xl" />
-            {totalItems > 0 && (
+            {mounted && safeCount > 0 && (
               <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1.5 text-[11px] leading-[20px] text-white bg-red-500 rounded-full text-center font-bold">
-                {totalItems}
+                {safeCount}
               </span>
             )}
           </button>

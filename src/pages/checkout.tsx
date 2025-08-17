@@ -1,6 +1,6 @@
 "use client";
-import { useMemo, useState } from "react";
-import AddressSearch from "../components/AddressSearch";
+import { useMemo, useReducer } from "react";
+import dynamic from "next/dynamic";
 import { useCart } from "@/context/CartContext";
 import Navbar from "@/components/Navbar";
 
@@ -28,124 +28,64 @@ const polygonCoords: [number, number][] = [
   [-70.54896896768896, -33.55297430982432],
 ];
 
-// PRECIOS
-const PRECIO_SOYA_EXTRA = 400;
-const PRECIO_TERIYAKI_EXTRA = 1000;
-const PRECIO_ACEVICHADA = 1200;
-const PRECIO_MARACUYA = 1100;
-const PRECIO_JENGIBRE_EXTRA = 500;
-const PRECIO_WASABI_EXTRA = 400;
-const COSTO_DELIVERY = 1500;
+import {
+  fmt,
+  toShortCLAddress,
+  REGEX_NUMERO_CALLE,
+  isValidChileanMobile,
+  paymentLabel,
+  CartItemLike,
+  priceOf,
+  codePartOf,
+  nameWithTipo,
+  splitFreeEvenly,
+  checkoutReducer,
+  initialCheckoutState,
+  PRECIO_SOYA_EXTRA,
+  PRECIO_TERIYAKI_EXTRA,
+  PRECIO_ACEVICHADA,
+  PRECIO_MARACUYA,
+  PRECIO_JENGIBRE_EXTRA,
+  PRECIO_WASABI_EXTRA,
+  COSTO_DELIVERY,
+} from "@/utils/checkout";
+import SummaryPanel from "@/components/checkout/SummaryPanel";
+import PaymentSelector from "@/components/checkout/PaymentSelector";
 
-// Helpers
-const nfCLP = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
-const fmt = (n: number) => nfCLP.format(n);
-
-// Dirección corta “Calle 1234, Comuna”
-const toShortCLAddress = (addr: string) => {
-  const parts = addr.split(",").map(s => s.trim()).filter(Boolean);
-  return parts.length >= 2 ? `${parts[0]}, ${parts[1]}` : addr.trim();
-};
-
-// Regex número de calle Chile
-const REGEX_NUMERO_CALLE = /(?:^|\s)(?:N°|No\.?|#)?\s*\d{1,5}[A-Za-z]?(?:-\d{1,4})?(?=\s|,|$)/;
-
-// Teléfono Chile
-const normalizePhone = (raw: string) => raw.replace(/\D+/g, "");
-const isValidChileanMobile = (raw: string) => {
-  const compact = raw.replace(/\s+/g, "");
-  const digits = normalizePhone(raw);
-  return /^(\+?56)?9\d{8}$/.test(compact) || /^569\d{8}$/.test(digits) || /^9\d{8}$/.test(digits);
-};
-
-// Nuevo: tipo para método de pago (en local)
-type PaymentMethod = "" | "efectivo" | "Tarjeta" | "transferencia";
-const paymentLabel = (pm: PaymentMethod) =>
-  pm === "efectivo" ? "Efectivo" :
-  pm === "Tarjeta" ? "Tarjeta" :
-  pm === "transferencia" ? "Transferencia" : "";
-
-// ====== Fallbacks para compatibilidad con carritos “legacy” ======
-type CartItemLike = {
-  cartKey?: string;
-  id: number;
-  nombre: string;
-  imagen: string;
-  cantidad: number;
-  precioUnit?: number;        // NUEVO
-  opcion?: { id: string; label: string }; // NUEVO
-  // legacy:
-  codigo?: string;
-  valor?: number;
-};
-
-const priceOf = (item: CartItemLike) =>
-  typeof item.precioUnit === "number" ? item.precioUnit :
-  typeof item.valor === "number" ? item.valor : 0;
-
-const keyOf = (item: CartItemLike) =>
-  item.cartKey ?? `${item.id}:${item.opcion?.id ?? "base"}`;
-
-const codePartOf = (item: CartItemLike) =>
-  item.codigo ? `${item.codigo} | ` : "";
-
-const nameWithTipo = (item: CartItemLike) =>
-  item.opcion?.label ? `${item.nombre} — ${item.opcion.label}` : item.nombre;
+const AddressSearch = dynamic(() => import("../components/AddressSearch"), {
+  ssr: false,
+});
 
 export default function Checkout() {
   const { cart } = useCart();
-  // NOTA: calculamos el subtotal desde el carrito para soportar ítems legacy
+  const [state, dispatch] = useReducer(checkoutReducer, initialCheckoutState);
+  const {
+    name,
+    lastName,
+    phone,
+    deliveryType,
+    address,
+    coords,
+    soya,
+    teriyaki,
+    acevichada,
+    maracuya,
+    palitos,
+    jengibre,
+    wasabi,
+    extraJengibre,
+    extraWasabi,
+    observacion,
+    paymentMethod,
+  } = state;
+
   const subtotalProductos = useMemo(
     () => cart.reduce((acc, it) => acc + priceOf(it as CartItemLike) * (it as CartItemLike).cantidad, 0),
     [cart]
   );
 
-  const [name, setName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [deliveryType, setDeliveryType] = useState<"retiro" | "delivery">("retiro");
-  const [address, setAddress] = useState("");
-  const [coords, setCoords] = useState<[number, number] | null>(null);
-
-  const [soya, setSoya] = useState<number | "">("");
-  const [teriyaki, setTeriyaki] = useState<number | "">("");
-  const [acevichada, setAcevichada] = useState<number | "">("");
-  const [maracuya, setMaracuya] = useState<number | "">("");
-  const [palitos, setPalitos] = useState<number | "">("");
-
-  // Base (sin costo) y extras pagados:
-  const [jengibre, setJengibre] = useState(false);
-  const [wasabi, setWasabi] = useState(false);
-  const [extraJengibre, setExtraJengibre] = useState<number | "">("");
-  const [extraWasabi, setExtraWasabi] = useState<number | "">("");
-
-  const [observacion, setObservacion] = useState("");
-
-  // Nuevo: método de pago en local
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("");
-
-  // Polígono zona
   const zonaPolygon = useMemo(() => turfPolygon([[...polygonCoords, polygonCoords[0]]]), []);
 
-  // Reparto gratis equitativo Soya/Teriyaki
-  function splitFreeEvenly(s: number, t: number, g: number) {
-    if (g <= 0 || s + t === 0) return { freeSoya: 0, freeTeri: 0 };
-    const base = Math.floor(g / 2);
-    let freeSoya = Math.min(s, base);
-    let freeTeri = Math.min(t, base);
-    let left = g - freeSoya - freeTeri;
-    while (left > 0) {
-      const needS = s - freeSoya;
-      const needT = t - freeTeri;
-      if (needS >= needT && needS > 0) freeSoya++;
-      else if (needT > 0) freeTeri++;
-      else break;
-      left--;
-    }
-    return { freeSoya, freeTeri };
-  }
-
-  // Totales
   const {
     totalProductos,
     freeOnSoya,
@@ -159,7 +99,7 @@ export default function Checkout() {
     deliveryFee,
     totalFinal,
   } = useMemo(() => {
-    const prod = subtotalProductos; // robusto para legacy y nuevo carrito␊
+    const prod = subtotalProductos;
     const gratis = cart.reduce((sum, item: CartItemLike) => sum + item.cantidad, 0);
     const soyaCount = Number(soya || 0);
     const teriCount = Number(teriyaki || 0);
@@ -209,7 +149,6 @@ export default function Checkout() {
       if (!inside) { alert("Lo sentimos, tu dirección está fuera de la zona de reparto."); return; }
     }
 
-    // Texto de productos para WhatsApp (incluye tipo y soporta legacy)
     const productosTexto = (cart as unknown as CartItemLike[])
       .map((item) => {
         const lineaNombre = `${codePartOf(item)}${nameWithTipo(item)}`;
@@ -252,7 +191,6 @@ export default function Checkout() {
 
   // ====== UI oscuro ======
   const inputBase = "w-full rounded-xl border border-white/10 bg-neutral-800/80 px-3 py-2 text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent";
-  const smallInput = "border border-white/10 bg-neutral-800/80 rounded-xl w-24 px-2 py-1 text-center text-sm text-neutral-100 focus:outline-none focus:ring-2 focus:ring-green-500";
   const card = "border border-white/10 rounded-2xl bg-neutral-900/70 shadow-xl";
 
   return (
@@ -267,91 +205,14 @@ export default function Checkout() {
           <div className="flex justify-center">
             <form onSubmit={handleSubmit} className={`${card} w-full max-w-2xl p-5 space-y-5`}>
               {cart.length > 0 && (
-                <div className={`${card} p-4 bg-neutral-900`}>
-                  <h3 className="font-bold mb-3 text-neutral-50">Tu carrito</h3>
-                  <div className="space-y-1">
-                    {(cart as unknown as CartItemLike[]).map((item) => (
-                      <div key={keyOf(item)} className="text-sm text-neutral-200 flex items-center justify-between">
-                        <span>
-                          {nameWithTipo(item)}{" "}
-                          <span className="text-neutral-400">(x{item.cantidad})</span>
-                        </span>
-                        <span className="font-mono">{fmt(priceOf(item) * item.cantidad)}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-3 border-t border-white/10 pt-3 flex items-center justify-between">
-                    <p className="text-sm text-neutral-300">Subtotal productos</p>
-                    <p className="font-semibold">{fmt(totalProductos)}</p>
-                  </div>
-
-                  <p className="text-xs text-neutral-400 mt-3">
-                    Incluye <span className="font-medium text-neutral-200">1 salsa (soya o teriyaki) por producto</span>. Extras: Soya {fmt(PRECIO_SOYA_EXTRA)}, Teriyaki {fmt(PRECIO_TERIYAKI_EXTRA)}.
-                  </p>
-
-                  <div className="mt-3 grid grid-cols-2 gap-3">
-                    <div>
-                      <label htmlFor="soya" className="block text-sm font-medium text-neutral-200 mb-1">Soya</label>
-                      <input id="soya" type="number" min={0} value={soya} onChange={(e) => setSoya(e.target.value === "" ? "" : Number(e.target.value))} className={smallInput} />
-                    </div>
-                    <div>
-                      <label htmlFor="teriyaki" className="block text-sm font-medium text-neutral-200 mb-1">Teriyaki</label>
-                      <input id="teriyaki" type="number" min={0} value={teriyaki} onChange={(e) => setTeriyaki(e.target.value === "" ? "" : Number(e.target.value))} className={smallInput} />
-                    </div>
-                    <div>
-                      <label htmlFor="acevichada" className="block text-sm font-medium text-neutral-200 mb-1">Acevichada ({fmt(PRECIO_ACEVICHADA)})</label>
-                      <input id="acevichada" type="number" min={0} value={acevichada} onChange={(e) => setAcevichada(e.target.value === "" ? "" : Number(e.target.value))} className={smallInput} />
-                    </div>
-                    <div>
-                      <label htmlFor="maracuya" className="block text-sm font-medium text-neutral-200 mb-1">Maracuyá ({fmt(PRECIO_MARACUYA)})</label>
-                      <input id="maracuya" type="number" min={0} value={maracuya} onChange={(e) => setMaracuya(e.target.value === "" ? "" : Number(e.target.value))} className={smallInput} />
-                    </div>
-                    <div>
-                      <label htmlFor="palitos" className="block text-sm font-medium text-neutral-200 mb-1">Palitos</label>
-                      <input id="palitos" type="number" min={0} value={palitos} onChange={(e) => setPalitos(e.target.value === "" ? "" : Number(e.target.value))} className={smallInput} />
-                    </div>
-                  </div>
-
-                  {/* Recuadro Jengibre / Wasabi */}
-                  <div className="mt-4 rounded-xl border border-white/10 p-3 bg-neutral-900/60">
-                    <h4 className="font-semibold mb-2 text-neutral-50">Jengibre y Wasabi</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="rounded-lg border border-white/10 p-3 bg-neutral-900/60">
-                        <label className="flex items-center gap-2 text-sm text-neutral-200 mb-2">
-                          <input type="checkbox" checked={jengibre} onChange={(e) => setJengibre(e.target.checked)} />
-                          Jengibre (1 sin costo)
-                        </label>
-                        <div className="flex items-center gap-2">
-                          <label htmlFor="extra-jengibre" className="text-sm text-neutral-300">Extra jengibre ({fmt(PRECIO_JENGIBRE_EXTRA)} c/u)</label>
-                          <input id="extra-jengibre" type="number" min={0} value={extraJengibre} onChange={(e) => setExtraJengibre(e.target.value === "" ? "" : Number(e.target.value))} className={smallInput} />
-                        </div>
-                      </div>
-                      <div className="rounded-lg border border-white/10 p-3 bg-neutral-900/60">
-                        <label className="flex items-center gap-2 text-sm text-neutral-200 mb-2">
-                          <input type="checkbox" checked={wasabi} onChange={(e) => setWasabi(e.target.checked)} />
-                          Wasabi (1 sin costo)
-                        </label>
-                        <div className="flex items-center gap-2">
-                          <label htmlFor="extra-wasabi" className="text-sm text-neutral-300">Extra wasabi ({fmt(PRECIO_WASABI_EXTRA)} c/u)</label>
-                          <input id="extra-wasabi" type="number" min={0} value={extraWasabi} onChange={(e) => setExtraWasabi(e.target.value === "" ? "" : Number(e.target.value))} className={smallInput} />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-3">
-                      <label htmlFor="obs" className="block text-sm font-medium text-neutral-200 mb-1">Observaciones</label>
-                      <textarea id="obs" rows={2} className={`${inputBase} resize-none`} placeholder="Ej: sin cebollín, sin nori, etc." value={observacion} onChange={(e) => setObservacion(e.target.value)} />
-                      <div className="mt-2 text-xs bg-yellow-500/10 border border-yellow-500/30 text-yellow-200 rounded p-2">
-                        Todo cambio puede llevar un valor extra dependiendo del requerimiento.
-                      </div>
-                  </div>
-                  {deliveryType === "delivery" && (
-                    <div className="mt-3 flex items-center justify-between text-sm">
-                      <span className="text-neutral-300">Delivery</span>
-                      <span className="font-semibold">{fmt(deliveryFee)}</span>
-                    </div>
-                  )}
-                </div>
+                <SummaryPanel
+                  cart={cart as unknown as CartItemLike[]}
+                  state={state}
+                  dispatch={dispatch}
+                  subtotalProductos={totalProductos}
+                  deliveryType={deliveryType}
+                  deliveryFee={deliveryFee}
+                />
               )}
 
               <div className="flex items-center justify-between border-t border-white/10 pt-4">
@@ -362,17 +223,40 @@ export default function Checkout() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="name" className="block font-medium mb-1 text-neutral-200">Nombre</label>
-                  <input id="name" type="text" className={inputBase} value={name} onChange={(e) => setName(e.target.value)} required />
+                  <input
+                    id="name"
+                    type="text"
+                    className={inputBase}
+                    value={name}
+                    onChange={(e) => dispatch({ type: "SET_FIELD", field: "name", value: e.target.value })}
+                    required
+                  />
                 </div>
                 <div>
                   <label htmlFor="lastname" className="block font-medium mb-1 text-neutral-200">Apellido</label>
-                  <input id="lastname" type="text" className={inputBase} value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+                  <input
+                    id="lastname"
+                    type="text"
+                    className={inputBase}
+                    value={lastName}
+                    onChange={(e) => dispatch({ type: "SET_FIELD", field: "lastName", value: e.target.value })}
+                    required
+                  />
                 </div>
               </div>
 
               <div>
                 <label htmlFor="phone" className="block font-medium mb-1 text-neutral-200">Teléfono (Chile)</label>
-                <input id="phone" type="tel" inputMode="numeric" className={inputBase} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+56 9 1234 5678" required />
+                <input
+                  id="phone"
+                  type="tel"
+                  inputMode="numeric"
+                  className={inputBase}
+                  value={phone}
+                  onChange={(e) => dispatch({ type: "SET_FIELD", field: "phone", value: e.target.value })}
+                  placeholder="+56 9 1234 5678"
+                  required
+                />
                 {!isValidChileanMobile(phone) && phone.trim() !== "" && (
                   <p className="text-xs text-red-300 mt-1">Ingresa un celular chileno válido (+56 9 ########).</p>
                 )}
@@ -380,29 +264,18 @@ export default function Checkout() {
 
               <div>
                 <label htmlFor="tipo" className="block font-medium mb-1 text-neutral-200">Tipo de entrega</label>
-                <select id="tipo" className={inputBase} value={deliveryType} onChange={(e) => setDeliveryType(e.target.value as "retiro" | "delivery")}>
+                <select
+                  id="tipo"
+                  className={inputBase}
+                  value={deliveryType}
+                  onChange={(e) => dispatch({ type: "SET_FIELD", field: "deliveryType", value: e.target.value as "retiro" | "delivery" })}
+                >
                   <option value="retiro">Retiro en tienda</option>
                   <option value="delivery">Delivery</option>
                 </select>
               </div>
 
-              {/* NUEVO: Método de pago en local */}
-              <div>
-                <label htmlFor="paymethod" className="block font-medium mb-1 text-neutral-200">Método de pago (en local)</label>
-                <select
-                  id="paymethod"
-                  className={inputBase}
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-                  required
-                >
-                  <option value="">Selecciona una opción…</option>
-                  <option value="efectivo">Efectivo</option>
-                  <option value="tarjeta">Crédito</option>
-                  <option value="transferencia">Transferencia</option>
-                </select>
-                <p className="text-xs text-neutral-400 mt-1">Solo informativo </p>
-              </div>
+              <PaymentSelector paymentMethod={paymentMethod} dispatch={dispatch} />
 
               {deliveryType === "delivery" && (
                 <div>
@@ -411,15 +284,13 @@ export default function Checkout() {
                     <AddressSearch
                       polygonCoords={polygonCoords}
                       onValidAddress={(addr, crds) => {
-                        setAddress(addr);
-                        setCoords(crds);
+                        dispatch({ type: "SET_FIELD", field: "address", value: addr });
+                        dispatch({ type: "SET_FIELD", field: "coords", value: crds });
                       }}
                     />
                   </div>
                 </div>
               )}
-
-
 
               <button
                 type="submit"

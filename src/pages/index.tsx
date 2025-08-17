@@ -17,7 +17,7 @@ export default function Home() {
 
   return (
     <div className="bg-gray-950 text-white">
-      {/* Navbar (si tu botón del carrito está aquí, añade data-cart-anchor allí) */}
+      {/* Navbar */}
       <Navbar />
 
       {/* Panel del carrito */}
@@ -28,7 +28,7 @@ export default function Home() {
 
       {/* Top Rolls */}
       <section className="py-12 bg-gray-900 text-gray-100">
-        <div className="max-w-6xl mx-auto px-4">
+        <div className="w-full max-w-none px-10">
           <h2 className="text-2xl font-bold text-center mb-8">Top Rolls</h2>
 
           {(() => {
@@ -39,9 +39,18 @@ export default function Home() {
               .filter((p): p is Producto => Boolean(p));
 
             return (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+              <div
+                className="
+                  grid gap-4 justify-center items-stretch
+                  [grid-template-columns:repeat(auto-fit,minmax(240px,300px))]
+                  sm:[grid-template-columns:repeat(auto-fit,minmax(260px,320px))]
+                "
+              >
                 {topRolls.map((p) => (
-                  <div key={p.id} className="bg-gray-800 rounded-lg overflow-hidden shadow">
+                  <div
+                    key={p.id}
+                    className="bg-gray-800 rounded-lg overflow-hidden shadow flex flex-col h-full"
+                  >
                     <Image
                       src={p.imagen}
                       alt={p.nombre}
@@ -49,16 +58,15 @@ export default function Home() {
                       height={200}
                       className="w-full h-50 object-cover"
                     />
-                    <div className="p-3">
+                    <div className="p-3 flex flex-col flex-1">
                       <h3 className="font-semibold text-sm">{p.nombre}</h3>
                       <p className="text-xs text-gray-300 line-clamp-2">{p.descripcion}</p>
 
-                      <div className="mt-2 flex items-center justify-between">
+                      <div className="mt-auto pt-2 flex items-center justify-between">
                         <span className="font-bold">{formatCLP(p.valor)}</span>
                         <button
                           onClick={(e) => {
                             addToCart(p);
-                            // dispara la animación hacia el ancla del carrito
                             animateToCart(e.nativeEvent as unknown as MouseEvent);
                           }}
                           className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs"
@@ -95,21 +103,30 @@ export default function Home() {
               .filter((p): p is Producto => Boolean(p));
 
             return (
-              <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
+              <div
+                className="
+                  grid gap-4 justify-center items-stretch
+                  [grid-template-columns:repeat(auto-fit,minmax(240px,300px))]
+                  md:[grid-template-columns:repeat(auto-fit,minmax(260px,320px))]
+                "
+              >
                 {topRolls.map((p) => (
-                  <div key={p.id} className="bg-gray-800 rounded-lg overflow-hidden shadow">
+                  <div
+                    key={p.id}
+                    className="bg-gray-800 rounded-lg overflow-hidden shadow flex flex-col h-full"
+                  >
                     <Image
                       src={p.imagen}
                       alt={p.nombre}
                       width={500}
                       height={300}
-                      className="w-full h-50 object-cover"
+                      className="w-full h-62 object-cover"
                     />
-                    <div className="p-3">
+                    <div className="p-3 flex flex-col flex-1">
                       <h3 className="font-semibold text-sm">{p.nombre}</h3>
                       <p className="text-xs text-gray-300 line-clamp-2">{p.descripcion}</p>
 
-                      <div className="mt-2 flex items-center justify-between">
+                      <div className="mt-auto pt-2 flex items-center justify-between">
                         <span className="font-bold">{formatCLP(p.valor)}</span>
                         <button
                           onClick={(e) => {

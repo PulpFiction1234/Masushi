@@ -28,7 +28,7 @@ export default function LocalPage() {
         {/* HERO */}
         <section
           className="relative h-[300px] sm:h-[380px] bg-cover bg-center flex items-center justify-center"
-          style={{ backgroundImage: "url('/images/hero-local.jpg')" }} // ← pon tu foto
+          style={{ backgroundImage: "url('/images/hero-local.webp')" }} // ← pon tu foto
         >
           <div className="absolute inset-0 bg-black/50" />
           <div className="relative z-10 text-center px-4">
@@ -119,12 +119,12 @@ export default function LocalPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {/* Reemplaza las imágenes por las tuyas */}
             <img
-              src="/images/puente-interior.jpg"
+              src="/images/puente-interior.webp"
               alt="Interior del local "
               className="w-full h-40 sm:h-48 object-cover rounded-xl border border-gray-800"
             />
             <img
-              src="/images/puente-exterior.jpg"
+              src="/images/puente-exterior.webp"
               alt="Exterior del local "
               className="w-full h-40 sm:h-48 object-cover rounded-xl border border-gray-800"
             />    

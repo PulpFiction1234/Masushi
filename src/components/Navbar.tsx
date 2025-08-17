@@ -31,7 +31,7 @@ const Navbar: React.FC = () => {
       {/* Logo */}
       <Link href="/" aria-label="Ir al inicio" className="flex items-center gap-2">
         <Image
-          src="/images/logo-masushi.png"
+          src="/images/logo-masushi.webp"
           alt="Masushi"
           width={240}
           height={30}

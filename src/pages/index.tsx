@@ -103,7 +103,7 @@ export default function Home() {
                       alt={p.nombre}
                       width={500}
                       height={300}
-                      className="w-full h-62 object-cover"
+                      className="w-full h-50 object-cover"
                     />
                     <div className="p-3">
                       <h3 className="font-semibold text-sm">{p.nombre}</h3>

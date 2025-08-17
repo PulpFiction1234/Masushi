@@ -57,6 +57,17 @@ export default function Home() {
                       width={500}
                       height={200}
                       className="w-full h-50 object-cover"
+                       quality={60}
+                      placeholder={
+                        typeof p.imagen === "string"
+                          ? p.blurDataUrl
+                            ? "blur"
+                            : undefined
+                          : "blur"
+                      }
+                      blurDataURL={
+                        typeof p.imagen === "string" ? p.blurDataUrl : undefined
+                      }
                     />
                     <div className="p-3 flex flex-col flex-1">
                       <h3 className="font-semibold text-sm">{p.nombre}</h3>
@@ -121,6 +132,17 @@ export default function Home() {
                       width={500}
                       height={300}
                       className="w-full h-62 object-cover"
+                         quality={60}
+                      placeholder={
+                        typeof p.imagen === "string"
+                          ? p.blurDataUrl
+                            ? "blur"
+                            : undefined
+                          : "blur"
+                      }
+                      blurDataURL={
+                        typeof p.imagen === "string" ? p.blurDataUrl : undefined
+                      }
                     />
                     <div className="p-3 flex flex-col flex-1">
                       <h3 className="font-semibold text-sm">{p.nombre}</h3>

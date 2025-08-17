@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/router"; // ← usa pages router aquí
@@ -55,12 +55,15 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
           {hasItems ? (
             safeCart.map((item) => (
               <div key={item.cartKey} className="flex items-center justify-between mb-3">
-                <Image
+                  <Image
                   src={item.imagen}
                   alt={item.nombre}
                   width={48}
                   height={48}
                   className="w-12 h-12 object-cover rounded"
+                  quality={60}
+                  placeholder={item.blurDataUrl ? "blur" : undefined}
+                  blurDataURL={item.blurDataUrl}
                 />
                 <div className="flex-1 ml-3">
                   <p className="font-semibold">{item.nombre}</p>

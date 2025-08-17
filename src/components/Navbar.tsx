@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { RiShoppingBag4Fill } from "react-icons/ri";
 import { useRouter } from "next/router";
+import logoMasushi from "@/public/images/logo-masushi.webp";
 
 const Navbar: React.FC = () => {
   const { cart } = useCart();
@@ -30,13 +31,15 @@ const Navbar: React.FC = () => {
     <nav className="bg-gray-950 shadow-md px-6 py-3 flex justify-between items-center sticky top-0 z-50 text-white">
       {/* Logo */}
       <Link href="/" aria-label="Ir al inicio" className="flex items-center gap-2">
-        <Image
-          src="/images/logo-masushi.webp"
+              <Image
+          src={logoMasushi}
           alt="Masushi"
           width={240}
           height={30}
           priority
           className="h-15 w-30"
+          placeholder="blur"
+          quality={60}
         />
       </Link>
 

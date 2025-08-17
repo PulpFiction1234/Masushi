@@ -51,6 +51,7 @@ export type CartItemLike = {
   opcion?: { id: string; label: string };
   codigo?: string;
   valor?: number;
+  blurDataUrl?: string;
 };
 
 export const priceOf = (item: CartItemLike) =>

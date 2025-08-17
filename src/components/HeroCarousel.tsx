@@ -2,20 +2,20 @@
 "use client";
 
 import Link from "next/link";
+import Image, { type StaticImageData } from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
+import hero1 from "@/public/images/hero-1.webp";
+import hero2 from "@/public/images/hero-2.webp";
+import hero3 from "@/public/images/hero-3.webp";
 
 interface HeroCarouselProps {
-  slides?: string[];
+  slides?: StaticImageData[];
   intervalMs?: number;
-  heightClass?: string; // para ajustar altura si quieres
+  heightClass?: string; // para ajustar altura si quieres␊
 }
 
 export default function HeroCarousel({
-  slides = [
-    "/images/hero-2.webp",
-    "/images/hero-1.webp",
-    "/images/hero-3.webp",
-  ],
+  slides = [hero2, hero1, hero3],
   intervalMs = 5000,
   heightClass = "h-[500px] md:h-[600px]",
 }: HeroCarouselProps) {
@@ -49,23 +49,24 @@ export default function HeroCarousel({
       aria-roledescription="carousel"
     >
       {/* Slides como fondos */}
-      <div className="absolute inset-0">
+       <div className="absolute inset-0">
         {slides.map((src, i) => (
-          <div
-            key={src}
-            className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+          <Image
+            key={src.src}
+            src={src}
+            alt=""
+            fill
+            placeholder="blur"
+            quality={60}
+            className={`object-cover transition-opacity duration-700 ease-in-out ${
               i === index ? "opacity-100" : "opacity-0"
             }`}
-            style={{
-              backgroundImage: `url('${src}')`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
             aria-hidden={i !== index}
+            priority={i === 0}
           />
         ))}
         {/* Oscurecedor para legibilidad */}
-        <div className="absolute inset-0 " />
+        <div className="absolute inset-0 bg-black/40" />
       </div>
 
       {/* Contenido centrado (lo mismo que tenías) */}

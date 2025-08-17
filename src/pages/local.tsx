@@ -2,7 +2,10 @@
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-
+import Image from "next/image";
+import heroLocalImg from "@/public/images/hero-local.webp";
+import puenteInteriorImg from "@/public/images/puente-interior.webp";
+import puenteExteriorImg from "@/public/images/puente-exterior.webp";
 
 const LOCAL = {
   nombre: "Masushi",
@@ -28,7 +31,7 @@ export default function LocalPage() {
         {/* HERO */}
         <section
           className="relative h-[300px] sm:h-[380px] bg-cover bg-center flex items-center justify-center"
-          style={{ backgroundImage: "url('/images/hero-local.webp')" }} // ← pon tu foto
+          style={{ backgroundImage: `url('${heroLocalImg.src}')` }}
         >
           <div className="absolute inset-0 bg-black/50" />
           <div className="relative z-10 text-center px-4">
@@ -118,16 +121,24 @@ export default function LocalPage() {
           <h2 className="text-2xl font-bold mb-6">Galería</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {/* Reemplaza las imágenes por las tuyas */}
-            <img
-              src="/images/puente-interior.webp"
+           <Image
+              src={puenteInteriorImg}
               alt="Interior del local "
+              width={400}
+              height={300}
               className="w-full h-40 sm:h-48 object-cover rounded-xl border border-gray-800"
+              placeholder="blur"
+              quality={60}
             />
-            <img
-              src="/images/puente-exterior.webp"
+            <Image
+              src={puenteExteriorImg}
               alt="Exterior del local "
+              width={400}
+              height={300}
               className="w-full h-40 sm:h-48 object-cover rounded-xl border border-gray-800"
-            />    
+              placeholder="blur"
+              quality={60}
+            /> 
           </div>
         </section>
       </main>

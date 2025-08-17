@@ -28,13 +28,24 @@ const ProductCard: React.FC<Props> = ({
   return (
     <div className="bg-gray-900 rounded-lg shadow p-4 flex flex-col h-full">
       <div className="relative aspect-square w-full overflow-hidden rounded bg-white">
-        <Image
+           <Image
           src={product.imagen}
           alt={product.nombre}
           fill
           sizes="(min-width:2000px) 20vw, (min-width:1024px) 25vw, (min-width:640px) 50vw, 100vw"
           className={objectFitClass}
           priority={false}
+          quality={60}
+          placeholder={
+            typeof product.imagen === "string"
+              ? product.blurDataUrl
+                ? "blur"
+                : undefined
+              : "blur"
+          }
+          blurDataURL={
+            typeof product.imagen === "string" ? product.blurDataUrl : undefined
+          }
           onLoadingComplete={(img) => {
             const ratio = img.naturalWidth / img.naturalHeight;
             const newMode: FitMode = ratio >= WIDE_THRESHOLD ? "contain" : "cover";

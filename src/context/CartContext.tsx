@@ -19,6 +19,7 @@ export type CartItem = {
   codigo?: string;
   nombre: string;
   imagen: string;
+  blurDataUrl?: string;
   precioUnit: number;
   cantidad: number;
   opcion?: CartOpcion;
@@ -101,6 +102,10 @@ export function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
         };
         return copy;
       }
+     const imagen = typeof prod.imagen === "string" ? prod.imagen : prod.imagen.src;
+      const blurDataUrl =
+        prod.blurDataUrl ??
+        (typeof prod.imagen === "object" ? prod.imagen.blurDataURL : undefined);
       return [
         ...state,
         {
@@ -108,7 +113,8 @@ export function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
           id: prod.id,
           codigo: prod.codigo,
           nombre: prod.nombre,
-          imagen: prod.imagen,
+          imagen,
+          blurDataUrl,
           precioUnit,
           cantidad: 1,
           opcion,

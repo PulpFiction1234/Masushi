@@ -12,9 +12,9 @@ interface HeroCarouselProps {
 
 export default function HeroCarousel({
   slides = [
-    "/images/hero-2.png",
-    "/images/hero-1.png",
-    "/images/hero-3.png",
+    "/images/hero-2.webp",
+    "/images/hero-1.webp",
+    "/images/hero-3.webp",
   ],
   intervalMs = 5000,
   heightClass = "h-[500px] md:h-[600px]",

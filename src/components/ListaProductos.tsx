@@ -16,26 +16,19 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
   const { addToCart } = useCart();
   const selected = categoriaSeleccionada ? normalize(categoriaSeleccionada) : "";
 
-  // Opción elegida POR producto (id -> opcionId)
   const [seleccion, setSeleccion] = useState<Record<number, string>>({});
-
-  // Modo de ajuste por producto (id -> "cover"/"contain")
   const [fitMap, setFitMap] = useState<Record<number, FitMode>>({});
 
-  // 1) Filtra sin mutar (usando coincidencia normalizada)
+  // 1) Filtra
   const productosFiltrados = useMemo(() => {
     if (!selected) return productos;
     return productos.filter((p) => normalize(p.categoria) === selected);
   }, [selected]);
 
-  // 2) Crea una copia y ordénala de forma determinista
+  // 2) Ordena estable
   const productosOrdenados = useMemo(() => {
     return [...productosFiltrados].sort((a, b) => a.id - b.id);
   }, [productosFiltrados]);
-
-  useEffect(() => {
-    // console.log("Categoria:", categoriaSeleccionada, "=>", productosOrdenados.length, "items");
-  }, [categoriaSeleccionada, productosOrdenados.length]);
 
   const onAdd = useCallback(
     (prod: Producto, selId: string, e: React.MouseEvent<HTMLButtonElement>) => {
@@ -47,8 +40,7 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
           return;
         }
       }
-
-  const precioUnit = opt?.precio ?? prod.valor;
+      const precioUnit = opt?.precio ?? prod.valor;
       addToCart(
         prod,
         { opcion: opt ? { id: opt.id, label: opt.label } : undefined, precioUnit }
@@ -58,31 +50,32 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
     [addToCart]
   );
 
-   // virtualización simple similar a react-window
+  // -------- Virtualización --------
   const COLUMN_WIDTH = 380;
   const ROW_HEIGHT = 600;
   const GAP = 16;
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState(0);
-  const [containerHeight, setContainerHeight] = useState(600);
+
+  // Medimos ancho/alto reales del contenedor con ResizeObserver
+  const [viewport, setViewport] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
-    const handleResize = () => {
-      setContainerWidth(containerRef.current?.clientWidth ?? 0);
-      if (typeof window !== "undefined") {
-        setContainerHeight(window.innerHeight - 200);
+    const el = containerRef.current;
+    if (!el) return;
+
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const cr = entry.contentRect;
+        setViewport({ width: cr.width, height: cr.height });
       }
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    });
+
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
-  const columnCount = Math.max(
-    1,
-    Math.floor((containerWidth + GAP) / (COLUMN_WIDTH + GAP))
-  );
+  const columnCount = Math.max(1, Math.floor((viewport.width + GAP) / (COLUMN_WIDTH + GAP)));
   const rowCount = Math.ceil(productosOrdenados.length / columnCount);
   const totalHeight = rowCount * (ROW_HEIGHT + GAP);
 
@@ -92,10 +85,7 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
   };
 
   const startRow = Math.floor(scrollTop / (ROW_HEIGHT + GAP));
-  const endRow = Math.min(
-    rowCount,
-    Math.ceil((scrollTop + containerHeight) / (ROW_HEIGHT + GAP))
-  );
+  const endRow = Math.min(rowCount, Math.ceil((scrollTop + viewport.height) / (ROW_HEIGHT + GAP)));
 
   const items: React.ReactNode[] = [];
   for (let row = startRow; row < endRow; row++) {
@@ -119,14 +109,10 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
           <ProductCard
             product={prod}
             selectedOptionId={seleccionActual}
-            onSelectOption={(id) =>
-              setSeleccion((prev) => ({ ...prev, [prod.id]: id }))
-            }
+            onSelectOption={(id) => setSeleccion((prev) => ({ ...prev, [prod.id]: id }))}
             fitMode={fitMap[prod.id]}
             onFitChange={(mode) =>
-              setFitMap((m) =>
-                m[prod.id] === mode ? m : { ...m, [prod.id]: mode }
-              )
+              setFitMap((m) => (m[prod.id] === mode ? m : { ...m, [prod.id]: mode }))
             }
             onAdd={(e) => onAdd(prod, seleccionActual, e)}
           />
@@ -136,21 +122,18 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
   }
 
   if (productosOrdenados.length === 0) {
-    return (
-      <div className="text-gray-400">No hay productos en esta categoría.</div>
-    );
+    return <div className="text-gray-400">No hay productos en esta categoría.</div>;
   }
 
   return (
     <div
       ref={containerRef}
       onScroll={onScroll}
-      style={{ height: containerHeight, overflowY: "auto", position: "relative" }}
-      className="w-full"
+      className="w-full h-full overflow-y-auto relative"
     >
       <div style={{ height: totalHeight, position: "relative" }}>{items}</div>
     </div>
   );
 };
 
-export default ListaProductos;    
+export default ListaProductos;

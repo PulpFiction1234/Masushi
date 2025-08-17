@@ -102,8 +102,8 @@ export default function Home() {
                       src={p.imagen}
                       alt={p.nombre}
                       width={500}
-                      height={200}
-                      className="w-full h-50 object-cover"
+                      height={300}
+                      className="w-full h-62 object-cover"
                     />
                     <div className="p-3">
                       <h3 className="font-semibold text-sm">{p.nombre}</h3>

@@ -25,6 +25,7 @@ import promoHotImg from "@/public/images/promo hot.webp";
 import promo36Img from "@/public/images/promo 36piezas.webp";
 import promo54Img from "@/public/images/promo 54piezas.webp";
 import promoVipImg from "@/public/images/promo vip.webp";
+import mechadapanko from "@/public/images/Mechada panko.png";
 
 export interface ProductoOpcion {
   id: string;      // clave estable (ej: "2pollo", "2camaron", "1y1")
@@ -157,16 +158,17 @@ const _productos: Producto[] = [
       { id: "1y1",      label: "1 de pollo y 1 de camarón" },
     ],
   },
-{ id: 58, codigo: "058", nombre: "Hosomaki queso crema", descripcion: "Queso crema/Arroz/Nori.", valor: 3500, imagen: hosomakiQuesoImg, categoria: "Hosomaki" },
-{ id: 59, codigo: "059", nombre: "Hosomaki teri", descripcion: "Pollo/Palta/Arroz/Nori.", valor: 3600, imagen: hosomakiTeriImg, categoria: "Hosomaki" },
-{ id: 60, codigo: "060", nombre: "Hosomaki sake", descripcion: "Salmon/Palta/Arroz/Nori.", valor: 3900, imagen: hosomakiSakeImg, categoria: "Hosomaki" },
-{ id: 61, codigo: "061", nombre: "Hosomaki ebi", descripcion: "Camaron/Palta/Arroz/Nori.", valor: 3900, imagen: hosomakiEbiImg, categoria: "Hosomaki" },
+{ id: 58, codigo: "058", nombre: "Hosomaki queso crema", descripcion: "Queso crema - Arroz/Nori.", valor: 3500, imagen: hosomakiQuesoImg, categoria: "Hosomaki" },
+{ id: 59, codigo: "059", nombre: "Hosomaki teri", descripcion: "Pollo - Palta - Arroz - Nori.", valor: 3600, imagen: hosomakiTeriImg, categoria: "Hosomaki" },
+{ id: 60, codigo: "060", nombre: "Hosomaki sake", descripcion: "Salmon - Palta - Arroz - Nori.", valor: 3900, imagen: hosomakiSakeImg, categoria: "Hosomaki" },
+{ id: 61, codigo: "061", nombre: "Hosomaki ebi", descripcion: "Camaron - Palta - Arroz - Nori.", valor: 3900, imagen: hosomakiEbiImg, categoria: "Hosomaki" },
+{ id: 62, codigo: "062", nombre: "Mechada panko", descripcion: "Carne mechada - Queso crema - Cebollin - En panko.", valor: 7100, imagen: mechadapanko, categoria: "Hot rolls" },
 
 { id: 65, codigo: "065", nombre: "Ceviche mixto", descripcion: "Salmon/Camaron/Pimenton/Cebolla morada/Leche de tigre/Palta.", valor: 12900, imagen: cevicheMixtoImg, categoria: "Ceviche" },
 
-{ id: 66, codigo: "066", nombre: "Nigiri sake", descripcion: "Bolita de arroz/Salmon.", valor: 3400, imagen: nigiriSakeImg, categoria: "Nigiri" },
-{ id: 67, codigo: "067", nombre: "Nigiri ebi", descripcion: "Bolita de arroz/Camaron.", valor: 3400, imagen: nigiriEbiImg, categoria: "Nigiri" },
-{ id: 68, codigo: "068", nombre: "Nigiri tako", descripcion: "Bolita de arroz/Pulpo.", valor: 3600, imagen: nigiriTakoImg, categoria: "Nigiri" },
+{ id: 66, codigo: "066", nombre: "Nigiri sake", descripcion: "Bolita de arroz - Salmon.", valor: 3400, imagen: nigiriSakeImg, categoria: "Nigiri" },
+{ id: 67, codigo: "067", nombre: "Nigiri ebi", descripcion: "Bolita de arroz - Camaron.", valor: 3400, imagen: nigiriEbiImg, categoria: "Nigiri" },
+{ id: 68, codigo: "068", nombre: "Nigiri tako", descripcion: "Bolita de arroz - Pulpo.", valor: 3600, imagen: nigiriTakoImg, categoria: "Nigiri" },
 
 { id: 73, codigo: "073", nombre: "Camaron Ecuatoriano Furay", descripcion: "5 unidades", valor: 5900, imagen: camaronFurayImg, categoria: "Para picar" },
 { id: 74, codigo: "074", nombre: "Pollo Furay", descripcion: "5 unidades", valor: 5900, imagen: polloFurayImg, categoria: "Para picar" },

@@ -5,7 +5,7 @@ import californiaTeriImg from "@/public/images/California teri.png";
 import californiaTeriCheeseImg from "@/public/images/California teri cheese.png";
 import californiaEbiImg from "@/public/images/California ebi.png";
 import CaliforniaSakeImg from "@/public/images/California sake.png";
-import CaliforniaTakoImg from "@/public/images/California tako.png";
+import CaliforniaTakoImg from "@/public/images/California tako cheese.png";
 import californiaEbiCheeseImg from "@/public/images/California ebi cheese.png";
 import CaliforniaSakeCheeseImg from "@/public/images/california sake cheesse.png";
 import MechadaPankoImg from "@/public/images/Mechada panko.png";

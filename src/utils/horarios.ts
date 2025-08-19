@@ -10,7 +10,7 @@ export const BUSINESS_TZ = "America/Santiago";
 export const HORARIO_SEMANAL: Record<DiaKey, Intervalo[]> = {
   sun: [],
   mon: [["16:30", "22:30"]],
-  tue: [["16:30", "22:30"]],
+  tue: [["13:30", "22:30"]],
   wed: [["16:30", "22:30"]],
   thu: [["16:30", "22:30"]],
   fri: [["16:30", "23:00"]],

@@ -4,8 +4,16 @@ import californiaKaniCheeseImg from "@/public/images/California kani cheese.png"
 import californiaTeriImg from "@/public/images/California teri.png";
 import californiaTeriCheeseImg from "@/public/images/California teri cheese.png";
 import californiaEbiImg from "@/public/images/California ebi.png";
+import californiaSakeImg from "@/public/images/California sake.png";
+import CaliforniaTakoImg from "@/public/images/California tako.png";
 import californiaEbiCheeseImg from "@/public/images/California ebi cheese.png";
 import californiaSakeCheeseImg from "@/public/images/california sake cheesse.png";
+import MechadaPankoImg from "@/public/images/Mechada panko.png";
+import HotatePankoImg from "@/public/images/Hotate panko.png";
+import TeriToriImg from "@/public/images/Teri tori.png";
+import TakoPankoImg from "@/public/images/Tako panko.png";
+import SakePankoImg from "@/public/images/Sake panko.png";
+import EbiPankoImg from "@/public/images/Ebi panko.png";
 import handrollImg from "@/public/images/Handroll.png";
 import promoHandrollImg from "@/public/images/Promo handroll.png";
 import hosomakiQuesoImg from "@/public/images/Hosomaki queso.png";
@@ -25,7 +33,19 @@ import promoHotImg from "@/public/images/promo hot.webp";
 import promo36Img from "@/public/images/promo 36piezas.webp";
 import promo54Img from "@/public/images/promo 54piezas.webp";
 import promoVipImg from "@/public/images/promo vip.webp";
-import mechadapanko from "@/public/images/Mechada panko.png";
+
+// Bebidas
+import arizonaMangoImg from "@/public/images/Arizona mango.png";
+import arizonaSandiaImg from "@/public/images/Arizona sandia.png";
+import arizonaUvaImg from "@/public/images/Arizona uva.png";
+import cocaColaOriginalLataImg from "@/public/images/Coca cola original lata.png";
+import cocaColaZeroLataImg from "@/public/images/Coca cola zero lata.png";
+import cocaColaOriginalBotellaImg from "@/public/images/Coca cola original 1.5.png";
+import cocaColaZeroBotellaImg from "@/public/images/Coca cola zero 1.5.png";
+import spriteLataImg from "@/public/images/Sprite lata.png";
+import spriteBotellaImg from "@/public/images/Sprite 1.5.png";
+import monsterVerdeImg from "@/public/images/Monster verde.png";
+
 
 export interface ProductoOpcion {
   id: string;      // clave estable (ej: "2pollo", "2camaron", "1y1")
@@ -158,11 +178,17 @@ const _productos: Producto[] = [
       { id: "1y1",      label: "1 de pollo y 1 de camarón" },
     ],
   },
+{ id: 49, codigo: "049", nombre: "Ebi cheese panko", descripcion: "Camaron - Queso crema - Cebollin - En panko.", valor: 6500, imagen: EbiPankoImg, categoria: "Hot rolls" },
+{ id: 50, codigo: "50", nombre: "Teri tori", descripcion: "Pollo - Queso crema - Cebollin - En panko.", valor: 6400, imagen: TeriToriImg, categoria: "Hot rolls" },
+{ id: 52, codigo: "052", nombre: "Sake cheese panko", descripcion: "Salmon - Queso crema - Cebollin - En panko.", valor: 6800, imagen: SakePankoImg, categoria: "Hot rolls" },
+{ id: 53, codigo: "053", nombre: "Tako panko", descripcion: "Pulpo - Queso crema - Cebollin - En panko.", valor: 7100, imagen: TakoPankoImg, categoria: "Hot rolls" },
+{ id: 54, codigo: "054", nombre: "Hotate panko", descripcion: "Ostion furay - Queso crema - Cebollin - En panko.", valor: 7100, imagen: HotatePankoImg, categoria: "Hot rolls" },
+{ id: 56, codigo: "056", nombre: "Mechada panko", descripcion: "Carne mechada - Queso crema - Cebollin - En panko.", valor: 7100, imagen: MechadaPankoImg, categoria: "Hot rolls" },  
 { id: 58, codigo: "058", nombre: "Hosomaki queso crema", descripcion: "Queso crema - Arroz/Nori.", valor: 3500, imagen: hosomakiQuesoImg, categoria: "Hosomaki" },
 { id: 59, codigo: "059", nombre: "Hosomaki teri", descripcion: "Pollo - Palta - Arroz - Nori.", valor: 3600, imagen: hosomakiTeriImg, categoria: "Hosomaki" },
 { id: 60, codigo: "060", nombre: "Hosomaki sake", descripcion: "Salmon - Palta - Arroz - Nori.", valor: 3900, imagen: hosomakiSakeImg, categoria: "Hosomaki" },
 { id: 61, codigo: "061", nombre: "Hosomaki ebi", descripcion: "Camaron - Palta - Arroz - Nori.", valor: 3900, imagen: hosomakiEbiImg, categoria: "Hosomaki" },
-{ id: 62, codigo: "062", nombre: "Mechada panko", descripcion: "Carne mechada - Queso crema - Cebollin - En panko.", valor: 7100, imagen: mechadapanko, categoria: "Hot rolls" },
+
 
 { id: 65, codigo: "065", nombre: "Ceviche mixto", descripcion: "Salmon/Camaron/Pimenton/Cebolla morada/Leche de tigre/Palta.", valor: 12900, imagen: cevicheMixtoImg, categoria: "Ceviche" },
 
@@ -183,6 +209,25 @@ const _productos: Producto[] = [
 { id: 202, codigo: "202", nombre: "Promo mixta (36 piezas)", descripcion: "California kani cheese en sesamo - Ebi cheese roll en palta - Ebi cheese panko - Teri Tori", valor: 18900, imagen: promo36Img, categoria: "Promociones" },
 { id: 203, codigo: "203", nombre: "Promo mixta (54 piezas)", descripcion: "California teri cheese en sesamo - California sake cheese en ciboullete - Ebi cheese roll en palta - Fuji cheese panko - Ebi cheese panko - Teri Tori", valor: 27900, imagen: promo54Img, categoria: "Promociones" },
 { id: 204, codigo: "204", nombre: "Promo vip (72 piezas)", descripcion: "Ebi cheese roll en palta - Teri roll en queso - Sake cheese roll en salmon - California ebi cheese en sesamo - Mechada panko - Sake cheese panko - Teri tori - Ebi cheese Panko", valor: 38900, imagen: promoVipImg, categoria: "Promociones" },
+
+
+
+
+
+// Bebidas
+{ id: 301, codigo: "83", nombre: "Coca Cola Original lata", descripcion: "Bebida gaseosa en lata 350 ml", valor: 1600, imagen: cocaColaOriginalLataImg, categoria: "Bebidas" },
+{ id: 302, codigo: "83", nombre: "Coca Cola Zero lata", descripcion: "Bebida gaseosa en lata 350 ml", valor: 1600, imagen: cocaColaZeroLataImg, categoria: "Bebidas" },
+{ id: 303, codigo: "83", nombre: "Sprite lata", descripcion: "Bebida gaseosa en lata 350 ml", valor: 1600, imagen: spriteLataImg, categoria: "Bebidas" },
+//{ id: 84-1, codigo: "84", nombre: "Jumex mango lata", descripcion: "Nectar jumex mango 335ml", valor: 1600, imagen: cocaColaOriginalLataImg, categoria: "Bebidas" },
+//{ id: 84-2, codigo: "084", nombre: "Jumex piña lata", descripcion: "Nectar jumex piña 335ml", valor: 1600, imagen: cocaColaZeroLataImg, categoria: "Bebidas" },
+//{ id: 84-3, codigo: "0084", nombre: "Jumex piña-coco lata", descripcion: "Nectar jumex piña-coco 335ml", valor: 1600, imagen: spriteLataImg, categoria: "Bebidas" },
+{ id: 307, codigo: "85", nombre: "Arizona Mango", descripcion: "Jugo en lata 500 ml", valor: 2500, imagen: arizonaMangoImg, categoria: "Bebidas" },
+{ id: 308, codigo: "85", nombre: "Arizona Sandía", descripcion: "Jugo en lata 500 ml", valor: 2500, imagen: arizonaSandiaImg, categoria: "Bebidas" },
+{ id: 309, codigo: "85", nombre: "Arizona Uva", descripcion: "Jugo en lata 500 ml", valor: 2500, imagen: arizonaUvaImg, categoria: "Bebidas" },
+{ id: 310, codigo: "86", nombre: "Monster verde", descripcion: "Bebida energética 473 ml", valor: 2500, imagen: monsterVerdeImg, categoria: "Bebidas" },
+{ id: 311, codigo: "87", nombre: "Coca Cola Original 1.5 L", descripcion: "Bebida gaseosa botella 1.5 L", valor: 3000, imagen: cocaColaOriginalBotellaImg, categoria: "Bebidas" },
+{ id: 312, codigo: "87", nombre: "Coca Cola Zero 1.5 L", descripcion: "Bebida gaseosa botella 1.5 L", valor: 3000, imagen: cocaColaZeroBotellaImg, categoria: "Bebidas" },
+{ id: 313, codigo: "87", nombre: "Sprite 1.5 L", descripcion: "Bebida gaseosa botella 1.5 L", valor: 3000, imagen: spriteBotellaImg, categoria: "Bebidas" },
 
 
  

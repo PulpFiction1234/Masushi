@@ -9,12 +9,12 @@ import Navbar from "@/components/Navbar";
 import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
 import { polygon as turfPolygon, point as turfPoint } from "@turf/helpers";
 
-// ====== THEME ======
+// THEME
 const ACCENT_FROM = "from-emerald-500";
 const ACCENT_TO = "to-green-600";
 
 // SWR fetcher
-const fetcher = (url: string) => fetch(url, { cache: "no-store" }).then(r => r.json());
+const fetcher = (url: string) => fetch(url, { cache: "no-store" }).then((r) => r.json());
 
 const polygonCoords: [number, number][] = [
   [-70.56792278176697, -33.54740779939201],
@@ -68,7 +68,7 @@ const polygonCoords: [number, number][] = [
   [-70.55406406519371, -33.54942759953093],
   [-70.55681698512399, -33.54936877106851],
   [-70.55676992666348, -33.54776077757733],
-  [-70.56792278176697, -33.54740779939201]
+  [-70.56792278176697, -33.54740779939201],
 ];
 
 import {
@@ -83,6 +83,8 @@ import {
   nameWithTipo,
   checkoutReducer,
   initialCheckoutState,
+  PRECIO_SOYA_EXTRA,
+  PRECIO_TERIYAKI_EXTRA,
   PRECIO_ACEVICHADA,
   PRECIO_MARACUYA,
   PRECIO_JENGIBRE_EXTRA,
@@ -91,111 +93,117 @@ import {
 } from "@/utils/checkout";
 import SummaryPanel from "@/components/checkout/SummaryPanel";
 import PaymentSelector from "@/components/checkout/PaymentSelector";
-import ExtrasSelector from "@/components/checkout/ExtrasSelector";
 
-// Catálogo para salsasGratis
+// Catálogo (para salsasGratis / categoría)
 import { productos } from "@/data/productos";
+type ProductoMin = { id: number; categoria?: string; salsasGratis?: number };
 
-const AddressSearch = dynamic(() => import("../components/AddressSearch"), {
-  ssr: false,
-});
+const AddressSearch = dynamic(() => import("../components/AddressSearch"), { ssr: false });
 
-// ===== Index catálogo =====
-const byId = new Map(productos.map(p => [p.id, p]));
+// Index por id del catálogo
+const byId = new Map(productos.map((p) => [p.id, p]));
 
-// Precios blindados para evitar que Teriyaki se “pise”
-import {
-  PRECIO_SOYA_EXTRA as PRECIO_SOYA,
-  PRECIO_TERIYAKI_EXTRA as PRECIO_TERIYAKI,
-} from "@/utils/checkout";
-
-const PRECIOS_EXTRAS = (() => {
-  const soya = Number.isFinite(PRECIO_SOYA) ? Number(PRECIO_SOYA) : 400;
-  let teriyaki = Number.isFinite(PRECIO_TERIYAKI) ? Number(PRECIO_TERIYAKI) : 1000;
-  if (!Number.isFinite(teriyaki) || teriyaki < 600) {
-    if (typeof window !== "undefined") {
-      console.warn("[Checkout] Valor de teriyaki inválido:", PRECIO_TERIYAKI, "-> fallback 1000");
-    }
-    teriyaki = 1000;
-  }
-  return Object.freeze({ soya, teriyaki });
-})();
-
-/** ==== Helpers gratis por ítem (solo afectan pool soya/teriyaki) ==== **/
-type ProductoMin = { id?: number; categoria?: string; salsasGratis?: number };
-const getProducto = (it: CartItemLike): ProductoMin => {
-  const any = it as any;
-  const pid = any.id ?? any.productoId ?? any.idProducto ?? any.producto?.id;
-  if (pid != null && byId.has(pid)) return byId.get(pid)!;
-  return {} as ProductoMin;
-};
+// Salsas gratis por unidad según catálogo (sin `any`)
 const salsasGratisPorUnidad = (it: CartItemLike): number => {
-  const p = getProducto(it);
-  if (typeof p?.salsasGratis === "number") return Math.max(0, p.salsasGratis);
-  const cat = String(p?.categoria ?? "").trim().toLowerCase();
-  if (cat.startsWith("bebida")) return 0; // bebidas = 0
-  if (!cat) return 0;
-  return 1; // productos normales = 1
+  const p = byId.get(it.id) as ProductoMin | undefined;
+  if (p && typeof p.salsasGratis === "number") return Math.max(0, p.salsasGratis);
+  // Fallback seguro: si no hay catálogo, asumimos 1 (bebidas en catálogo ya tienen 0).
+  return 1;
 };
-/** =============================================================== **/
 
 export default function Checkout() {
   const { cart } = useCart();
   const [state, dispatch] = useReducer(checkoutReducer, initialCheckoutState);
+
   const {
-    name, lastName, phone, deliveryType, address, coords,
-    soya, teriyaki, soyaExtra, teriyakiExtra,
-    acevichada, maracuya, palitos,
-    jengibre, wasabi, extraJengibre, extraWasabi,
-    observacion, paymentMethod,
+    name,
+    lastName,
+    phone,
+    deliveryType,
+    address,
+    coords,
+    soya,
+    teriyaki,
+    soyaExtra,
+    teriyakiExtra,
+    acevichada,
+    maracuya,
+    palitos,
+    jengibre, // pool gratis J/W (como número)
+    wasabi,   // pool gratis J/W (como número)
+    extraJengibre,
+    extraWasabi,
+    observacion,
+    paymentMethod,
   } = state;
 
-  // Estado de apertura
+  // Estado de apertura desde /api/open (refresca cada 60s)
   const { data: openData } = useSWR("/api/open", fetcher, { refreshInterval: 60_000 });
   const abierto = openData?.abierto === true;
   const statusLabel =
     abierto
-      ? (openData?.nextClose ? `Abierto • cierra ${openData.nextClose.human}` : "Abierto")
-      : (openData?.nextOpen ? `Cerrado • abrimos ${openData.nextOpen.human}` : "Cerrado");
+      ? openData?.nextClose
+        ? `Abierto • cierra ${openData.nextClose.human}`
+        : "Abierto"
+      : openData?.nextOpen
+      ? `Cerrado • abrimos ${openData.nextOpen.human}`
+      : "Cerrado";
 
-  // Subtotal productos
+  // Cart tipado
+  const cartTyped = useMemo(() => cart as unknown as CartItemLike[], [cart]);
+
   const subtotalProductos = useMemo(
-    () => cart.reduce((acc, it) => acc + priceOf(it as CartItemLike) * (it as CartItemLike).cantidad, 0),
-    [cart]
-  );
-
-  // Polígono delivery
-  const zonaPolygon = useMemo(() => turfPolygon([[...polygonCoords, polygonCoords[0]]]), []);
-
-  // Pool de gratis SOLO para soya/teriyaki
-  const maxGratisBasicas = useMemo(
     () =>
-      cart.reduce(
-        (sum, item: CartItemLike) =>
-          sum + salsasGratisPorUnidad(item) * (Number((item as any).cantidad) || 0),
+      cartTyped.reduce(
+        (acc, it) => acc + priceOf(it) * it.cantidad,
         0
       ),
-    [cart]
+    [cartTyped]
   );
 
-  // Totales
+  const zonaPolygon = useMemo(() => turfPolygon([[...polygonCoords, polygonCoords[0]]]), []);
+
+  // Pool gratis J/W fijo en 2
+  const POOL_JW = 2;
+
+  // Cálculos monetarios/totales
   const {
     totalProductos,
+    freeSoya,
+    freeTeri,
+    paidSoya,
+    paidTeri,
     totalAcevichada,
     totalMaracuya,
-    costoJengibreExtras,
-    costoWasabiExtras,
     costoSoyaExtra,
     costoTeriExtra,
+    costoJengibreExtras,
+    costoWasabiExtras,
     deliveryFee,
     totalFinal,
+    gratisBasicas,
   } = useMemo(() => {
     const prod = subtotalProductos;
 
-    const sExtra = Number(soyaExtra || 0);
-    const tExtra = Number(teriyakiExtra || 0);
-    const costoSoyaExtra = sExtra * PRECIOS_EXTRAS.soya;
-    const costoTeriExtra = tExtra * PRECIOS_EXTRAS.teriyaki;
+    // Pool de salsas gratis (soya/teriyaki) según catálogo
+    const gratis = cartTyped.reduce(
+      (sum, item) => sum + salsasGratisPorUnidad(item) * item.cantidad,
+      0
+    );
+
+    const soyaG = Number(soya || 0);
+    const teriG = Number(teriyaki || 0);
+    const usados = soyaG + teriG;
+    const capSoya = Math.max(0, gratis - teriG);
+    const capTeri = Math.max(0, gratis - soyaG);
+    const freeS = Math.min(soyaG, capSoya);
+    const freeT = Math.min(teriyaki || 0, capTeri);
+
+    const pSoya = Math.max(0, soyaG - freeS);
+    const pTeri = Math.max(0, (Number(teriyaki || 0)) - freeT);
+
+    const costoSoya = pSoya * PRECIO_SOYA_EXTRA;
+    const costoTeri = pTeri * PRECIO_TERIYAKI_EXTRA;
 
     const ace = Number(acevichada || 0) * PRECIO_ACEVICHADA;
     const mar = Number(maracuya || 0) * PRECIO_MARACUYA;
@@ -203,22 +211,52 @@ export default function Checkout() {
     const eJen = Number(extraJengibre || 0) * PRECIO_JENGIBRE_EXTRA;
     const eWas = Number(extraWasabi || 0) * PRECIO_WASABI_EXTRA;
 
+    // extras explícitos de soya/teriyaki
+    const costoSoyaPlus = Number(soyaExtra || 0) * PRECIO_SOYA_EXTRA;
+    const costoTeriPlus = Number(teriyakiExtra || 0) * PRECIO_TERIYAKI_EXTRA;
+
     const fee = deliveryType === "delivery" ? COSTO_DELIVERY : 0;
+
+    const total =
+      prod +
+      costoSoya +
+      costoTeri +
+      costoSoyaPlus +
+      costoTeriPlus +
+      ace +
+      mar +
+      eJen +
+      eWas +
+      fee;
 
     return {
       totalProductos: prod,
+      freeSoya: freeS,
+      freeTeri: freeT,
+      paidSoya: pSoya,
+      paidTeri: pTeri,
       totalAcevichada: ace,
       totalMaracuya: mar,
+      costoSoyaExtra: costoSoya + costoSoyaPlus,
+      costoTeriExtra: costoTeri + costoTeriPlus,
       costoJengibreExtras: eJen,
       costoWasabiExtras: eWas,
-      costoSoyaExtra,
-      costoTeriExtra,
       deliveryFee: fee,
-      totalFinal: prod + costoSoyaExtra + costoTeriExtra + ace + mar + eJen + eWas + fee,
+      totalFinal: total,
+      gratisBasicas: gratis,
     };
   }, [
-    subtotalProductos, soyaExtra, teriyakiExtra,
-    acevichada, maracuya, extraJengibre, extraWasabi, deliveryType
+    subtotalProductos,
+    cartTyped,
+    soya,
+    teriyaki,
+    soyaExtra,
+    teriyakiExtra,
+    acevichada,
+    maracuya,
+    extraJengibre,
+    extraWasabi,
+    deliveryType,
   ]);
 
   const canSubmitBase =
@@ -228,52 +266,75 @@ export default function Checkout() {
     paymentMethod !== "" &&
     (deliveryType === "retiro" || (coords && REGEX_NUMERO_CALLE.test(address)));
 
-  const canSubmit = canSubmitBase && (abierto === true);
+  const canSubmit = canSubmitBase && abierto === true;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (cart.length === 0) { alert("Tu carrito está vacío"); return; }
+    if (cartTyped.length === 0) {
+      alert("Tu carrito está vacío");
+      return;
+    }
 
+    // Verificación inmediata en servidor
     fetch("/api/open", { cache: "no-store" })
-      .then(r => r.json())
+      .then((r) => r.json())
       .then((od) => {
         if (!od?.abierto) {
-          alert(od?.nextOpen?.human ? `Estamos cerrados. Abrimos ${od.nextOpen.human}.` : "Estamos cerrados en este momento.");
+          alert(
+            od?.nextOpen?.human
+              ? `Estamos cerrados. Abrimos ${od.nextOpen.human}.`
+              : "Estamos cerrados en este momento."
+          );
           return;
         }
 
         if (deliveryType === "delivery") {
-          if (!coords) { alert("Ingrese una dirección válida."); return; }
-          if (!REGEX_NUMERO_CALLE.test(address)) { alert("Debe ingresar un número de domicilio (ej.: N° 1234 o #1234)."); return; }
+          if (!coords) {
+            alert("Ingrese una dirección válida.");
+            return;
+          }
+          if (!REGEX_NUMERO_CALLE.test(address)) {
+            alert("Debe ingresar un número de domicilio (ej.: N° 1234 o #1234).");
+            return;
+          }
           const inside = booleanPointInPolygon(turfPoint(coords), zonaPolygon);
-          if (!inside) { alert("Lo sentimos, tu dirección está fuera de la zona de reparto."); return; }
+          if (!inside) {
+            alert("Lo sentimos, tu dirección está fuera de la zona de reparto.");
+            return;
+          }
         }
 
-        const productosTexto = (cart as unknown as CartItemLike[])
+        const productosTexto = cartTyped
           .map((item) => {
             const lineaNombre = `${codePartOf(item)}${nameWithTipo(item)}`;
-            const totalLinea = fmt(priceOf(item) * (item as any).cantidad);
-            return ` ${lineaNombre} x${(item as any).cantidad} — ${totalLinea}`;
+            const totalLinea = fmt(priceOf(item) * item.cantidad);
+            return ` ${lineaNombre} x${item.cantidad} — ${totalLinea}`;
           })
           .join("\n");
 
-        // Sección “gratis” arriba (jengibre/wasabi incluidos)
-        const gratisTexto = [
+        const extrasBasicasLineas = [
           `Soya (gratis): ${Number(soya || 0)}`,
           `Teriyaki (gratis): ${Number(teriyaki || 0)}`,
-          `Jengibre (gratis): ${Number(jengibre || 0)}`,
-          `Wasabi (gratis): ${Number(wasabi || 0)}`,
-        ].join("\n");
+          `Soya extra: ${Number(soyaExtra || 0)} = ${fmt(Number(soyaExtra || 0) * PRECIO_SOYA_EXTRA)}`,
+          `Teriyaki extra: ${Number(teriyakiExtra || 0)} = ${fmt(
+            Number(teriyakiExtra || 0) * PRECIO_TERIYAKI_EXTRA
+          )}`,
+        ];
+
+        const jwGratisLineas = [
+          `Jengibre (gratis): ${Number(jengibre || 0)}/${POOL_JW}`,
+          `Wasabi (gratis): ${Number(wasabi || 0)}/${POOL_JW}`,
+        ];
 
         const extrasTexto = [
-          `Soya extra: ${Number(soyaExtra || 0)} = ${fmt(costoSoyaExtra)}`,
-          `Teriyaki extra: ${Number(teriyakiExtra || 0)} = ${fmt(costoTeriExtra)}`,
+          ...extrasBasicasLineas,
+          ...jwGratisLineas,
           `Acevichada: ${Number(acevichada || 0)} = ${fmt(totalAcevichada)}`,
           `Maracuyá: ${Number(maracuya || 0)} = ${fmt(totalMaracuya)}`,
           `Extra jengibre: ${Number(extraJengibre || 0)} = ${fmt(costoJengibreExtras)}`,
           `Extra wasabi: ${Number(extraWasabi || 0)} = ${fmt(costoWasabiExtras)}`,
-          palitos !== "" ? `Palitos: ${Number(palitos || 0)}` : "",
+          `Palitos (gratis): ${Number(palitos || 0)}`,
           deliveryType === "delivery" ? `Delivery: ${fmt(deliveryFee)}` : "",
           observacion ? `Observaciones: ${observacion}` : "",
         ]
@@ -288,17 +349,15 @@ export default function Checkout() {
           `Teléfono: ${phone}\n` +
           `Método de pago: ${paymentLabel(paymentMethod)}\n` +
           `\n--- Productos ---\n${productosTexto}\n` +
-          `\n--- Salsas gratis ---\n${gratisTexto}\n` +
-          `\n--- Extras ---\n${extrasTexto}\n` +
+          `\n--- Salsas y extras ---\n${extrasTexto}\n` +
           `\nTotal: ${fmt(totalFinal)}`;
-
         const mensaje = encodeURIComponent(msg);
         window.open(`https://wa.me/56951869402?text=${mensaje}`, "_blank");
       })
       .catch(() => alert("No se pudo verificar el estado del local. Intenta de nuevo."));
   };
 
-  // ====== UI ======
+  // UI
   const inputBase =
     "w-full rounded-xl border border-white/10 bg-neutral-800/80 px-3 py-2 text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent";
   const card = "border border-white/10 rounded-2xl bg-neutral-900/70 shadow-xl";
@@ -320,22 +379,18 @@ export default function Checkout() {
                 {openData?.timeZone && <span className="text-neutral-400"></span>}
               </div>
 
-              {cart.length > 0 && (
+              {cartTyped.length > 0 && (
                 <SummaryPanel
-                  cart={cart as unknown as CartItemLike[]}
+                  cart={cartTyped}
                   state={state}
                   dispatch={dispatch}
                   subtotalProductos={totalProductos}
                   deliveryType={deliveryType}
                   deliveryFee={deliveryFee}
+                  maxGratisBasicas={gratisBasicas}
+                  maxGratisJWas={POOL_JW}
                 />
               )}
-
-              <ExtrasSelector
-                state={state}
-                dispatch={dispatch}
-                maxGratisBasicas={maxGratisBasicas}
-              />
 
               <div className="flex items-center justify-between border-t border-white/10 pt-4">
                 <p className="text-base font-semibold">Total final</p>
@@ -344,7 +399,9 @@ export default function Checkout() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="name" className="block font-medium mb-1 text-neutral-200">Nombre</label>
+                  <label htmlFor="name" className="block font-medium mb-1 text-neutral-200">
+                    Nombre
+                  </label>
                   <input
                     id="name"
                     type="text"
@@ -355,7 +412,9 @@ export default function Checkout() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="lastname" className="block font-medium mb-1 text-neutral-200">Apellido</label>
+                  <label htmlFor="lastname" className="block font-medium mb-1 text-neutral-200">
+                    Apellido
+                  </label>
                   <input
                     id="lastname"
                     type="text"
@@ -368,7 +427,9 @@ export default function Checkout() {
               </div>
 
               <div>
-                <label htmlFor="phone" className="block font-medium mb-1 text-neutral-200">Teléfono (Chile)</label>
+                <label htmlFor="phone" className="block font-medium mb-1 text-neutral-200">
+                  Teléfono (Chile)
+                </label>
                 <input
                   id="phone"
                   type="tel"
@@ -385,12 +446,16 @@ export default function Checkout() {
               </div>
 
               <div>
-                <label htmlFor="tipo" className="block font-medium mb-1 text-neutral-200">Tipo de entrega</label>
+                <label htmlFor="tipo" className="block font-medium mb-1 text-neutral-200">
+                  Tipo de entrega
+                </label>
                 <select
                   id="tipo"
                   className={inputBase}
                   value={deliveryType}
-                  onChange={(e) => dispatch({ type: "SET_FIELD", field: "deliveryType", value: (e.target.value as "retiro" | "delivery") })}
+                  onChange={(e) =>
+                    dispatch({ type: "SET_FIELD", field: "deliveryType", value: e.target.value as "retiro" | "delivery" })
+                  }
                 >
                   <option value="retiro">Retiro en tienda</option>
                   <option value="delivery">Delivery</option>
@@ -401,7 +466,9 @@ export default function Checkout() {
 
               {deliveryType === "delivery" && (
                 <div>
-                  <label htmlFor="addr" className="block font-medium mb-1 text-neutral-200">Dirección</label>
+                  <label htmlFor="addr" className="block font-medium mb-1 text-neutral-200">
+                    Dirección
+                  </label>
                   <div id="addr" className="w-full">
                     <AddressSearch
                       polygonCoords={polygonCoords}
@@ -420,7 +487,9 @@ export default function Checkout() {
                 className={`w-full rounded-xl px-4 py-2 font-medium text-white bg-gradient-to-b ${ACCENT_FROM} ${ACCENT_TO} shadow hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed`}
               >
                 {abierto === false
-                  ? (openData?.nextOpen ? `Cerrado • abrimos ${openData.nextOpen.human}` : "Cerrado")
+                  ? openData?.nextOpen
+                    ? `Cerrado • abrimos ${openData.nextOpen.human}`
+                    : "Cerrado"
                   : "Hacer pedido"}
               </button>
             </form>

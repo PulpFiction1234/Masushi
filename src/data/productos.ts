@@ -201,6 +201,7 @@ const _productos: Producto[] = [
     valor: 10000, // ajusta si corresponde
     imagen: promoHandrollImg,
     categoria: "Handrolls",
+    salsasGratis: 2,
     opciones: [
       { id: "2pollo",   label: "2 de pollo" },
       { id: "2camaron", label: "2 de camarón" },

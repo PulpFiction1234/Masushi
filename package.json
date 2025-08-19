@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "img:png2webp": "node scripts/png2webp.mjs --quality 82 --alpha 90 --dirs public,src/assets"
+
   },
   "dependencies": {
     "@mapbox/mapbox-gl-geocoder": "^5.1.0",

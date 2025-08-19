@@ -180,7 +180,7 @@ const _productos: Producto[] = [
     ],
     },
   {
-    id: 57-1,
+    id: 57,
     codigo: "057",
     nombre: "Handroll",
     descripcion: "Elige el relleno",
@@ -193,7 +193,7 @@ const _productos: Producto[] = [
     ],
     },
    {
-    id: 57-2,
+    id: 57.1,
     codigo: "0057",
     nombre: "Promo handrolls",
     descripcion: "Elige la combinación:",

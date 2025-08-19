@@ -10,7 +10,7 @@ export const BUSINESS_TZ = "America/Santiago";
 export const HORARIO_SEMANAL: Record<DiaKey, Intervalo[]> = {
   sun: [],
   mon: [["16:30", "22:30"]],
-  tue: [["13:30", "22:30"]],
+  tue: [["16:30", "22:30"]],
   wed: [["16:30", "22:30"]],
   thu: [["16:30", "22:30"]],
   fri: [["16:30", "23:00"]],
@@ -23,8 +23,8 @@ export const OVERRIDES: Record<string, Intervalo[] | null | undefined> = {
   // "2025-12-24": [["16:30","20:30"]],
 };
 
-// (opcional) última orden X minutos antes del cierre
-export const ULTIMA_ORDEN_MIN = 0; // p. ej. 15 si quieres cerrar 15 min antes
+// última orden X minutos antes del cierre
+export const ULTIMA_ORDEN_MIN = 5; 
 
 // ===== Helpers de TZ/fecha =====
 function getPartsInTZ(d: Date, tz: string) {

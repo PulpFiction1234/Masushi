@@ -28,7 +28,11 @@ export const normalizePhone = (raw: string) => raw.replace(/\D+/g, "");
 export const isValidChileanMobile = (raw: string) => {
   const compact = raw.replace(/\s+/g, "");
   const digits = normalizePhone(raw);
-  return /^(\+?56)?9\d{8}$/.test(compact) || /^569\d{8}$/.test(digits) || /^9\d{8}$/.test(digits);
+  return (
+    /^(\+?56)?9\d{8}$/.test(compact) ||
+    /^569\d{8}$/.test(digits) ||
+    /^9\d{8}$/.test(digits)
+  );
 };
 
 export type PaymentMethod = "" | "efectivo" | "tarjeta" | "transferencia";
@@ -41,6 +45,7 @@ export const paymentLabel = (pm: PaymentMethod) =>
     ? "Transferencia"
     : "";
 
+/** ==== Utilidades de carrito ==== */
 export type CartItemLike = {
   cartKey?: string;
   id: number;
@@ -70,6 +75,7 @@ export const codePartOf = (item: CartItemLike) =>
 export const nameWithTipo = (item: CartItemLike) =>
   item.opcion?.label ? `${item.nombre} — ${item.opcion.label}` : item.nombre;
 
+/** La dejamos exportada por compatibilidad (puede usarse para repartir s/ t gratis) */
 export function splitFreeEvenly(s: number, t: number, g: number) {
   if (g <= 0 || s + t === 0) return { freeSoya: 0, freeTeri: 0 };
   const base = Math.floor(g / 2);
@@ -87,6 +93,7 @@ export function splitFreeEvenly(s: number, t: number, g: number) {
   return { freeSoya, freeTeri };
 }
 
+/** ==== Checkout state ==== */
 export interface CheckoutState {
   name: string;
   lastName: string;
@@ -94,15 +101,28 @@ export interface CheckoutState {
   deliveryType: "retiro" | "delivery";
   address: string;
   coords: [number, number] | null;
+
+  // Gratis (limitadas por el pool soya/teriyaki del pedido)
   soya: number | "";
   teriyaki: number | "";
+
+  // Extras pagados (se cobran directamente, no usan pool)
+  soyaExtra: number | "";
+  teriyakiExtra: number | "";
+
+  // Otras salsas pagadas
   acevichada: number | "";
   maracuya: number | "";
+
+  // Complementos
   palitos: number | "";
-  jengibre: boolean;
-  wasabi: boolean;
-  extraJengibre: number | "";
-  extraWasabi: number | "";
+
+  // Pool gratis independiente Jengibre/Wasabi (numéricos, p.ej. máx 2 en total entre ambos)
+  jengibre: number | "";      // gratis
+  wasabi: number | "";        // gratis
+  extraJengibre: number | ""; // se cobra
+  extraWasabi: number | "";   // se cobra
+
   observacion: string;
   paymentMethod: PaymentMethod;
 }
@@ -117,15 +137,24 @@ export const initialCheckoutState: CheckoutState = {
   deliveryType: "retiro",
   address: "",
   coords: null,
-  soya: "",
-  teriyaki: "",
-  acevichada: "",
-  maracuya: "",
-  palitos: "",
-  jengibre: false,
-  wasabi: false,
-  extraJengibre: "",
-  extraWasabi: "",
+
+  // Pools y extras
+  soya: 0,
+  teriyaki: 0,
+  soyaExtra: 0,
+  teriyakiExtra: 0,
+
+  acevichada: 0,
+  maracuya: 0,
+
+  palitos: 0,
+
+  // Jengibre/Wasabi como cantidades (no booleans)
+  jengibre: 0,
+  wasabi: 0,
+  extraJengibre: 0,
+  extraWasabi: 0,
+
   observacion: "",
   paymentMethod: "",
 };

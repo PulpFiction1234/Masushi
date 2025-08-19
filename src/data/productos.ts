@@ -63,6 +63,7 @@ export interface Producto {
   categoria: string;
   opciones?: ProductoOpcion[]; // ← SOLO si el producto tiene variantes
   blurDataUrl?: string;
+  salsasGratis?: number;
 }
 
 // Definición normal (IDs y códigos únicos)
@@ -207,7 +208,7 @@ const _productos: Producto[] = [
     ],
   },
 { id: 49, codigo: "049", nombre: "Ebi cheese panko", descripcion: "Camaron - Queso crema - Cebollin - En panko.", valor: 6500, imagen: EbiPankoImg, categoria: "Hot rolls" },
-{ id: 50, codigo: "50", nombre: "Teri tori", descripcion: "Pollo - Queso crema - Cebollin - En panko.", valor: 6400, imagen: TeriToriImg, categoria: "Hot rolls" },
+{ id: 50, codigo: "050", nombre: "Teri tori", descripcion: "Pollo - Queso crema - Cebollin - En panko.", valor: 6400, imagen: TeriToriImg, categoria: "Hot rolls" },
 { id: 52, codigo: "052", nombre: "Sake cheese panko", descripcion: "Salmon - Queso crema - Cebollin - En panko.", valor: 6800, imagen: SakePankoImg, categoria: "Hot rolls" },
 { id: 53, codigo: "053", nombre: "Tako panko", descripcion: "Pulpo - Queso crema - Cebollin - En panko.", valor: 7100, imagen: TakoPankoImg, categoria: "Hot rolls" },
 { id: 54, codigo: "054", nombre: "Hotate panko", descripcion: "Ostion furay - Queso crema - Cebollin - En panko.", valor: 7100, imagen: HotatePankoImg, categoria: "Hot rolls" },
@@ -232,30 +233,33 @@ const _productos: Producto[] = [
 { id: 77, codigo: "077", nombre: "Gyozas pollo", descripcion: "5 unidades", valor: 4800, imagen: gyozasImg, categoria: "Para picar" },
 { id: 78, codigo: "078", nombre: "Gyozas cerdo", descripcion: "5 unidades", valor: 4800, imagen: gyozasImg, categoria: "Para picar" },
 { id: 79, codigo: "079", nombre: "Gyozas camaron", descripcion: "5 unidades", valor: 4900, imagen: gyozasImg, categoria: "Para picar" },
-{ id: 200, codigo: "200", nombre: "Promo uno (18 piezas)", descripcion: "Ebi cheese roll en palta - California teri cheese", valor: 10900, imagen: promoUnoImg, categoria: "Promociones" },
-{ id: 201, codigo: "201", nombre: "Promo HOT (36 piezas)", descripcion: "Teri tori - Ebi cheese panko - Funji cheese panko- Kani cheese panko", valor: 18900, imagen: promoHotImg, categoria: "Promociones" },
-{ id: 202, codigo: "202", nombre: "Promo mixta (36 piezas)", descripcion: "California kani cheese en sesamo - Ebi cheese roll en palta - Ebi cheese panko - Teri Tori", valor: 18900, imagen: promo36Img, categoria: "Promociones" },
-{ id: 203, codigo: "203", nombre: "Promo mixta (54 piezas)", descripcion: "California teri cheese en sesamo - California sake cheese en ciboullete - Ebi cheese roll en palta - Fuji cheese panko - Ebi cheese panko - Teri Tori", valor: 27900, imagen: promo54Img, categoria: "Promociones" },
-{ id: 204, codigo: "204", nombre: "Promo vip (72 piezas)", descripcion: "Ebi cheese roll en palta - Teri roll en queso - Sake cheese roll en salmon - California ebi cheese en sesamo - Mechada panko - Sake cheese panko - Teri tori - Ebi cheese Panko", valor: 38900, imagen: promoVipImg, categoria: "Promociones" },
+
+
+// Promociones
+{ id: 200, codigo: "200", nombre: "Promo uno (18 piezas)", descripcion: "Ebi cheese roll en palta - California teri cheese", valor: 10900, imagen: promoUnoImg, categoria: "Promociones",salsasGratis: 2 },
+{ id: 201, codigo: "201", nombre: "Promo HOT (36 piezas)", descripcion: "Teri tori - Ebi cheese panko - Funji cheese panko- Kani cheese panko", valor: 18900, imagen: promoHotImg, categoria: "Promociones",salsasGratis: 5 },
+{ id: 202, codigo: "202", nombre: "Promo mixta (36 piezas)", descripcion: "California kani cheese en sesamo - Ebi cheese roll en palta - Ebi cheese panko - Teri Tori", valor: 18900, imagen: promo36Img, categoria: "Promociones",salsasGratis: 5 },
+{ id: 203, codigo: "203", nombre: "Promo mixta (54 piezas)", descripcion: "California teri cheese en sesamo - California sake cheese en ciboullete - Ebi cheese roll en palta - Fuji cheese panko - Ebi cheese panko - Teri Tori", valor: 27900, imagen: promo54Img, categoria: "Promociones", salsasGratis: 8 },
+{ id: 204, codigo: "204", nombre: "Promo vip (72 piezas)", descripcion: "Ebi cheese roll en palta - Teri roll en queso - Sake cheese roll en salmon - California ebi cheese en sesamo - Mechada panko - Sake cheese panko - Teri tori - Ebi cheese Panko", valor: 38900, imagen: promoVipImg, categoria: "Promociones", salsasGratis: 10 },
 
 
 
 
 
 // Bebidas
-{ id: 301, codigo: "83", nombre: "Coca Cola Original lata", descripcion: "Bebida gaseosa en lata 350 ml", valor: 1600, imagen: cocaColaOriginalLataImg, categoria: "Bebidas" },
-{ id: 302, codigo: "83", nombre: "Coca Cola Zero lata", descripcion: "Bebida gaseosa en lata 350 ml", valor: 1600, imagen: cocaColaZeroLataImg, categoria: "Bebidas" },
-{ id: 303, codigo: "83", nombre: "Sprite lata", descripcion: "Bebida gaseosa en lata 350 ml", valor: 1600, imagen: spriteLataImg, categoria: "Bebidas" },
-//{ id: 84-1, codigo: "84", nombre: "Jumex mango lata", descripcion: "Nectar jumex mango 335ml", valor: 1600, imagen: cocaColaOriginalLataImg, categoria: "Bebidas" },
+{ id: 301, codigo: "83", nombre: "Coca Cola Original lata", descripcion: "Bebida gaseosa en lata 350 ml", valor: 1600, imagen: cocaColaOriginalLataImg, categoria: "Bebidas", salsasGratis: 0 },
+{ id: 302, codigo: "83", nombre: "Coca Cola Zero lata", descripcion: "Bebida gaseosa en lata 350 ml", valor: 1600, imagen: cocaColaZeroLataImg, categoria: "Bebidas", salsasGratis: 0 },
+{ id: 303, codigo: "83", nombre: "Sprite lata", descripcion: "Bebida gaseosa en lata 350 ml", valor: 1600, imagen: spriteLataImg, categoria: "Bebidas", salsasGratis: 0 },
+//{ id: 84-1, codigo: "84", nombre: "Jumex mango lata", descripcion: "Nectar jumex mango 335ml", valor: 1600, imagen: cocaColaOriginalLataImg, categoria: "Bebidas", salsasGratis: 0 },
 //{ id: 84-2, codigo: "084", nombre: "Jumex piña lata", descripcion: "Nectar jumex piña 335ml", valor: 1600, imagen: cocaColaZeroLataImg, categoria: "Bebidas" },
-//{ id: 84-3, codigo: "0084", nombre: "Jumex piña-coco lata", descripcion: "Nectar jumex piña-coco 335ml", valor: 1600, imagen: spriteLataImg, categoria: "Bebidas" },
-{ id: 307, codigo: "85", nombre: "Arizona Mango", descripcion: "Jugo en lata 500 ml", valor: 2500, imagen: arizonaMangoImg, categoria: "Bebidas" },
-{ id: 308, codigo: "85", nombre: "Arizona Sandía", descripcion: "Jugo en lata 500 ml", valor: 2500, imagen: arizonaSandiaImg, categoria: "Bebidas" },
-{ id: 309, codigo: "85", nombre: "Arizona Uva", descripcion: "Jugo en lata 500 ml", valor: 2500, imagen: arizonaUvaImg, categoria: "Bebidas" },
-{ id: 310, codigo: "86", nombre: "Monster verde", descripcion: "Bebida energética 473 ml", valor: 2500, imagen: monsterVerdeImg, categoria: "Bebidas" },
-{ id: 311, codigo: "87", nombre: "Coca Cola Original 1.5 L", descripcion: "Bebida gaseosa botella 1.5 L", valor: 3000, imagen: cocaColaOriginalBotellaImg, categoria: "Bebidas" },
-{ id: 312, codigo: "87", nombre: "Coca Cola Zero 1.5 L", descripcion: "Bebida gaseosa botella 1.5 L", valor: 3000, imagen: cocaColaZeroBotellaImg, categoria: "Bebidas" },
-{ id: 313, codigo: "87", nombre: "Sprite 1.5 L", descripcion: "Bebida gaseosa botella 1.5 L", valor: 3000, imagen: spriteBotellaImg, categoria: "Bebidas" },
+//{ id: 84-3, codigo: "0084", nombre: "Jumex piña-coco lata", descripcion: "Nectar jumex piña-coco 335ml", valor: 1600, imagen: spriteLataImg, categoria: "Bebidas", salsasGratis: 0 },
+{ id: 307, codigo: "85", nombre: "Arizona Mango", descripcion: "Jugo en lata 500 ml", valor: 2500, imagen: arizonaMangoImg, categoria: "Bebidas", salsasGratis: 0 },
+{ id: 308, codigo: "85", nombre: "Arizona Sandía", descripcion: "Jugo en lata 500 ml", valor: 2500, imagen: arizonaSandiaImg, categoria: "Bebidas", salsasGratis: 0 },
+{ id: 309, codigo: "85", nombre: "Arizona Uva", descripcion: "Jugo en lata 500 ml", valor: 2500, imagen: arizonaUvaImg, categoria: "Bebidas", salsasGratis: 0 },
+{ id: 310, codigo: "86", nombre: "Monster verde", descripcion: "Bebida energética 473 ml", valor: 2500, imagen: monsterVerdeImg, categoria: "Bebidas", salsasGratis: 0 },
+{ id: 311, codigo: "87", nombre: "Coca Cola Original 1.5 L", descripcion: "Bebida gaseosa botella 1.5 L", valor: 3000, imagen: cocaColaOriginalBotellaImg, categoria: "Bebidas", salsasGratis: 0 },
+{ id: 312, codigo: "87", nombre: "Coca Cola Zero 1.5 L", descripcion: "Bebida gaseosa botella 1.5 L", valor: 3000, imagen: cocaColaZeroBotellaImg, categoria: "Bebidas", salsasGratis: 0 },
+{ id: 313, codigo: "87", nombre: "Sprite 1.5 L", descripcion: "Bebida gaseosa botella 1.5 L", valor: 3000, imagen: spriteBotellaImg, categoria: "Bebidas", salsasGratis: 0 },
 
 
  

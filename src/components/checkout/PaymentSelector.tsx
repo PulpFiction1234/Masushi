@@ -26,7 +26,7 @@ export default function PaymentSelector({ paymentMethod, dispatch }: Props) {
       >
         <option value="">Selecciona una opción…</option>
         <option value="efectivo">Efectivo</option>
-        <option value="tarjeta">Crédito</option>
+        <option value="tarjeta">Tarjetas</option>
         <option value="transferencia">Transferencia</option>
       </select>
       <p className="text-xs text-neutral-400 mt-1">Solo informativo </p>

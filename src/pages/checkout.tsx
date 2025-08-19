@@ -1,6 +1,7 @@
 "use client";
 import { useMemo, useReducer } from "react";
 import dynamic from "next/dynamic";
+import useSWR from "swr";
 import { useCart } from "@/context/CartContext";
 import Navbar from "@/components/Navbar";
 
@@ -11,6 +12,9 @@ import { polygon as turfPolygon, point as turfPoint } from "@turf/helpers";
 // ====== THEME (ajústalo si quieres) ======
 const ACCENT_FROM = "from-emerald-500";
 const ACCENT_TO = "to-green-600";
+
+// SWR fetcher
+const fetcher = (url: string) => fetch(url, { cache: "no-store" }).then(r => r.json());
 
 const polygonCoords: [number, number][] = [
   [-70.56792278176697, -33.54740779939201],
@@ -118,6 +122,14 @@ export default function Checkout() {
     paymentMethod,
   } = state;
 
+  // ===== Estado de apertura desde /api/open (refresca cada 60s)
+  const { data: openData } = useSWR("/api/open", fetcher, { refreshInterval: 60_000 });
+  const abierto = openData?.abierto === true;
+  const statusLabel =
+    abierto
+      ? (openData?.nextClose ? `Abierto • cierra ${openData.nextClose.human}` : "Abierto")
+      : (openData?.nextOpen ? `Cerrado • abrimos ${openData.nextOpen.human}` : "Cerrado");
+
   const subtotalProductos = useMemo(
     () => cart.reduce((acc, it) => acc + priceOf(it as CartItemLike) * (it as CartItemLike).cantidad, 0),
     [cart]
@@ -171,65 +183,81 @@ export default function Checkout() {
     };
   }, [subtotalProductos, cart, soya, teriyaki, acevichada, maracuya, extraJengibre, extraWasabi, deliveryType]);
 
-  const canSubmit =
+  const canSubmitBase =
     name.trim().length > 1 &&
     lastName.trim().length > 1 &&
     isValidChileanMobile(phone) &&
     paymentMethod !== "" &&
     (deliveryType === "retiro" || (coords && REGEX_NUMERO_CALLE.test(address)));
 
+  const canSubmit = canSubmitBase && (abierto === true);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
     if (cart.length === 0) { alert("Tu carrito está vacío"); return; }
-    if (deliveryType === "delivery") {
-      if (!coords) { alert("Ingrese una dirección válida."); return; }
-      if (!REGEX_NUMERO_CALLE.test(address)) { alert("Debe ingresar un número de domicilio (ej.: N° 1234 o #1234)."); return; }
-      const inside = booleanPointInPolygon(turfPoint(coords), zonaPolygon);
-      if (!inside) { alert("Lo sentimos, tu dirección está fuera de la zona de reparto."); return; }
-    }
 
-    const productosTexto = (cart as unknown as CartItemLike[])
-      .map((item) => {
-        const lineaNombre = `${codePartOf(item)}${nameWithTipo(item)}`;
-        const totalLinea = fmt(priceOf(item) * item.cantidad);
-        return ` ${lineaNombre} x${item.cantidad} — ${totalLinea}`;
+    // Verificación inmediata en servidor (evita “salto” por reloj del cliente)
+    fetch("/api/open", { cache: "no-store" })
+      .then(r => r.json())
+      .then((od) => {
+        if (!od?.abierto) {
+          alert(od?.nextOpen?.human ? `Estamos cerrados. Abrimos ${od.nextOpen.human}.` : "Estamos cerrados en este momento.");
+          return;
+        }
+
+        if (deliveryType === "delivery") {
+          if (!coords) { alert("Ingrese una dirección válida."); return; }
+          if (!REGEX_NUMERO_CALLE.test(address)) { alert("Debe ingresar un número de domicilio (ej.: N° 1234 o #1234)."); return; }
+          const inside = booleanPointInPolygon(turfPoint(coords), zonaPolygon);
+          if (!inside) { alert("Lo sentimos, tu dirección está fuera de la zona de reparto."); return; }
+        }
+
+        const productosTexto = (cart as unknown as CartItemLike[])
+          .map((item) => {
+            const lineaNombre = `${codePartOf(item)}${nameWithTipo(item)}`;
+            const totalLinea = fmt(priceOf(item) * item.cantidad);
+            return ` ${lineaNombre} x${item.cantidad} — ${totalLinea}`;
+          })
+          .join("\n");
+
+        const extrasBasicasLineas = [
+          `Soya: ${Number(soya || 0)} (gratis: ${freeOnSoya}, pagas: ${paidSoya} = ${fmt(paidSoya * PRECIO_SOYA_EXTRA)})`,
+          `Teriyaki: ${Number(teriyaki || 0)} (gratis: ${freeOnTeriyaki}, pagas: ${paidTeriyaki} = ${fmt(paidTeriyaki * PRECIO_TERIYAKI_EXTRA)})`,
+        ];
+
+        const extrasTexto = [
+          ...extrasBasicasLineas,
+          `Acevichada: ${Number(acevichada || 0)} = ${fmt(totalAcevichada)}`,
+          `Maracuyá: ${Number(maracuya || 0)} = ${fmt(totalMaracuya)}`,
+          `Jengibre: ${jengibre ? "Sí" : "No"}`,
+          `Wasabi: ${wasabi ? "Sí" : "No"}`,
+          `Extra jengibre: ${Number(extraJengibre || 0)} = ${fmt(costoJengibreExtras)}`,
+          `Extra wasabi: ${Number(extraWasabi || 0)} = ${fmt(costoWasabiExtras)}`,
+          palitos !== "" ? `Palitos: ${Number(palitos || 0)}` : "",
+          deliveryType === "delivery" ? `Delivery: ${fmt(deliveryFee)}` : "",
+          observacion ? `Observaciones: ${observacion}` : "",
+        ].filter(Boolean).join("\n");
+
+        const shortAddress = toShortCLAddress(address);
+        const msg =
+          `Tipo: ${deliveryType}\n` +
+          (deliveryType === "delivery" ? `Dirección: ${shortAddress}\n` : "") +
+          `Nombre: ${name} ${lastName}\n` +
+          `Teléfono: ${phone}\n` +
+          `Método de pago: ${paymentLabel(paymentMethod)}\n` +
+          `\n--- Productos ---\n${productosTexto}\n` +
+          `\n--- Extras ---\n${extrasTexto}\n` +
+          `\nTotal: ${fmt(totalFinal)}`;
+        const mensaje = encodeURIComponent(msg);
+        window.open(`https://wa.me/56951869402?text=${mensaje}`, "_blank");
       })
-      .join("\n");
-
-    const extrasBasicasLineas = [
-      `Soya: ${Number(soya || 0)} (gratis: ${freeOnSoya}, pagas: ${paidSoya} = ${fmt(paidSoya * PRECIO_SOYA_EXTRA)})`,
-      `Teriyaki: ${Number(teriyaki || 0)} (gratis: ${freeOnTeriyaki}, pagas: ${paidTeriyaki} = ${fmt(paidTeriyaki * PRECIO_TERIYAKI_EXTRA)})`,
-    ];
-
-    const extrasTexto = [
-      ...extrasBasicasLineas,
-      `Acevichada: ${Number(acevichada || 0)} = ${fmt(totalAcevichada)}`,
-      `Maracuyá: ${Number(maracuya || 0)} = ${fmt(totalMaracuya)}`,
-      `Jengibre: ${jengibre ? "Sí" : "No"}`,
-      `Wasabi: ${wasabi ? "Sí" : "No"}`,
-      `Extra jengibre: ${Number(extraJengibre || 0)} = ${fmt(costoJengibreExtras)}`,
-      `Extra wasabi: ${Number(extraWasabi || 0)} = ${fmt(costoWasabiExtras)}`,
-      palitos !== "" ? `Palitos: ${Number(palitos || 0)}` : "",
-      deliveryType === "delivery" ? `Delivery: ${fmt(deliveryFee)}` : "",
-      observacion ? `Observaciones: ${observacion}` : "",
-    ].filter(Boolean).join("\n");
-
-    const shortAddress = toShortCLAddress(address);
-    const msg =
-      `Tipo: ${deliveryType}\n` +
-      (deliveryType === "delivery" ? `Dirección: ${shortAddress}\n` : "") +
-      `Nombre: ${name} ${lastName}\n` +
-      `Teléfono: ${phone}\n` +
-      `Método de pago: ${paymentLabel(paymentMethod)}\n` +
-      `\n--- Productos ---\n${productosTexto}\n` +
-      `\n--- Extras ---\n${extrasTexto}\n` +
-      `\nTotal: ${fmt(totalFinal)}`;
-    const mensaje = encodeURIComponent(msg);
-    window.open(`https://wa.me/56951869402?text=${mensaje}`, "_blank");
+      .catch(() => alert("No se pudo verificar el estado del local. Intenta de nuevo."));
   };
 
   // ====== UI oscuro ======
-  const inputBase = "w-full rounded-xl border border-white/10 bg-neutral-800/80 px-3 py-2 text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent";
+  const inputBase =
+    "w-full rounded-xl border border-white/10 bg-neutral-800/80 px-3 py-2 text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent";
   const card = "border border-white/10 rounded-2xl bg-neutral-900/70 shadow-xl";
 
   return (
@@ -243,6 +271,12 @@ export default function Checkout() {
 
           <div className="flex justify-center">
             <form onSubmit={handleSubmit} className={`${card} w-full max-w-2xl p-5 space-y-5`}>
+              {/* Estado de apertura */}
+              <div className="rounded-xl bg-neutral-800/70 border border-white/10 p-3 text-sm flex items-center justify-between">
+                <span className={abierto ? "text-emerald-300" : "text-amber-300"}>{statusLabel}</span>
+                {openData?.timeZone && <span className="text-neutral-400"></span>}
+              </div>
+
               {cart.length > 0 && (
                 <SummaryPanel
                   cart={cart as unknown as CartItemLike[]}
@@ -307,7 +341,7 @@ export default function Checkout() {
                   id="tipo"
                   className={inputBase}
                   value={deliveryType}
-                  onChange={(e) => dispatch({ type: "SET_FIELD", field: "deliveryType", value: e.target.value as "retiro" | "delivery" })}
+                  onChange={(e) => dispatch({ type: "SET_FIELD", field: "deliveryType", value: (e.target.value as "retiro" | "delivery") })}
                 >
                   <option value="retiro">Retiro en tienda</option>
                   <option value="delivery">Delivery</option>
@@ -336,7 +370,9 @@ export default function Checkout() {
                 disabled={!canSubmit}
                 className={`w-full rounded-xl px-4 py-2 font-medium text-white bg-gradient-to-b ${ACCENT_FROM} ${ACCENT_TO} shadow hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed`}
               >
-                Hacer pedido
+                {abierto === false
+                  ? (openData?.nextOpen ? `Cerrado • abrimos ${openData.nextOpen.human}` : "Cerrado")
+                  : "Hacer pedido"}
               </button>
             </form>
           </div>

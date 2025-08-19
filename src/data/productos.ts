@@ -4,10 +4,10 @@ import californiaKaniCheeseImg from "@/public/images/California kani cheese.png"
 import californiaTeriImg from "@/public/images/California teri.png";
 import californiaTeriCheeseImg from "@/public/images/California teri cheese.png";
 import californiaEbiImg from "@/public/images/California ebi.png";
-import californiaSakeImg from "@/public/images/California sake.png";
+import CaliforniaSakeImg from "@/public/images/California sake.png";
 import CaliforniaTakoImg from "@/public/images/California tako.png";
 import californiaEbiCheeseImg from "@/public/images/California ebi cheese.png";
-import californiaSakeCheeseImg from "@/public/images/california sake cheesse.png";
+import CaliforniaSakeCheeseImg from "@/public/images/california sake cheesse.png";
 import MechadaPankoImg from "@/public/images/Mechada panko.png";
 import HotatePankoImg from "@/public/images/Hotate panko.png";
 import TeriToriImg from "@/public/images/Teri tori.png";
@@ -137,13 +137,41 @@ const _productos: Producto[] = [
       { id: "Masago",      label: "Masago" },
     ],
     },
+    {
+    id: 37,
+    codigo: "037",
+    nombre: "California sake",
+    descripcion: "Salmon/Palta",
+    valor: 5900, // ajusta si corresponde
+    imagen: CaliforniaSakeImg,
+    categoria: "California rolls",
+    opciones: [
+      { id: "Sesamo",   label: "Sesamo" },
+      { id: "Cibullete", label: "Cibullete" },
+      { id: "Masago",      label: "Masago" },
+    ],
+    },
      {
     id: 38,
     codigo: "038",
     nombre: "California sake cheese",
     descripcion: "Salmon/Queso crema/Palta",
     valor: 5600, // ajusta si corresponde
-    imagen: californiaSakeCheeseImg,
+    imagen: CaliforniaSakeCheeseImg,
+    categoria: "California rolls",
+    opciones: [
+      { id: "Sesamo",   label: "Sesamo" },
+      { id: "Cibullete", label: "Cibullete" },
+      { id: "Masago",      label: "Masago" },
+    ],
+    },
+      {
+    id: 39,
+    codigo: "039",
+    nombre: "California tako cheese",
+    descripcion: "Pulpo/Queso crema/Palta",
+    valor: 6400, // ajusta si corresponde
+    imagen: CaliforniaTakoImg,
     categoria: "California rolls",
     opciones: [
       { id: "Sesamo",   label: "Sesamo" },

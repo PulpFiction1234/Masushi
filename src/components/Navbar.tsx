@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useCart } from "@/context/CartContext";
 import { RiShoppingBag4Fill } from "react-icons/ri";
 import { useRouter } from "next/router";
@@ -19,11 +19,11 @@ const Navbar: React.FC = () => {
 
   const router = useRouter();
 
-  const openCart = () => {
+   const openCart = useCallback(() => {
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("open-cart"));
     }
-  };
+    }, []);
 
   const showCartIcon = router.pathname !== "/checkout";
 
@@ -69,4 +69,4 @@ const Navbar: React.FC = () => {
   );
 };
 
-export default Navbar;
+export default React.memo(Navbar);

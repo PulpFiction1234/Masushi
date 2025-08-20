@@ -206,10 +206,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     []
   );
 
+  const value = useMemo(
+    () => ({ cart, total, ready, addToCart, updateQuantity, removeFromCart, clearCart }),
+    [cart, total, ready, addToCart, updateQuantity, removeFromCart, clearCart]
+  );
+
   return (
-    <CartContext.Provider
-      value={{ cart, total, ready, addToCart, updateQuantity, removeFromCart, clearCart }}
-    >
+    <CartContext.Provider value={value}>
       {children}
     </CartContext.Provider>
   );

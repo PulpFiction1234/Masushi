@@ -5,9 +5,7 @@ import useSWR from "swr";
 import { useCart } from "@/context/CartContext";
 import Navbar from "@/components/Navbar";
 
-// Turf liviano
-import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
-import { polygon as turfPolygon, point as turfPoint } from "@turf/helpers";
+
 
 // THEME
 const ACCENT_FROM = "from-emerald-500";
@@ -165,8 +163,6 @@ export default function Checkout() {
     [cartTyped]
   );
 
-  const zonaPolygon = useMemo(() => turfPolygon([[...polygonCoords, polygonCoords[0]]]), []);
-
   // Pool gratis J/W fijo en 2
   const POOL_JW = 2;
 
@@ -291,7 +287,7 @@ export default function Checkout() {
 
   const canSubmit = canSubmitBase && abierto === true;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (cartTyped.length === 0) {
@@ -302,7 +298,7 @@ export default function Checkout() {
     // Verificación inmediata en servidor
     fetch("/api/open", { cache: "no-store" })
       .then((r) => r.json())
-      .then((od) => {
+      .then(async (od) => {
         if (!od?.abierto) {
           alert(
             od?.nextOpen?.human
@@ -321,7 +317,12 @@ export default function Checkout() {
             alert("Debe ingresar un número de domicilio (ej.: N° 1234 o #1234).");
             return;
           }
-          const inside = booleanPointInPolygon(turfPoint(coords), zonaPolygon);
+          const { default: booleanPointInPolygon } = await import(
+            "@turf/boolean-point-in-polygon"
+          );
+          const { polygon, point } = await import("@turf/helpers");
+          const zonaPolygon = polygon([[...polygonCoords, polygonCoords[0]]]);
+          const inside = booleanPointInPolygon(point(coords), zonaPolygon);
           if (!inside) {
             alert("Lo sentimos, tu dirección está fuera de la zona de reparto.");
             return;

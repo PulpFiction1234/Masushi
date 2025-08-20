@@ -1,11 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import Navbar from "@/components/Navbar";
-import CarritoPanel from "@/components/CarritoPanel";
 import Footer from "@/components/Footer";
-import HeroCarousel from "@/components/HeroCarousel";
 import ProductSection from "@/components/ProductSection";
+
+const HeroCarousel = dynamic(() => import("@/components/HeroCarousel"));
+const CarritoPanel = dynamic(
+  () => import("@/components/CarritoPanel"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="p-4 text-white">Cargando carrito...</div>
+    ),
+  }
+);
+
 
 export default function Home() {
   const [isCartOpen, setIsCartOpen] = useState(false);

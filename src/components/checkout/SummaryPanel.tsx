@@ -19,10 +19,9 @@ interface Props {
   subtotalProductos: number;
   deliveryType: "retiro" | "delivery";
   deliveryFee: number;
-  /** pool gratis soya/teriyaki calculado en checkout */
-  maxGratisBasicas: number;
-  /** pool gratis jengibre/wasabi (default 2 si no lo usas) */
-  maxGratisJWas?: number;
+  maxGratisBasicas: number;   // pool soya/teriyaki
+  maxGratisJWas?: number;     // pool jengibre/wasabi
+  maxPalitosGratis?: number;  // 👈 nuevo
 }
 
 export default function SummaryPanel({
@@ -34,6 +33,7 @@ export default function SummaryPanel({
   deliveryFee,
   maxGratisBasicas,
   maxGratisJWas = 2,
+  maxPalitosGratis = 0,
 }: Props) {
   return (
     <div className={`${card} p-4 bg-neutral-900`}>
@@ -53,12 +53,12 @@ export default function SummaryPanel({
         <p className="font-semibold">{fmt(subtotalProductos)}</p>
       </div>
 
-      {/* Controles de salsas/extra */}
       <ExtrasSelector
         state={state}
         dispatch={dispatch}
         maxGratisBasicas={maxGratisBasicas}
         maxGratisJWas={maxGratisJWas}
+        maxPalitosGratis={maxPalitosGratis} // 👈 pasa el tope
       />
 
       {deliveryType === "delivery" && (

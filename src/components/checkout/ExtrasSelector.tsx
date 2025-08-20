@@ -8,6 +8,9 @@ import {
   PRECIO_TERIYAKI_EXTRA,
   CheckoutState,
   CheckoutAction,
+  // 👇 nuevos precios
+  PRECIO_PALITO_EXTRA,
+  PRECIO_AYUDA_PALITOS,
 } from "@/utils/checkout";
 import React from "react";
 
@@ -21,8 +24,10 @@ interface Props {
   dispatch: React.Dispatch<CheckoutAction>;
   /** total gratis disponibles SOLO para soya/teriyaki */
   maxGratisBasicas: number;
-  /** opcional: pool gratis para jengibre/wasabi (default 2) */
+  /** pool gratis jengibre/wasabi (default 2) */
   maxGratisJWas?: number;
+  /** tope de palitos gratis calculado desde el carrito */
+  maxPalitosGratis?: number;
 }
 
 export default function ExtrasSelector({
@@ -30,6 +35,7 @@ export default function ExtrasSelector({
   dispatch,
   maxGratisBasicas,
   maxGratisJWas = 2,
+  maxPalitosGratis = 0,
 }: Props) {
   // ===== Pool GRATIS: Soya/Teriyaki =====
   const soyaGratis = Number(state.soya || 0);
@@ -71,6 +77,13 @@ export default function ExtrasSelector({
     const maxForW = Math.max(0, maxGratisJWas - jengibreFree);
     if (next > maxForW) next = maxForW;
     dispatch({ type: "SET_FIELD", field: "wasabi", value: raw === "" ? "" : next });
+  };
+
+  // ===== Palitos (gratis) con tope por carrito =====
+  const onChangePalitosGratis = (raw: string) => {
+    let next = clampInt(Number(raw === "" ? 0 : raw));
+    if (maxPalitosGratis > 0 && next > maxPalitosGratis) next = maxPalitosGratis;
+    dispatch({ type: "SET_FIELD", field: "palitos", value: raw === "" ? "" : next });
   };
 
   return (
@@ -164,23 +177,45 @@ export default function ExtrasSelector({
 
         {/* Palitos (gratis) debajo de ambas columnas, MISMO recuadro */}
         <div className="mt-4 pt-3 border-t border-white/10">
-          <label htmlFor="palitos" className="block text-sm font-medium text-neutral-200 mb-1">
-            Palitos (gratis)
-          </label>
-          <input
-            id="palitos"
-            type="number"
-            min={0}
-            value={state.palitos}
-            onChange={(e) =>
-              dispatch({
-                type: "SET_FIELD",
-                field: "palitos",
-                value: e.target.value === "" ? "" : Math.max(0, Number(e.target.value)),
-              })
-            }
-            className={smallInput}
-          />
+          <div className="flex items-end gap-3">
+            <div>
+              <label htmlFor="palitos" className="block text-sm font-medium text-neutral-200 mb-1">
+                Palitos (gratis)
+              </label>
+              <input
+                id="palitos"
+                type="number"
+                min={0}
+                max={maxPalitosGratis > 0 ? maxPalitosGratis : undefined}
+                value={state.palitos}
+                onChange={(e) => onChangePalitosGratis(e.target.value)}
+                className={smallInput}
+              />
+            </div>
+            <p className="text-[11px] text-neutral-400">
+              Máx. palitos gratis: <span className="text-neutral-200 font-semibold">{maxPalitosGratis}</span>
+            </p>
+            
+          <div>
+            <label htmlFor="ayudaPalitos" className="block text-sm font-medium text-neutral-200 mb-1">
+              Ayuda palitos ({fmt(PRECIO_AYUDA_PALITOS)} c/u)
+            </label>
+            <input
+              id="ayudaPalitos"
+              type="number"
+              min={0}
+              value={state.ayudaPalitos}
+              onChange={(e) =>
+                dispatch({
+                  type: "SET_FIELD",
+                  field: "ayudaPalitos",
+                  value: e.target.value === "" ? "" : Math.max(0, Number(e.target.value)),
+                })
+              }
+              className={smallInput}
+            />
+          </div>
+          </div>
         </div>
       </div>
 
@@ -302,6 +337,27 @@ export default function ExtrasSelector({
                 dispatch({
                   type: "SET_FIELD",
                   field: "extraWasabi",
+                  value: e.target.value === "" ? "" : Math.max(0, Number(e.target.value)),
+                })
+              }
+              className={smallInput}
+            />
+          </div>
+
+          {/* 👇 NUEVOS CAMPOS EN UI */}
+          <div>
+            <label htmlFor="palitosExtra" className="block text-sm font-medium text-neutral-200 mb-1">
+              Palito extra ({fmt(PRECIO_PALITO_EXTRA)} c/u)
+            </label>
+            <input
+              id="palitosExtra"
+              type="number"
+              min={0}
+              value={state.palitosExtra}
+              onChange={(e) =>
+                dispatch({
+                  type: "SET_FIELD",
+                  field: "palitosExtra",
                   value: e.target.value === "" ? "" : Math.max(0, Number(e.target.value)),
                 })
               }

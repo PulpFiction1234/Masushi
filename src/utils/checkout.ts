@@ -1,3 +1,4 @@
+// src/utils/checkout.ts
 export const PRECIO_SOYA_EXTRA = 400;
 export const PRECIO_TERIYAKI_EXTRA = 1000;
 export const PRECIO_ACEVICHADA = 1200;
@@ -5,6 +6,10 @@ export const PRECIO_MARACUYA = 1100;
 export const PRECIO_JENGIBRE_EXTRA = 500;
 export const PRECIO_WASABI_EXTRA = 400;
 export const COSTO_DELIVERY = 1500;
+
+// 👇 nuevos
+export const PRECIO_PALITO_EXTRA = 200;
+export const PRECIO_AYUDA_PALITOS = 500;
 
 export const nfCLP = new Intl.NumberFormat("es-CL", {
   style: "currency",
@@ -114,7 +119,7 @@ export interface CheckoutState {
   acevichada: number | "";
   maracuya: number | "";
 
-  // Complementos
+  // Complementos (entrada del usuario)
   palitos: number | "";
 
   // Pool gratis independiente Jengibre/Wasabi (numéricos, p.ej. máx 2 en total entre ambos)
@@ -122,6 +127,10 @@ export interface CheckoutState {
   wasabi: number | "";        // gratis
   extraJengibre: number | ""; // se cobra
   extraWasabi: number | "";   // se cobra
+
+  // 👇 nuevos extras
+  palitosExtra: number | "";  // se cobra (200 c/u)
+  ayudaPalitos: number | "";  // se cobra (500 c/u)
 
   observacion: string;
   paymentMethod: PaymentMethod;
@@ -155,6 +164,10 @@ export const initialCheckoutState: CheckoutState = {
   extraJengibre: 0,
   extraWasabi: 0,
 
+  // 👇 nuevos extras
+  palitosExtra: 0,
+  ayudaPalitos: 0,
+
   observacion: "",
   paymentMethod: "",
 };
@@ -169,4 +182,35 @@ export function checkoutReducer(
     default:
       return state;
   }
+}
+
+
+export type ProductoMinPalitos = {
+  id?: number;
+  categoria?: string;
+  topePalitosGratis?: number; // nuevo en catálogo
+};
+
+export function palitosGratisPorUnidadFromCatalog(
+  item: CartItemLike,
+  byId: Map<number, ProductoMinPalitos>
+): number {
+  const p = byId.get(item.id);
+  if (p && typeof p.topePalitosGratis === "number") {
+    return Math.max(0, p.topePalitosGratis);
+  }
+  const cat = (p?.categoria ?? "").trim().toLowerCase();
+  if (cat.startsWith("bebida")) return 0;
+  return 1;
+}
+
+/** Suma total de palitos gratis del carrito según catálogo (escala por cantidad). */
+export function maxPalitosGratisFromCart(
+  cart: CartItemLike[],
+  byId: Map<number, ProductoMinPalitos>
+): number {
+  return cart.reduce(
+    (sum, it) => sum + palitosGratisPorUnidadFromCatalog(it, byId) * Math.max(0, Number(it.cantidad || 0)),
+    0
+  );
 }

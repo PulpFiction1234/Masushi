@@ -90,11 +90,16 @@ import {
   PRECIO_JENGIBRE_EXTRA,
   PRECIO_WASABI_EXTRA,
   COSTO_DELIVERY,
+  // 👇 nuevos imports para palitos
+  PRECIO_PALITO_EXTRA,
+  PRECIO_AYUDA_PALITOS,
+  maxPalitosGratisFromCart,
+  ProductoMinPalitos,
 } from "@/utils/checkout";
 import SummaryPanel from "@/components/checkout/SummaryPanel";
 import PaymentSelector from "@/components/checkout/PaymentSelector";
 
-// Catálogo (para salsasGratis / categoría)
+// Catálogo
 import { productos } from "@/data/productos";
 type ProductoMin = { id: number; categoria?: string; salsasGratis?: number };
 
@@ -107,7 +112,7 @@ const byId = new Map(productos.map((p) => [p.id, p]));
 const salsasGratisPorUnidad = (it: CartItemLike): number => {
   const p = byId.get(it.id) as ProductoMin | undefined;
   if (p && typeof p.salsasGratis === "number") return Math.max(0, p.salsasGratis);
-  // Fallback seguro: si no hay catálogo, asumimos 1 (bebidas en catálogo ya tienen 0).
+  // Fallback: 1 (en catálogo las bebidas ya vienen con 0)
   return 1;
 };
 
@@ -129,10 +134,13 @@ export default function Checkout() {
     acevichada,
     maracuya,
     palitos,
-    jengibre, // pool gratis J/W (como número)
-    wasabi,   // pool gratis J/W (como número)
+    jengibre, // pool gratis J/W (número)
+    wasabi,   // pool gratis J/W (número)
     extraJengibre,
     extraWasabi,
+    // 👇 nuevos en state (definidos en utils/checkout.ts)
+    palitosExtra,
+    ayudaPalitos,
     observacion,
     paymentMethod,
   } = state;
@@ -153,11 +161,7 @@ export default function Checkout() {
   const cartTyped = useMemo(() => cart as unknown as CartItemLike[], [cart]);
 
   const subtotalProductos = useMemo(
-    () =>
-      cartTyped.reduce(
-        (acc, it) => acc + priceOf(it) * it.cantidad,
-        0
-      ),
+    () => cartTyped.reduce((acc, it) => acc + priceOf(it) * it.cantidad, 0),
     [cartTyped]
   );
 
@@ -165,6 +169,12 @@ export default function Checkout() {
 
   // Pool gratis J/W fijo en 2
   const POOL_JW = 2;
+
+  // Tope de palitos gratis desde catálogo (1 por roll por defecto, bebidas 0, promos con tope definido)
+  const maxPalitosGratis = useMemo(
+    () => maxPalitosGratisFromCart(cartTyped, byId as Map<number, ProductoMinPalitos>),
+    [cartTyped]
+  );
 
   // Cálculos monetarios/totales
   const {
@@ -179,6 +189,9 @@ export default function Checkout() {
     costoTeriExtra,
     costoJengibreExtras,
     costoWasabiExtras,
+    // 👇 nuevos costos
+    costoPalitosExtra,
+    costoAyudaPalitos,
     deliveryFee,
     totalFinal,
     gratisBasicas,
@@ -193,14 +206,14 @@ export default function Checkout() {
 
     const soyaG = Number(soya || 0);
     const teriG = Number(teriyaki || 0);
-    const usados = soyaG + teriG;
+
     const capSoya = Math.max(0, gratis - teriG);
     const capTeri = Math.max(0, gratis - soyaG);
     const freeS = Math.min(soyaG, capSoya);
-    const freeT = Math.min(teriyaki || 0, capTeri);
+    const freeT = Math.min(teriG, capTeri);
 
     const pSoya = Math.max(0, soyaG - freeS);
-    const pTeri = Math.max(0, (Number(teriyaki || 0)) - freeT);
+    const pTeri = Math.max(0, teriG - freeT);
 
     const costoSoya = pSoya * PRECIO_SOYA_EXTRA;
     const costoTeri = pTeri * PRECIO_TERIYAKI_EXTRA;
@@ -215,6 +228,10 @@ export default function Checkout() {
     const costoSoyaPlus = Number(soyaExtra || 0) * PRECIO_SOYA_EXTRA;
     const costoTeriPlus = Number(teriyakiExtra || 0) * PRECIO_TERIYAKI_EXTRA;
 
+    // 👇 nuevos: palitos extra y ayuda palitos
+    const cPalitosExtra = Number(palitosExtra || 0) * PRECIO_PALITO_EXTRA;
+    const cAyudaPalitos = Number(ayudaPalitos || 0) * PRECIO_AYUDA_PALITOS;
+
     const fee = deliveryType === "delivery" ? COSTO_DELIVERY : 0;
 
     const total =
@@ -227,6 +244,8 @@ export default function Checkout() {
       mar +
       eJen +
       eWas +
+      cPalitosExtra +
+      cAyudaPalitos +
       fee;
 
     return {
@@ -241,6 +260,8 @@ export default function Checkout() {
       costoTeriExtra: costoTeri + costoTeriPlus,
       costoJengibreExtras: eJen,
       costoWasabiExtras: eWas,
+      costoPalitosExtra: cPalitosExtra,
+      costoAyudaPalitos: cAyudaPalitos,
       deliveryFee: fee,
       totalFinal: total,
       gratisBasicas: gratis,
@@ -256,6 +277,8 @@ export default function Checkout() {
     maracuya,
     extraJengibre,
     extraWasabi,
+    palitosExtra,
+    ayudaPalitos,
     deliveryType,
   ]);
 
@@ -327,14 +350,20 @@ export default function Checkout() {
           `Wasabi (gratis): ${Number(wasabi || 0)}/${POOL_JW}`,
         ];
 
+        const palitosLineas = [
+          `Palitos (gratis): ${Number(palitos || 0)} / ${maxPalitosGratis}`,
+          `Palitos extra: ${Number(palitosExtra || 0)} = ${fmt(costoPalitosExtra)}`,
+          `Ayuda palitos: ${Number(ayudaPalitos || 0)} = ${fmt(costoAyudaPalitos)}`,
+        ];
+
         const extrasTexto = [
           ...extrasBasicasLineas,
           ...jwGratisLineas,
+          ...palitosLineas,
           `Acevichada: ${Number(acevichada || 0)} = ${fmt(totalAcevichada)}`,
           `Maracuyá: ${Number(maracuya || 0)} = ${fmt(totalMaracuya)}`,
           `Extra jengibre: ${Number(extraJengibre || 0)} = ${fmt(costoJengibreExtras)}`,
           `Extra wasabi: ${Number(extraWasabi || 0)} = ${fmt(costoWasabiExtras)}`,
-          `Palitos (gratis): ${Number(palitos || 0)}`,
           deliveryType === "delivery" ? `Delivery: ${fmt(deliveryFee)}` : "",
           observacion ? `Observaciones: ${observacion}` : "",
         ]
@@ -389,6 +418,8 @@ export default function Checkout() {
                   deliveryFee={deliveryFee}
                   maxGratisBasicas={gratisBasicas}
                   maxGratisJWas={POOL_JW}
+                  // 👇 pásale el tope de palitos gratis al panel (y de ahí a ExtrasSelector)
+                  maxPalitosGratis={maxPalitosGratis}
                 />
               )}
 

@@ -1,5 +1,7 @@
 // data/productos.ts
 import type { StaticImageData } from "next/image";
+
+//california rolls
 import californiaKaniCheeseImg from "@/public/images/California kani cheese.webp";
 import californiaTeriImg from "@/public/images/California teri.webp";
 import californiaTeriCheeseImg from "@/public/images/California teri cheese.webp";
@@ -8,26 +10,43 @@ import CaliforniaSakeImg from "@/public/images/California sake.webp";
 import CaliforniaTakoImg from "@/public/images/California tako cheese.webp";
 import californiaEbiCheeseImg from "@/public/images/California ebi cheese.webp";
 import CaliforniaSakeCheeseImg from "@/public/images/california sake cheesse.webp";
+
+//hot rolls 
 import MechadaPankoImg from "@/public/images/Mechada panko.webp";
 import HotatePankoImg from "@/public/images/Hotate panko.webp";
 import TeriToriImg from "@/public/images/Teri tori.webp";
 import TakoPankoImg from "@/public/images/Tako panko.webp";
 import SakePankoImg from "@/public/images/Sake panko.webp";
 import EbiPankoImg from "@/public/images/Ebi panko.webp";
+import KaniPankoImg from "@/public/images/Kani panko.webp";
+import SabiPankoImg from "@/public/images/Sabi panko.webp";
+
+
+//handrolls
 import handrollImg from "@/public/images/Handroll.webp";
 import promoHandrollImg from "@/public/images/Promo handroll.webp";
+
+//hosomaki
 import hosomakiQuesoImg from "@/public/images/Hosomaki queso.webp";
 import hosomakiTeriImg from "@/public/images/Hosomaki teri.webp";
 import hosomakiSakeImg from "@/public/images/Hosomaki sake.webp";
 import hosomakiEbiImg from "@/public/images/Hosomaki ebi.webp";
+
+//ceviche
 import cevicheMixtoImg from "@/public/images/Ceviche mixto.webp";
+
+//nigiri
 import nigiriSakeImg from "@/public/images/Nigiri sake.webp";
 import nigiriEbiImg from "@/public/images/Nigiri ebi.webp";
 import nigiriTakoImg from "@/public/images/Nigiri tako.webp";
+
+//para picar
 import camaronFurayImg from "@/public/images/Camaron furay.webp";
 import polloFurayImg from "@/public/images/Pollo furay.webp";
 import gyozasChampinonImg from "@/public/images/Gyozas champiñon.webp";
 import gyozasImg from "@/public/images/Gyozas.webp";
+
+// promociones
 import promoUnoImg from "@/public/images/promo uno.webp";
 import promoHotImg from "@/public/images/promo hot.webp";
 import promo36Img from "@/public/images/promo 36piezas.webp";
@@ -35,7 +54,6 @@ import promo54Img from "@/public/images/promo 54piezas.webp";
 import promoVipImg from "@/public/images/promo vip.webp";
 
 //en salmon
-
 import TeriCheeseSalmonImg from "@/public/images/Teri cheese roll en salmon.webp";
 import SakeSalmonImg from "@/public/images/Sake roll en salmon.webp";
 import SakeCheeseSalmonImg from "@/public/images/Sake cheese roll en salmon.webp";
@@ -232,13 +250,18 @@ const _productos: Producto[] = [
 { id: 31, codigo: "031", nombre: "Ebi furay cheese roll en salmon", descripcion: "Camaron apanado - Queso crema - Cebollin - En salmon.", valor: 6900, imagen: EbiFuraySalmonImg, categoria: "Rolls envueltos en salmon" },
 
 
-
+// Hot rolls
+{ id: 48, codigo: "048", nombre: "Kani panko", descripcion: "Kanikama - Queso crema - Cebollin - En panko.", valor: 5900, imagen: KaniPankoImg, categoria: "Hot rolls" },
 { id: 49, codigo: "049", nombre: "Ebi cheese panko", descripcion: "Camaron - Queso crema - Cebollin - En panko.", valor: 6500, imagen: EbiPankoImg, categoria: "Hot rolls" },
+{ id: 51, codigo: "051", nombre: "Sabi panko", descripcion: "Salmon - Camaron - Queso crema - En panko.", valor: 6900, imagen: SabiPankoImg, categoria: "Hot rolls" },
 { id: 50, codigo: "050", nombre: "Teri tori", descripcion: "Pollo - Queso crema - Cebollin - En panko.", valor: 6400, imagen: TeriToriImg, categoria: "Hot rolls" },
 { id: 52, codigo: "052", nombre: "Sake cheese panko", descripcion: "Salmon - Queso crema - Cebollin - En panko.", valor: 6800, imagen: SakePankoImg, categoria: "Hot rolls" },
 { id: 53, codigo: "053", nombre: "Tako panko", descripcion: "Pulpo - Queso crema - Cebollin - En panko.", valor: 7100, imagen: TakoPankoImg, categoria: "Hot rolls" },
 { id: 54, codigo: "054", nombre: "Hotate panko", descripcion: "Ostion furay - Queso crema - Cebollin - En panko.", valor: 7100, imagen: HotatePankoImg, categoria: "Hot rolls" },
-{ id: 56, codigo: "056", nombre: "Mechada panko", descripcion: "Carne mechada - Queso crema - Cebollin - En panko.", valor: 7100, imagen: MechadaPankoImg, categoria: "Hot rolls" },  
+{ id: 56, codigo: "056", nombre: "Mechada panko", descripcion: "Carne mechada - Queso crema - Cebollin - En panko.", valor: 7100, imagen: MechadaPankoImg, categoria: "Hot rolls" }, 
+
+
+
 { id: 58, codigo: "058", nombre: "Hosomaki queso crema", descripcion: "Queso crema - Arroz/Nori.", valor: 3500, imagen: hosomakiQuesoImg, categoria: "Hosomaki" },
 { id: 59, codigo: "059", nombre: "Hosomaki teri", descripcion: "Pollo - Palta - Arroz - Nori.", valor: 3600, imagen: hosomakiTeriImg, categoria: "Hosomaki" },
 { id: 60, codigo: "060", nombre: "Hosomaki sake", descripcion: "Salmon - Palta - Arroz - Nori.", valor: 3900, imagen: hosomakiSakeImg, categoria: "Hosomaki" },

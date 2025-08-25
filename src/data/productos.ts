@@ -53,6 +53,9 @@ import promo36Img from "@/public/images/promo 36piezas.webp";
 import promo54Img from "@/public/images/promo 54piezas.webp";
 import promoVipImg from "@/public/images/promo vip.webp";
 
+//en palta
+import SabiCheesePaltaImg from "@/public/images/Sabi cheese palta.webp";
+
 //en salmon
 import TeriCheeseSalmonImg from "@/public/images/Teri cheese roll en salmon.webp";
 import SakeSalmonImg from "@/public/images/Sake roll en salmon.webp";
@@ -239,6 +242,9 @@ const _productos: Producto[] = [
       { id: "1y1",      label: "1 de pollo y 1 de camarón" },
     ],
   },
+
+  //en palta
+{ id: 22, codigo: "022", nombre: "Sabi roll en palta", descripcion: "Salmon - Camaron - Queso crema - En palta.", valor: 6900, imagen: SabiCheesePaltaImg, categoria: "Rolls envueltos en palta" },  
 
   //en salmon
 { id: 25, codigo: "025", nombre: "Teri cheese roll en salmon", descripcion: "Pollo - Queso crema - Palta - En salmon.", valor: 6400, imagen: TeriCheeseSalmonImg, categoria: "Rolls envueltos en salmon" },

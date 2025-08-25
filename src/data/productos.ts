@@ -34,6 +34,16 @@ import promo36Img from "@/public/images/promo 36piezas.webp";
 import promo54Img from "@/public/images/promo 54piezas.webp";
 import promoVipImg from "@/public/images/promo vip.webp";
 
+//en salmon
+
+import TeriCheeseSalmonImg from "@/public/images/Teri cheese roll en salmon.webp";
+import SakeSalmonImg from "@/public/images/Sake roll en salmon.webp";
+import SakeCheeseSalmonImg from "@/public/images/Sake cheese roll en salmon.webp";
+import EbiCheeseSalmonImg from "@/public/images/Ebi cheese roll en salmon.webp";
+import SabiSalmonImg from "@/public/images/Sabi roll en salmon.webp";
+import TakoCheeseSalmonImg from "@/public/images/Tako cheese roll en salmon.webp";
+import EbiFuraySalmonImg from "@/public/images/Ebi furay cheese roll en salmon.webp";
+
 // Bebidas
 import arizonaMangoImg from "@/public/images/Arizona mango.webp";
 import arizonaSandiaImg from "@/public/images/Arizona sandia.webp";
@@ -211,6 +221,18 @@ const _productos: Producto[] = [
       { id: "1y1",      label: "1 de pollo y 1 de camarón" },
     ],
   },
+
+  //en salmon
+{ id: 25, codigo: "025", nombre: "Teri cheese roll en salmon", descripcion: "Pollo - Queso crema - Palta - En salmon.", valor: 6400, imagen: TeriCheeseSalmonImg, categoria: "Rolls envueltos en salmon" },
+{ id: 26, codigo: "026", nombre: "Sake roll en salmon", descripcion: "Salmon - Palta - Cebollin - En salmon.", valor: 6600, imagen: SakeSalmonImg, categoria: "Rolls envueltos en salmon" },
+{ id: 27, codigo: "027", nombre: "Sake cheese roll en salmon", descripcion: "Salmon - Queso crema - Palta - En salmon.", valor: 6900, imagen: SakeCheeseSalmonImg, categoria: "Rolls envueltos en salmon" },
+{ id: 28, codigo: "028", nombre: "Ebi cheese roll en salmon", descripcion: "Camaron - Queso crema - Palta - En salmon.", valor: 6700, imagen: EbiCheeseSalmonImg, categoria: "Rolls envueltos en salmon" },
+{ id: 29, codigo: "029", nombre: "Sabi roll en salmon", descripcion: "Salmon - Queso crema - Camaron - En salmon.", valor: 6900, imagen: SabiSalmonImg, categoria: "Rolls envueltos en salmon" },
+{ id: 30, codigo: "030", nombre: "Tako cheese roll en salmon", descripcion: "Pulpo - Queso crema - Palta - En salmon.", valor: 6900, imagen: TakoCheeseSalmonImg, categoria: "Rolls envueltos en salmon" },  
+{ id: 31, codigo: "031", nombre: "Ebi furay cheese roll en salmon", descripcion: "Camaron apanado - Queso crema - Cebollin - En salmon.", valor: 6900, imagen: EbiFuraySalmonImg, categoria: "Rolls envueltos en salmon" },
+
+
+
 { id: 49, codigo: "049", nombre: "Ebi cheese panko", descripcion: "Camaron - Queso crema - Cebollin - En panko.", valor: 6500, imagen: EbiPankoImg, categoria: "Hot rolls" },
 { id: 50, codigo: "050", nombre: "Teri tori", descripcion: "Pollo - Queso crema - Cebollin - En panko.", valor: 6400, imagen: TeriToriImg, categoria: "Hot rolls" },
 { id: 52, codigo: "052", nombre: "Sake cheese panko", descripcion: "Salmon - Queso crema - Cebollin - En panko.", valor: 6800, imagen: SakePankoImg, categoria: "Hot rolls" },

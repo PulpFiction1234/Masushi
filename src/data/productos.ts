@@ -84,7 +84,7 @@ import cocaColaZeroBotellaImg from "@/public/images/Coca cola zero 1.5.webp";
 import spriteLataImg from "@/public/images/Sprite lata.webp";
 import spriteBotellaImg from "@/public/images/Sprite 1.5.webp";
 import monsterVerdeImg from "@/public/images/Monster verde.webp";
-import JumexPiñaImg from "@/public/images/jumex pina.webp";   
+import JumexPiñaImg from "@/public/images/Jumex pina.webp";   
 import JumexMangoImg from "@/public/images/Jumex mango.webp";   
 import JumexPinaCocoImg from "@/public/images/Jumex pina coco.webp";
 

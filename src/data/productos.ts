@@ -84,7 +84,7 @@ import cocaColaZeroBotellaImg from "@/public/images/Coca cola zero 1.5.webp";
 import spriteLataImg from "@/public/images/Sprite lata.webp";
 import spriteBotellaImg from "@/public/images/Sprite 1.5.webp";
 import monsterVerdeImg from "@/public/images/Monster verde.webp";
-import JumexPiñaImg from "@/public/images/Jumex pina.webp";   
+import JumexPinaImg from "@/public/images/Jumex pina.webp";   
 import JumexMangoImg from "@/public/images/Jumex mango.webp";   
 import JumexPinaCocoImg from "@/public/images/Jumex pina coco.webp";
 
@@ -364,7 +364,7 @@ const _productos: Producto[] = [
 { id: 302, codigo: "83", nombre: "Coca Cola Zero lata", descripcion: "Bebida gaseosa en lata 350 ml", valor: 1600, imagen: cocaColaZeroLataImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
 { id: 303, codigo: "83", nombre: "Sprite lata", descripcion: "Bebida gaseosa en lata 350 ml", valor: 1600, imagen: spriteLataImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
 { id: 84-1, codigo: "84", nombre: "Jumex mango lata", descripcion: "Nectar jumex mango 335ml", valor: 1600, imagen: JumexMangoImg  , categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
-{ id: 84-2, codigo: "084", nombre: "Jumex piña lata", descripcion: "Nectar jumex piña 335ml", valor: 1600, imagen: JumexPiñaImg , categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
+{ id: 84-2, codigo: "084", nombre: "Jumex piña lata", descripcion: "Nectar jumex piña 335ml", valor: 1600, imagen: JumexPinaImg , categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
 { id: 84-3, codigo: "0084", nombre: "Jumex piña-coco lata", descripcion: "Nectar jumex piña-coco 335ml", valor: 1600, imagen: JumexPinaCocoImg , categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
 { id: 307, codigo: "85", nombre: "Arizona Mango", descripcion: "Jugo en lata 500 ml", valor: 2500, imagen: arizonaMangoImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
 { id: 308, codigo: "85", nombre: "Arizona Sandía", descripcion: "Jugo en lata 500 ml", valor: 2500, imagen: arizonaSandiaImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },

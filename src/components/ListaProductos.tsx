@@ -32,6 +32,35 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
 
   const onAdd = useCallback(
     (prod: Producto, selId: string, e: React.MouseEvent<HTMLButtonElement>) => {
+      // caso configurable ("armalo")
+      if (prod.configuracion?.tipo === "armalo") {
+        if (!selId || !selId.startsWith("armalo:")) {
+          alert("Completa tu selección antes de agregar al carrito.");
+          return;
+        }
+        let payload: any;
+        try { payload = JSON.parse(selId.slice(7)); } catch {
+          alert("Hubo un problema con la selección. Intenta nuevamente.");
+          return;
+        }
+        if (!payload?.valid) {
+          alert("Elige 2 proteínas, 2 acompañamientos y una envoltura.");
+          return;
+        }
+        const precioUnit = typeof payload.price === "number" ? payload.price : prod.valor;
+
+        addToCart(
+          prod,
+          {
+            opcion: { id: "armalo", label: payload.label },
+            precioUnit
+          }
+        );
+        animateToCart(e.nativeEvent as unknown as MouseEvent);
+        return;
+      }
+
+      // caso normal (lo que ya tenías)
       let opt: ProductoOpcion | undefined;
       if (prod.opciones?.length) {
         opt = prod.opciones.find((o) => o.id === selId);

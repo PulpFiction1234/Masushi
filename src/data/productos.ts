@@ -53,6 +53,14 @@ import promo36Img from "@/public/images/promo 36piezas.webp";
 import promo54Img from "@/public/images/promo 54piezas.webp";
 import promoVipImg from "@/public/images/promo vip.webp";
 
+//en queso crema
+import SabiQuesoImg from "@/public/images/Sabi roll en queso.webp";
+import TakoQuesoImg from "@/public/images/Tako roll en queso.webp";
+import EbiQuesoImg from "@/public/images/Ebi roll en queso.webp";
+import SakeQuesoImg from "@/public/images/Sake roll en queso.webp";
+import TeriQuesoImg from "@/public/images/Teri roll en queso.webp";
+import EbyFurayQuesoImg from "@/public/images/Ebi furay en queso.webp";
+
 //en palta
 import SabiCheesePaltaImg from "@/public/images/Sabi cheese palta.webp";
 
@@ -76,6 +84,11 @@ import cocaColaZeroBotellaImg from "@/public/images/Coca cola zero 1.5.webp";
 import spriteLataImg from "@/public/images/Sprite lata.webp";
 import spriteBotellaImg from "@/public/images/Sprite 1.5.webp";
 import monsterVerdeImg from "@/public/images/Monster verde.webp";
+import JumexPiñaImg from "@/public/images/Jumex piña.webp";   
+import JumexMangoImg from "@/public/images/Jumex mango.webp";   
+import JumexPinaCocoImg from "@/public/images/Jumex piña-coco.webp";
+
+import armaTuRollImg from "@/public/images/Atugusto.webp";
 
 
 export interface ProductoOpcion {
@@ -83,6 +96,17 @@ export interface ProductoOpcion {
   label: string;   // texto visible para el usuario
   precio?: number; // opcional: si alguna opción cambia el precio
 }
+
+export interface GrupoMenu {
+  id: string;               // "proteina1" | "proteina2" | "acomp1" | "acomp2" | "envoltura"
+  label: string;            // texto del menú
+  opciones: ProductoOpcion[];
+}
+export interface ConfigArmalo {
+  tipo: "armalo";
+  menus: GrupoMenu[];
+}
+
 
 export interface Producto {
   id: number;
@@ -96,7 +120,32 @@ export interface Producto {
   blurDataUrl?: string;
   salsasGratis?: number;
   topePalitosGratis?: number;
+  configuracion?: ConfigArmalo;
 }
+const PROTEINAS: ProductoOpcion[] = [
+  { id: "salmon",          label: "Salmón" },
+  { id: "camaron",         label: "Camarón" },
+  { id: "pollo",           label: "Pollo" },
+  { id: "champinon",       label: "Champiñón" },
+  { id: "ostion",          label: "Ostión" },
+  { id: "salmon_ahumado",  label: "Salmón ahumado" },
+  { id: "mechada",         label: "Carne mechada" },
+];
+
+const ACOMPS: ProductoOpcion[] = [
+  { id: "palta",       label: "Palta" },
+  { id: "queso",       label: "Queso crema" },
+  { id: "palmito",     label: "Palmito" },
+  { id: "choclo_baby", label: "Choclo baby" },
+  { id: "cebollin",    label: "Cebollín" },
+];
+
+const ENVOLTURA: ProductoOpcion[] = [
+  { id: "palta",   label: "Palta" },
+  { id: "salmon",  label: "Salmón" },
+  { id: "queso",   label: "Queso crema" },
+  { id: "panko",   label: "Panko (frito)" },
+];
 
 // Definición normal (IDs y códigos únicos)
 const _productos: Producto[] = [
@@ -104,7 +153,7 @@ const _productos: Producto[] = [
       id: 32,
       codigo: "032",
       nombre: "California kani cheese",
-      descripcion: "Kanikama/Queso crema/Palta",
+      descripcion: "Kanikama - Queso crema - Palta",
       valor: 5300, // ajusta si corresponde
       imagen: californiaKaniCheeseImg,
       categoria: "California rolls",
@@ -118,7 +167,7 @@ const _productos: Producto[] = [
       id: 33,
       codigo: "033",
       nombre: "California teri",
-      descripcion: "Pollo teriyaki/Palta",
+      descripcion: "Pollo teriyaki - Palta",
       valor: 5400, // ajusta si corresponde
       imagen: californiaTeriImg,
       categoria: "California rolls",
@@ -132,7 +181,7 @@ const _productos: Producto[] = [
     id: 34,
     codigo: "034",
     nombre: "California teri cheese",
-    descripcion: "Pollo teriyaki/Queso crema/Palta",
+    descripcion: "Pollo teriyaki - Queso crema - Palta",
     valor: 5600, // ajusta si corresponde
     imagen: californiaTeriCheeseImg,
     categoria: "California rolls",
@@ -146,7 +195,7 @@ const _productos: Producto[] = [
     id: 35,
     codigo: "035",
     nombre: "California ebi",
-    descripcion: "Camaron/Palta",
+    descripcion: "Camaron - Palta",
     valor: 5600, // ajusta si corresponde
     imagen: californiaEbiImg,
     categoria: "California rolls",
@@ -160,7 +209,7 @@ const _productos: Producto[] = [
     id: 36,
     codigo: "036",
     nombre: "California ebi cheese",
-    descripcion: "Camaron/Queso crema/Palta",
+    descripcion: "Camaron/Queso crema - Palta",
     valor: 5600, // ajusta si corresponde
     imagen: californiaEbiCheeseImg,
     categoria: "California rolls",
@@ -174,7 +223,7 @@ const _productos: Producto[] = [
     id: 37,
     codigo: "037",
     nombre: "California sake",
-    descripcion: "Salmon/Palta",
+    descripcion: "Salmon - Palta",
     valor: 5900, // ajusta si corresponde
     imagen: CaliforniaSakeImg,
     categoria: "California rolls",
@@ -188,7 +237,7 @@ const _productos: Producto[] = [
     id: 38,
     codigo: "038",
     nombre: "California sake cheese",
-    descripcion: "Salmon/Queso crema/Palta",
+    descripcion: "Salmon - Queso crema - Palta",
     valor: 5600, // ajusta si corresponde
     imagen: CaliforniaSakeCheeseImg,
     categoria: "California rolls",
@@ -202,7 +251,7 @@ const _productos: Producto[] = [
     id: 39,
     codigo: "039",
     nombre: "California tako cheese",
-    descripcion: "Pulpo/Queso crema/Palta",
+    descripcion: "Pulpo - Queso crema - Palta",
     valor: 6400, // ajusta si corresponde
     imagen: CaliforniaTakoImg,
     categoria: "California rolls",
@@ -212,6 +261,8 @@ const _productos: Producto[] = [
       { id: "Masago",      label: "Masago" },
     ],
     },
+
+    //handrolls
   {
     id: 57,
     codigo: "057",
@@ -243,7 +294,14 @@ const _productos: Producto[] = [
     ],
   },
 
-  //en palta
+  //en queso crema
+{ id: 9, codigo: "009", nombre: "Tako roll en queso crema", descripcion: "Pulpo - Palta - Cebollin - En Queso crema.", valor: 6900, imagen: TakoQuesoImg , categoria: "Rolls envueltos en queso crema" }, 
+{ id: 10, codigo: "010", nombre: "Teri roll en queso crema", descripcion: "Pollo - Palta - Cebollin - En Queso crema.", valor: 6000, imagen: TeriQuesoImg , categoria: "Rolls envueltos en queso crema" },
+{ id: 11, codigo: "011", nombre: "Shinsen roll", descripcion: "Salmon - Palta - Cebollin - En Queso crema.", valor: 6500, imagen: SakeQuesoImg , categoria: "Rolls envueltos en queso crema" },
+{ id: 12, codigo: "012", nombre: "Palm roll", descripcion: "Camaron - Palta - Cebollin - En Queso crema.", valor: 6500, imagen: EbiQuesoImg , categoria: "Rolls envueltos en queso crema" },
+{ id: 13, codigo: "013", nombre: "Sabi roll en queso crema", descripcion: "Salmon - Camaron - Palta - En Queso crema.", valor: 6600, imagen: SabiQuesoImg , categoria: "Rolls envueltos en queso crema" },
+{ id: 14, codigo: "014", nombre: "Ebi furay roll en queso crema", descripcion: "Camaron apanado - Palta - Cebollin - En Queso crema.", valor: 6500, imagen: EbyFurayQuesoImg , categoria: "Rolls envueltos en queso crema" },
+//en palta
 { id: 22, codigo: "022", nombre: "Sabi roll en palta", descripcion: "Salmon - Camaron - Queso crema - En palta.", valor: 6900, imagen: SabiCheesePaltaImg, categoria: "Rolls envueltos en palta" },  
 
   //en salmon
@@ -268,7 +326,7 @@ const _productos: Producto[] = [
 
 
 
-{ id: 58, codigo: "058", nombre: "Hosomaki queso crema", descripcion: "Queso crema - Arroz/Nori.", valor: 3500, imagen: hosomakiQuesoImg, categoria: "Hosomaki" },
+{ id: 58, codigo: "058", nombre: "Hosomaki queso crema", descripcion: "Queso crema - Arroz - Nori.", valor: 3500, imagen: hosomakiQuesoImg, categoria: "Hosomaki" },
 { id: 59, codigo: "059", nombre: "Hosomaki teri", descripcion: "Pollo - Palta - Arroz - Nori.", valor: 3600, imagen: hosomakiTeriImg, categoria: "Hosomaki" },
 { id: 60, codigo: "060", nombre: "Hosomaki sake", descripcion: "Salmon - Palta - Arroz - Nori.", valor: 3900, imagen: hosomakiSakeImg, categoria: "Hosomaki" },
 { id: 61, codigo: "061", nombre: "Hosomaki ebi", descripcion: "Camaron - Palta - Arroz - Nori.", valor: 3900, imagen: hosomakiEbiImg, categoria: "Hosomaki" },
@@ -305,9 +363,9 @@ const _productos: Producto[] = [
 { id: 301, codigo: "83", nombre: "Coca Cola Original lata", descripcion: "Bebida gaseosa en lata 350 ml", valor: 1600, imagen: cocaColaOriginalLataImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
 { id: 302, codigo: "83", nombre: "Coca Cola Zero lata", descripcion: "Bebida gaseosa en lata 350 ml", valor: 1600, imagen: cocaColaZeroLataImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
 { id: 303, codigo: "83", nombre: "Sprite lata", descripcion: "Bebida gaseosa en lata 350 ml", valor: 1600, imagen: spriteLataImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
-//{ id: 84-1, codigo: "84", nombre: "Jumex mango lata", descripcion: "Nectar jumex mango 335ml", valor: 1600, imagen: cocaColaOriginalLataImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
-//{ id: 84-2, codigo: "084", nombre: "Jumex piña lata", descripcion: "Nectar jumex piña 335ml", valor: 1600, imagen: cocaColaZeroLataImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
-//{ id: 84-3, codigo: "0084", nombre: "Jumex piña-coco lata", descripcion: "Nectar jumex piña-coco 335ml", valor: 1600, imagen: spriteLataImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
+{ id: 84-1, codigo: "84", nombre: "Jumex mango lata", descripcion: "Nectar jumex mango 335ml", valor: 1600, imagen: JumexMangoImg  , categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
+{ id: 84-2, codigo: "084", nombre: "Jumex piña lata", descripcion: "Nectar jumex piña 335ml", valor: 1600, imagen: JumexPiñaImg , categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
+{ id: 84-3, codigo: "0084", nombre: "Jumex piña-coco lata", descripcion: "Nectar jumex piña-coco 335ml", valor: 1600, imagen: JumexPinaCocoImg , categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
 { id: 307, codigo: "85", nombre: "Arizona Mango", descripcion: "Jugo en lata 500 ml", valor: 2500, imagen: arizonaMangoImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
 { id: 308, codigo: "85", nombre: "Arizona Sandía", descripcion: "Jugo en lata 500 ml", valor: 2500, imagen: arizonaSandiaImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
 { id: 309, codigo: "85", nombre: "Arizona Uva", descripcion: "Jugo en lata 500 ml", valor: 2500, imagen: arizonaUvaImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
@@ -316,7 +374,25 @@ const _productos: Producto[] = [
 { id: 312, codigo: "87", nombre: "Coca Cola Zero 1.5 L", descripcion: "Bebida gaseosa botella 1.5 L", valor: 3000, imagen: cocaColaZeroBotellaImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
 { id: 313, codigo: "87", nombre: "Sprite 1.5 L", descripcion: "Bebida gaseosa botella 1.5 L", valor: 3000, imagen: spriteBotellaImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
 
-
+{
+    id: 8,
+    codigo: "008",
+    nombre: "Ármalo a tu gusto",
+    descripcion: "",
+    valor: 8500,
+    imagen: armaTuRollImg,
+    categoria: "Roll sin arroz",
+    configuracion: {
+      tipo: "armalo",
+      menus: [
+        { id: "proteina1", label: "Proteína 1", opciones: PROTEINAS },
+        { id: "proteina2", label: "Proteína 2", opciones: PROTEINAS },
+        { id: "acomp1",    label: "Acompañamiento 1", opciones: ACOMPS },
+        { id: "acomp2",    label: "Acompañamiento 2", opciones: ACOMPS },
+        { id: "envoltura", label: "Envoltura", opciones: ENVOLTURA },
+      ],
+    },
+  },
  
 ];
 

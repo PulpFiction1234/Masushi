@@ -54,15 +54,25 @@ export default function ProductSection({ title, productIds, linkBase }: ProductS
 
                 <div className="mt-auto pt-2 flex items-center justify-between">
                   <span className="font-bold">{formatCLP(p.valor)}</span>
-                  <button
-                    onClick={(e) => {
-                      addToCart(p);
-                      animateToCart(e.nativeEvent as unknown as MouseEvent);
-                    }}
-                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs"
-                  >
-                    Agregar
-                  </button>
+
+                  {p.configuracion?.tipo !== "armalo" ? (
+                    <button
+                      onClick={(e) => {
+                        addToCart(p);
+                        animateToCart(e.nativeEvent as unknown as MouseEvent);
+                      }}
+                      className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs"
+                    >
+                      Agregar
+                    </button>
+                  ) : (
+                    <a
+                      href={`${linkBase}${p.id}`}
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs"
+                    >
+                      Personalizar
+                    </a>
+                  )}
                 </div>
 
                 <a

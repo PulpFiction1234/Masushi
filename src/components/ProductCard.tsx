@@ -2,8 +2,14 @@ import React from "react";
 import Image from "next/image";
 import { type Producto } from "@/data/productos";
 import ProductOptionSelector from "./ProductOptionSelector";
+import BuildYourRollSelector from "./BuildYourRollSelector"; // ⬅️ NUEVO
 import { fmtMiles } from "@/utils/format";
 import { WIDE_THRESHOLD, type FitMode } from "@/utils/constants";
+
+function parseArmalo(encoded?: string) {
+  if (!encoded || !encoded.startsWith("armalo:")) return null;
+  try { return JSON.parse(encoded.slice(7)); } catch { return null; }
+}
 
 interface Props {
   product: Producto;
@@ -23,12 +29,27 @@ const ProductCard: React.FC<Props> = ({
   onFitChange,
 }) => {
   const tieneOpciones = !!product.opciones?.length;
+  const esArmalo = product.configuracion?.tipo === "armalo";
+  const armalo = esArmalo ? parseArmalo(selectedOptionId) : null;
+
   const objectFitClass = fitMode === "contain" ? "object-contain" : "object-cover";
+
+  const precioMostrar = esArmalo
+    ? (armalo?.price ?? product.valor)
+    : tieneOpciones
+      ? (() => {
+          const optSel = product.opciones!.find((o) => o.id === selectedOptionId);
+          return (optSel?.precio ?? product.valor) || 0;
+        })()
+      : product.valor;
+
+  const disabled =
+    esArmalo ? !armalo?.valid : (tieneOpciones && !selectedOptionId);
 
   return (
     <div className="bg-gray-900 rounded-lg shadow p-4 flex flex-col h-full">
       <div className="relative aspect-square w-full overflow-hidden rounded bg-white">
-           <Image
+        <Image
           src={product.imagen}
           alt={product.nombre}
           fill
@@ -57,7 +78,7 @@ const ProductCard: React.FC<Props> = ({
       <h3 className="text-lg text-gray-200 font-semibold mt-2">{product.nombre}</h3>
       <p className="text-sm text-gray-400">{product.descripcion}</p>
 
-      {tieneOpciones && (
+      {!esArmalo && tieneOpciones && (
         <ProductOptionSelector
           productId={product.id}
           opciones={product.opciones!}
@@ -67,25 +88,28 @@ const ProductCard: React.FC<Props> = ({
         />
       )}
 
+      {esArmalo && product.configuracion && (
+        <BuildYourRollSelector
+          productId={product.id}
+          config={product.configuracion}
+          precioBase={product.valor}
+          selectedId={selectedOptionId}
+          onChange={onSelectOption}
+        />
+      )}
+
       <div className="mt-auto">
         <p className="font-bold text-gray-200 mt-3">
           {"$"}
-          {fmtMiles.format(
-            tieneOpciones
-              ? (() => {
-                  const optSel = product.opciones!.find((o) => o.id === selectedOptionId);
-                  return (optSel?.precio ?? product.valor) || 0;
-                })()
-              : product.valor
-          )}
+          {fmtMiles.format(precioMostrar)}
         </p>
 
         <button
           type="button"
           onClick={onAdd}
           className="bg-green-500 text-white px-4 py-2 mt-3 rounded hover:bg-green-600 w-full disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={tieneOpciones && !selectedOptionId}
-          aria-disabled={tieneOpciones && !selectedOptionId}
+          disabled={disabled}
+          aria-disabled={disabled}
         >
           Agregar al carrito
         </button>

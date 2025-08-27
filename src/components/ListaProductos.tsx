@@ -7,6 +7,8 @@ import { useCart } from "@/context/CartContext";
 import ProductCard from "./ProductCard";
 import { normalize } from "@/utils/strings";
 import { type FitMode } from "@/utils/constants";
+// Reutilizamos el tipo exportado por el selector (sólo tipo => no genera ciclo en runtime)
+import type { ArmaloPayload } from "./BuildYourRollSelector";
 
 interface ListaProductosProps {
   categoriaSeleccionada: string | null;
@@ -38,22 +40,27 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
           alert("Completa tu selección antes de agregar al carrito.");
           return;
         }
-        let payload: any;
-        try { payload = JSON.parse(selId.slice(7)); } catch {
+
+        let payload: ArmaloPayload | null = null;
+        try {
+          payload = JSON.parse(selId.slice(7)) as ArmaloPayload;
+        } catch {
           alert("Hubo un problema con la selección. Intenta nuevamente.");
           return;
         }
+
         if (!payload?.valid) {
           alert("Elige 2 proteínas, 2 acompañamientos y una envoltura.");
           return;
         }
+
         const precioUnit = typeof payload.price === "number" ? payload.price : prod.valor;
 
         addToCart(
           prod,
           {
             opcion: { id: "armalo", label: payload.label },
-            precioUnit
+            precioUnit,
           }
         );
         animateToCart(e.nativeEvent as unknown as MouseEvent);

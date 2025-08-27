@@ -1,7 +1,6 @@
-// components/BuildYourRollSelector.tsx
+// src/components/BuildYourRollSelector.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { type ConfigArmalo, type ProductoOpcion } from "@/data/productos";
-// import { fmtMiles } from "@/utils/format"; // ⬅️ ya no mostramos precio
 
 type Sel = {
   proteina1?: string;
@@ -11,19 +10,30 @@ type Sel = {
   envoltura?: string;
 };
 
+// Payload tipado que viajara en selectedId (JSON dentro de "armalo:...")
+export type ArmaloPayload = Sel & {
+  price: number;
+  label: string;
+  valid: boolean;
+};
+
 function optMap(menus: ConfigArmalo["menus"]) {
   const map = new Map<string, ProductoOpcion>();
   menus.forEach((m) => m.opciones.forEach((o) => map.set(o.id, o)));
   return map;
 }
 
-function encodeArmalo(payload: any) {
+function encodeArmalo(payload: ArmaloPayload) {
   return "armalo:" + JSON.stringify(payload);
 }
 
-function decodeArmalo(selectedId: string | undefined) {
+function decodeArmalo(selectedId: string | undefined): ArmaloPayload | null {
   if (!selectedId?.startsWith("armalo:")) return null;
-  try { return JSON.parse(selectedId.slice(7)); } catch { return null; }
+  try {
+    return JSON.parse(selectedId.slice(7)) as ArmaloPayload;
+  } catch {
+    return null;
+  }
 }
 
 interface Props {
@@ -35,14 +45,14 @@ interface Props {
 }
 
 const BuildYourRollSelector: React.FC<Props> = ({
-  productId,
+  productId: _productId, // subrayado para evitar warning, pero además lo usamos abajo
   config,
   precioBase,
   selectedId,
   onChange,
 }) => {
   const allOpts = useMemo(() => optMap(config.menus), [config.menus]);
-  const initial = decodeArmalo(selectedId) as Sel | null;
+  const initial = decodeArmalo(selectedId);
   const [sel, setSel] = useState<Sel>(initial ?? {});
 
   const isValid =
@@ -50,7 +60,7 @@ const BuildYourRollSelector: React.FC<Props> = ({
     !!sel.acomp1 && !!sel.acomp2 && sel.acomp1 !== sel.acomp2 &&
     !!sel.envoltura;
 
-  // Calculamos el total, pero no lo mostramos.
+  // Calculamos total (no lo mostramos, pero viaja en el payload)
   const precioExtra =
     (sel.proteina1 ? allOpts.get(sel.proteina1)?.precio ?? 0 : 0) +
     (sel.proteina2 ? allOpts.get(sel.proteina2)?.precio ?? 0 : 0) +
@@ -67,7 +77,7 @@ const BuildYourRollSelector: React.FC<Props> = ({
     : "Personaliza tu roll";
 
   useEffect(() => {
-    const payload = { ...sel, price: precioTotal, label, valid: isValid };
+    const payload: ArmaloPayload = { ...sel, price: precioTotal, label, valid: isValid };
     onChange(encodeArmalo(payload));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sel.proteina1, sel.proteina2, sel.acomp1, sel.acomp2, sel.envoltura]);
@@ -83,7 +93,7 @@ const BuildYourRollSelector: React.FC<Props> = ({
     <label className="block text-[10px] leading-4 text-gray-400 font-medium">
       {labelText}
       <select
-        className="mt-0.5 w-full bg-gray-800 text-gray-100 text-[10px] leading-4 rounded-sm border border-gray-700 px-2 py-1 h-5"
+        className="mt-0.5 w-full bg-gray-800 text-gray-100 text-[10px] leading-4 rounded-sm border border-gray-700 px-2 py-1 h-7"
         value={sel[id] ?? ""}
         onChange={(e) => setSel((s) => ({ ...s, [id]: e.target.value || undefined }))}
       >
@@ -91,8 +101,6 @@ const BuildYourRollSelector: React.FC<Props> = ({
         {opciones.map((o) => (
           <option key={o.id} value={o.id} disabled={otherSelected === o.id}>
             {o.label}
-            {/* si una opción tiene recargo, se puede mantener en el texto */}
-            {typeof o.precio === "number" && o.precio > 0 ? ` (+$${o.precio})` : ""}
           </option>
         ))}
       </select>
@@ -100,8 +108,11 @@ const BuildYourRollSelector: React.FC<Props> = ({
   );
 
   return (
-    <fieldset className="mt-3 text-left text-[10px]">
-     
+    <fieldset
+      className="mt-3 text-left text-[10px]"
+      data-product-id={_productId} // lo usamos para evitar 'unused var' y puede ayudarte en QA
+    >
+      <legend className="text-[10px] text-gray-400 mb-1 tracking-wide">Personaliza tu roll</legend>
 
       {/* Proteínas lado a lado */}
       <div className="grid grid-cols-2 gap-1">
@@ -119,8 +130,6 @@ const BuildYourRollSelector: React.FC<Props> = ({
       <div className="mt-1">
         {renderSelect("envoltura", getMenu("envoltura").label, getMenu("envoltura").opciones)}
       </div>
-
-      {/* ❌ Eliminado el párrafo de "Precio: ..." para ganar espacio visual */}
     </fieldset>
   );
 };

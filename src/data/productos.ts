@@ -57,7 +57,7 @@ import promoVipImg from "@/public/images/promo vip.webp";
 import SabiQuesoImg from "@/public/images/Sabi roll en queso.webp";
 import TakoQuesoImg from "@/public/images/Tako roll en queso.webp";
 import EbiQuesoImg from "@/public/images/Ebi roll en queso.webp";
-import SakeQuesoImg from "@/public/images/Sake roll en queso.webp";
+import SakeQuesoImg from "@/public/images/Shinshen roll.webp";
 import TeriQuesoImg from "@/public/images/Teri roll en queso.webp";
 import EbyFurayQuesoImg from "@/public/images/Ebi furay en queso.webp";
 
@@ -84,9 +84,9 @@ import cocaColaZeroBotellaImg from "@/public/images/Coca cola zero 1.5.webp";
 import spriteLataImg from "@/public/images/Sprite lata.webp";
 import spriteBotellaImg from "@/public/images/Sprite 1.5.webp";
 import monsterVerdeImg from "@/public/images/Monster verde.webp";
-import JumexPiñaImg from "@/public/images/Jumex piña.webp";   
+import JumexPiñaImg from "@/public/images/Jumex pina.webp";   
 import JumexMangoImg from "@/public/images/Jumex mango.webp";   
-import JumexPinaCocoImg from "@/public/images/Jumex piña-coco.webp";
+import JumexPinaCocoImg from "@/public/images/Jumex pina coco.webp";
 
 import armaTuRollImg from "@/public/images/Atugusto.webp";
 

@@ -1,6 +1,13 @@
 // data/productos.ts
 import type { StaticImageData } from "next/image";
 
+
+//rolls especiales
+
+import AcevichadoRollImg from "@/public/images/Acevichado roll.webp";
+import MaguroRollImg from "@/public/images/Maguro roll.webp";
+
+
 //california rolls
 import californiaKaniCheeseImg from "@/public/images/California kani cheese.webp";
 import californiaTeriImg from "@/public/images/California teri.webp";
@@ -303,7 +310,10 @@ const _productos: Producto[] = [
     ],
   },
 
-  //en queso crema
+// rolls especiales
+{ id: 1, codigo: "001", nombre: "Maguro roll", descripcion: "Camaron apanado - Palta - en Atun con salsa acevichada.", valor: 7500, imagen: MaguroRollImg, categoria: "Roll premium" },
+{ id: 2, codigo: "002", nombre: "Acevichado roll", descripcion: "Camarón - Queso crema -Palta - En salmon con salsa acevichada.", valor: 7100, imagen: AcevichadoRollImg, categoria: "Roll premium" },
+//en queso crema
 { id: 9, codigo: "009", nombre: "Tako roll en queso crema", descripcion: "Pulpo - Palta - Cebollin - En Queso crema.", valor: 6900, imagen: TakoQuesoImg , categoria: "Rolls envueltos en queso crema" }, 
 { id: 10, codigo: "010", nombre: "Teri roll en queso crema", descripcion: "Pollo - Palta - Cebollin - En Queso crema.", valor: 6000, imagen: TeriQuesoImg , categoria: "Rolls envueltos en queso crema" },
 { id: 11, codigo: "011", nombre: "Shinsen roll", descripcion: "Salmon - Palta - Cebollin - En Queso crema.", valor: 6500, imagen: SakeQuesoImg , categoria: "Rolls envueltos en queso crema" },
@@ -352,7 +362,7 @@ const _productos: Producto[] = [
 { id: 61, codigo: "061", nombre: "Hosomaki ebi", descripcion: "Camaron - Palta - Arroz - Nori.", valor: 3900, imagen: hosomakiEbiImg, categoria: "Hosomaki" },
 
 //ceviche
-{ id: 65, codigo: "065", nombre: "Ceviche mixto", descripcion: "Salmon/Camaron/Pimenton/Cebolla morada/Leche de tigre/Palta.", valor: 12900, imagen: cevicheMixtoImg, categoria: "Ceviche" },
+{ id: 65, codigo: "065", nombre: "Ceviche mixto", descripcion: "Salmon - Camaron - Pimenton - Cebolla morada - Leche de tigre - Palta.", valor: 12900, imagen: cevicheMixtoImg, categoria: "Ceviche" },
 
 //nigiri
 { id: 66, codigo: "066", nombre: "Nigiri sake", descripcion: "Bolita de arroz - Salmon.", valor: 3400, imagen: nigiriSakeImg, categoria: "Nigiri" },

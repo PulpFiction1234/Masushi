@@ -119,7 +119,7 @@ export default function MenuPage() {
           {/* 🔎 NUEVO: mini buscador (sticky bajo el Navbar) */}
           <div className="sticky top-30 z-30 mx-auto max-w-2xl mb-4">
             <label htmlFor="buscador" className="sr-only">
-              Buscar productos por nombre, descripción o código
+              Buscar productos por nombre, ingrediente o código
             </label>
             <div className="relative">
               <input

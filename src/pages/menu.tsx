@@ -1,5 +1,6 @@
 "use client";
-import React, { useEffect, useState } from "react";
+
+import React, { useEffect, useState, useDeferredValue } from "react";
 import ListaProductos from "@/components/ListaProductos";
 import Navbar from "@/components/Navbar";
 
@@ -13,6 +14,10 @@ const categorias = [
 export default function MenuPage() {
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string | null>(null);
   const [menuAbierto, setMenuAbierto] = useState(false);
+
+  // 🔎 NUEVO: estado del buscador
+  const [busqueda, setBusqueda] = useState("");
+  const busquedaDeferida = useDeferredValue(busqueda);
 
   // Bloquear scroll y cerrar con ESC cuando el menú móvil está abierto
   useEffect(() => {
@@ -64,7 +69,6 @@ export default function MenuPage() {
           role="dialog"
           aria-modal="true"
         >
-          {/* Encabezado del panel (con botón cerrar solo en móvil) */}
           <div className="flex items-center justify-between px-3 pt-4 pb-2 md:pb-3">
             <h2 className="text-base font-bold">Categorías</h2>
             <button
@@ -77,7 +81,6 @@ export default function MenuPage() {
             </button>
           </div>
 
-          {/* Contenedor con scroll */}
           <div
             className="flex-1 overflow-y-auto overscroll-contain px-2 space-y-1.5 pb-[calc(env(safe-area-inset-bottom)+24px)]"
             style={{ WebkitOverflowScrolling: "touch" }}
@@ -111,12 +114,46 @@ export default function MenuPage() {
           </div>
         </aside>
 
-        {/* Contenido: en desktop le damos margen para que no quede bajo el sidebar fijo */}
+        {/* Contenido */}
         <main className="min-h-screen p-6 text-center bg-gray-950 md:ml-56">
-          {/* ⬇️ clave para FORZAR REMOUNT al cambiar de categoría */}
+          {/* 🔎 NUEVO: mini buscador (sticky bajo el Navbar) */}
+          <div className="sticky top-30 z-30 mx-auto max-w-2xl mb-4">
+            <label htmlFor="buscador" className="sr-only">
+              Buscar productos por nombre, descripción o código
+            </label>
+            <div className="relative">
+              <input
+                id="buscador"
+                type="search"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                placeholder="Buscar por nombre, descripción o código…"
+                autoComplete="off"
+                className="
+                  w-full rounded-xl bg-gray-800 text-white placeholder-gray-400
+                  px-4 py-3 pr-10 shadow-inner outline-none ring-1 ring-gray-700
+                  focus:ring-2 focus:ring-emerald-500 transition
+                "
+                aria-describedby="hint-busqueda"
+              />
+              {busqueda && (
+                <button
+                  type="button"
+                  onClick={() => setBusqueda("")}
+                  aria-label="Limpiar búsqueda"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-300 hover:text-white"
+                >
+                  ✕  
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Remount por categoría (la búsqueda NO remonta) */}
           <ListaProductos
             key={`cat-${categoriaSeleccionada ?? "todas"}`}
             categoriaSeleccionada={categoriaSeleccionada}
+            busqueda={busquedaDeferida} // ← NUEVO
           />
         </main>
       </div>

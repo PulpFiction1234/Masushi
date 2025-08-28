@@ -7,25 +7,55 @@ import { useCart } from "@/context/CartContext";
 import ProductCard from "./ProductCard";
 import { normalize } from "@/utils/strings";
 import { type FitMode } from "@/utils/constants";
-// Reutilizamos el tipo exportado por el selector (sólo tipo => no genera ciclo en runtime)
 import type { ArmaloPayload } from "./BuildYourRollSelector";
 
 interface ListaProductosProps {
   categoriaSeleccionada: string | null;
+  busqueda?: string; // ← NUEVO
 }
 
-const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }) => {
+const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada, busqueda = "" }) => {
   const { addToCart } = useCart();
   const selected = categoriaSeleccionada ? normalize(categoriaSeleccionada) : "";
 
   const [seleccion, setSeleccion] = useState<Record<number, string>>({});
   const [fitMap, setFitMap] = useState<Record<number, FitMode>>({});
 
-  // 1) Filtra
+  // 🔎 NUEVO: utilidades búsqueda
+  const query = normalize(busqueda).trim();
+  const tokens = useMemo(
+    () => query.split(/\s+/).filter(Boolean),
+    [query]
+  );
+
+  // 1) Filtra por categoría + búsqueda (nombre/desc/código)
   const productosFiltrados = useMemo(() => {
-    if (!selected) return productos;
-    return productos.filter((p) => normalize(p.categoria) === selected);
-  }, [selected]);
+    // base por categoría
+    const base = selected
+      ? productos.filter((p) => normalize(p.categoria) === selected)
+      : productos;
+
+    if (tokens.length === 0) return base;
+
+    return base.filter((p) => {
+      const nombre = normalize(p.nombre);
+      const desc = normalize(p.descripcion ?? "");
+      const cod = normalize(p.codigo ?? "");
+      const codSinCeros = cod.replace(/^0+/, "");
+
+      // AND: todos los tokens deben aparecer en algún campo
+      return tokens.every((t) => {
+        const tSinCeros = t.replace(/^0+/, "");
+        return (
+          nombre.includes(t) ||
+          desc.includes(t) ||
+          cod.includes(t) ||
+          codSinCeros.includes(t) ||
+          cod.includes(tSinCeros)
+        );
+      });
+    });
+  }, [selected, tokens]);
 
   // 2) Ordena estable
   const productosOrdenados = useMemo(() => {
@@ -67,7 +97,7 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
         return;
       }
 
-      // caso normal (lo que ya tenías)
+      // caso normal
       let opt: ProductoOpcion | undefined;
       if (prod.opciones?.length) {
         opt = prod.opciones.find((o) => o.id === selId);
@@ -86,14 +116,12 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
     [addToCart]
   );
 
-  // -------- Virtualización --------
+  // -------- Virtualización (sin cambios) --------
   const COLUMN_WIDTH = 380;
   const ROW_HEIGHT = 600;
   const GAP = 16;
 
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Medimos ancho/alto reales del contenedor con ResizeObserver
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
@@ -158,7 +186,11 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada }
   }
 
   if (productosOrdenados.length === 0) {
-    return <div className="text-gray-400">No hay productos en esta categoría.</div>;
+    return (
+      <div className="text-gray-400">
+        {tokens.length > 0 ? "No encontramos productos que coincidan con tu búsqueda." : "No hay productos en esta categoría."}
+      </div>
+    );
   }
 
   return (

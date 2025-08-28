@@ -63,6 +63,15 @@ import EbyFurayQuesoImg from "@/public/images/Ebi furay en queso.webp";
 
 //en palta
 import SabiCheesePaltaImg from "@/public/images/Sabi cheese palta.webp";
+import MechadaCheesePaltaImg from "@/public/images/Mechada cheese en palta.webp"
+import SakeCheesePaltaImg from "@/public/images/Sake cheese en palta.webp"
+import TeriCheesePaltaImg from "@/public/images/Teri cheese roll en palta.webp"
+import TeriRollPaltaImg from "@/public/images/Teri roll en palta.webp"
+import TeriFurayPaltaImg from "@/public/images/Teri furay en palta.webp"
+import EbiFurayPaltaImg from "@/public/images/Ebi furay en palta.webp"
+import EbiCheesePaltaImg from "@/public/images/Ebi chesse en palta.webp"
+import EbiRollPaltaImg from "@/public/images/Ebi roll en palta.webp"
+import TakoCheesePaltaImg from "@/public/images/Tako cheese roll en palta.webp"
 
 //en salmon
 import TeriCheeseSalmonImg from "@/public/images/Teri cheese roll en salmon.webp";
@@ -301,10 +310,21 @@ const _productos: Producto[] = [
 { id: 12, codigo: "012", nombre: "Palm roll", descripcion: "Camaron - Palta - Cebollin - En Queso crema.", valor: 6500, imagen: EbiQuesoImg , categoria: "Rolls envueltos en queso crema" },
 { id: 13, codigo: "013", nombre: "Sabi roll en queso crema", descripcion: "Salmon - Camaron - Palta - En Queso crema.", valor: 6600, imagen: SabiQuesoImg , categoria: "Rolls envueltos en queso crema" },
 { id: 14, codigo: "014", nombre: "Ebi furay roll en queso crema", descripcion: "Camaron apanado - Palta - Cebollin - En Queso crema.", valor: 6500, imagen: EbyFurayQuesoImg , categoria: "Rolls envueltos en queso crema" },
-//en palta
-{ id: 22, codigo: "022", nombre: "Sabi roll en palta", descripcion: "Salmon - Camaron - Queso crema - En palta.", valor: 6900, imagen: SabiCheesePaltaImg, categoria: "Rolls envueltos en palta" },  
 
-  //en salmon
+//en palta
+{ id: 15, codigo: "015", nombre: "Mechada cheese roll en palta", descripcion: "Carne mechada - Queso crema - Palta - En palta.", valor: 6900, imagen: MechadaCheesePaltaImg, categoria: "Rolls envueltos en palta" },
+{ id: 16, codigo: "016", nombre: "Teri roll en palta", descripcion: "Pollo - Palta - Cebollin - En palta.", valor: 6300, imagen: TeriRollPaltaImg, categoria: "Rolls envueltos en palta" },
+{ id: 17, codigo: "017", nombre: "Teri cheese roll en palta", descripcion: "Pollo - Queso crema - Cebollin - En palta.", valor: 6500, imagen: TeriCheesePaltaImg, categoria: "Rolls envueltos en palta" },
+{ id: 18, codigo: "018", nombre: "Teri furay en palta", descripcion: "Pollo apanado - Queso crema -Palta - En palta.", valor: 6700, imagen: TeriFurayPaltaImg, categoria: "Rolls envueltos en palta" },
+{ id: 19, codigo: "019", nombre: "Sake cheese roll en palta", descripcion: "Salmon - Queso crema - Palta - En palta.", valor: 6900, imagen: SakeCheesePaltaImg, categoria: "Rolls envueltos en palta" },
+{ id: 20, codigo: "020", nombre: "Ebi roll en palta", descripcion: "Camaron - Palta - Cebollin - En palta.", valor: 6000, imagen: EbiRollPaltaImg, categoria: "Rolls envueltos en palta" },
+{ id: 21, codigo: "021", nombre: "Ebi cheese roll en palta", descripcion: "Camaron - Queso crema - Palta - En palta.", valor: 6400, imagen: EbiCheesePaltaImg, categoria: "Rolls envueltos en palta" }, 
+{ id: 22, codigo: "022", nombre: "Sabi roll en palta", descripcion: "Salmon - Camaron - Queso crema - En palta.", valor: 6600, imagen: SabiCheesePaltaImg, categoria: "Rolls envueltos en palta" },  
+{ id: 23, codigo: "023", nombre: "Tako cheese roll en palta", descripcion: "Pulpo - Queso crema - Cebollin - En palta.", valor: 6900, imagen: TakoCheesePaltaImg, categoria: "Rolls envueltos en palta" },
+{ id: 24, codigo: "024", nombre: "Criss roll", descripcion: "Camaron apanado - Queso crema - Ciboulette - En palta.", valor: 6900, imagen: EbiFurayPaltaImg, categoria: "Rolls envueltos en palta" },
+
+
+//en salmon
 { id: 25, codigo: "025", nombre: "Teri cheese roll en salmon", descripcion: "Pollo - Queso crema - Palta - En salmon.", valor: 6400, imagen: TeriCheeseSalmonImg, categoria: "Rolls envueltos en salmon" },
 { id: 26, codigo: "026", nombre: "Sake roll en salmon", descripcion: "Salmon - Palta - Cebollin - En salmon.", valor: 6600, imagen: SakeSalmonImg, categoria: "Rolls envueltos en salmon" },
 { id: 27, codigo: "027", nombre: "Sake cheese roll en salmon", descripcion: "Salmon - Queso crema - Palta - En salmon.", valor: 6900, imagen: SakeCheeseSalmonImg, categoria: "Rolls envueltos en salmon" },
@@ -325,21 +345,25 @@ const _productos: Producto[] = [
 { id: 56, codigo: "056", nombre: "Mechada panko", descripcion: "Carne mechada - Queso crema - Cebollin - En panko.", valor: 7100, imagen: MechadaPankoImg, categoria: "Hot rolls" }, 
 
 
-
+//hosomakis
 { id: 58, codigo: "058", nombre: "Hosomaki queso crema", descripcion: "Queso crema - Arroz - Nori.", valor: 3500, imagen: hosomakiQuesoImg, categoria: "Hosomaki" },
 { id: 59, codigo: "059", nombre: "Hosomaki teri", descripcion: "Pollo - Palta - Arroz - Nori.", valor: 3600, imagen: hosomakiTeriImg, categoria: "Hosomaki" },
 { id: 60, codigo: "060", nombre: "Hosomaki sake", descripcion: "Salmon - Palta - Arroz - Nori.", valor: 3900, imagen: hosomakiSakeImg, categoria: "Hosomaki" },
 { id: 61, codigo: "061", nombre: "Hosomaki ebi", descripcion: "Camaron - Palta - Arroz - Nori.", valor: 3900, imagen: hosomakiEbiImg, categoria: "Hosomaki" },
 
-
+//ceviche
 { id: 65, codigo: "065", nombre: "Ceviche mixto", descripcion: "Salmon/Camaron/Pimenton/Cebolla morada/Leche de tigre/Palta.", valor: 12900, imagen: cevicheMixtoImg, categoria: "Ceviche" },
 
+//nigiri
 { id: 66, codigo: "066", nombre: "Nigiri sake", descripcion: "Bolita de arroz - Salmon.", valor: 3400, imagen: nigiriSakeImg, categoria: "Nigiri" },
 { id: 67, codigo: "067", nombre: "Nigiri ebi", descripcion: "Bolita de arroz - Camaron.", valor: 3400, imagen: nigiriEbiImg, categoria: "Nigiri" },
 { id: 68, codigo: "068", nombre: "Nigiri tako", descripcion: "Bolita de arroz - Pulpo.", valor: 3600, imagen: nigiriTakoImg, categoria: "Nigiri" },
 
+// Para picar
 { id: 73, codigo: "073", nombre: "Camaron Ecuatoriano Furay", descripcion: "5 unidades", valor: 5900, imagen: camaronFurayImg, categoria: "Para picar" },
 { id: 74, codigo: "074", nombre: "Pollo Furay", descripcion: "5 unidades", valor: 5900, imagen: polloFurayImg, categoria: "Para picar" },
+
+// Gyozas
 
 { id: 75, codigo: "075", nombre: "Gyozas champiñon queso", descripcion: "5 unidades", valor: 4600, imagen: gyozasChampinonImg, categoria: "Para picar" },
 { id: 76, codigo: "076", nombre: "Gyozas verdura", descripcion: "5 unidades", valor: 4600, imagen: gyozasImg, categoria: "Para picar" },
@@ -363,9 +387,9 @@ const _productos: Producto[] = [
 { id: 301, codigo: "83", nombre: "Coca Cola Original lata", descripcion: "Bebida gaseosa en lata 350 ml", valor: 1600, imagen: cocaColaOriginalLataImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
 { id: 302, codigo: "83", nombre: "Coca Cola Zero lata", descripcion: "Bebida gaseosa en lata 350 ml", valor: 1600, imagen: cocaColaZeroLataImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
 { id: 303, codigo: "83", nombre: "Sprite lata", descripcion: "Bebida gaseosa en lata 350 ml", valor: 1600, imagen: spriteLataImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
-{ id: 84-1, codigo: "84", nombre: "Jumex mango lata", descripcion: "Nectar jumex mango 335ml", valor: 1600, imagen: JumexMangoImg  , categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
-{ id: 84-2, codigo: "084", nombre: "Jumex piña lata", descripcion: "Nectar jumex piña 335ml", valor: 1600, imagen: JumexPinaImg , categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
-{ id: 84-3, codigo: "0084", nombre: "Jumex piña-coco lata", descripcion: "Nectar jumex piña-coco 335ml", valor: 1600, imagen: JumexPinaCocoImg , categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
+{ id: 304, codigo: "84", nombre: "Jumex mango lata", descripcion: "Nectar jumex mango 335ml", valor: 1600, imagen: JumexMangoImg  , categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
+{ id: 305, codigo: "84", nombre: "Jumex piña lata", descripcion: "Nectar jumex piña 335ml", valor: 1600, imagen: JumexPinaImg , categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
+{ id: 306, codigo: "84", nombre: "Jumex piña-coco lata", descripcion: "Nectar jumex piña-coco 335ml", valor: 1600, imagen: JumexPinaCocoImg , categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
 { id: 307, codigo: "85", nombre: "Arizona Mango", descripcion: "Jugo en lata 500 ml", valor: 2500, imagen: arizonaMangoImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
 { id: 308, codigo: "85", nombre: "Arizona Sandía", descripcion: "Jugo en lata 500 ml", valor: 2500, imagen: arizonaSandiaImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
 { id: 309, codigo: "85", nombre: "Arizona Uva", descripcion: "Jugo en lata 500 ml", valor: 2500, imagen: arizonaUvaImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },

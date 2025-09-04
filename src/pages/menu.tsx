@@ -116,38 +116,45 @@ export default function MenuPage() {
 
         {/* Contenido */}
         <main className="min-h-screen p-6 text-center bg-gray-950 md:ml-56">
-          {/* 🔎 NUEVO: mini buscador (sticky bajo el Navbar) */}
-          <div className="sticky top-30 z-30 mx-auto max-w-2xl mb-4">
-            <label htmlFor="buscador" className="sr-only">
-              Buscar productos por nombre, ingrediente o código
-            </label>
-            <div className="relative">
-              <input
-                id="buscador"
-                type="search"
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-                placeholder="Buscar por nombre, descripción o código…"
-                autoComplete="off"
-                className="
-                  w-full rounded-xl bg-gray-800 text-white placeholder-gray-400
-                  px-4 py-3 pr-10 shadow-inner outline-none ring-1 ring-gray-700
-                  focus:ring-2 focus:ring-emerald-500 transition
-                "
-                aria-describedby="hint-busqueda"
-              />
-              {busqueda && (
-                <button
-                  type="button"
-                  onClick={() => setBusqueda("")}
-                  aria-label="Limpiar búsqueda"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-300 hover:text-white"
-                >
-                  ✕  
-                </button>
-              )}
+          {/* 🔎 Mini buscador (más angosto en móvil) */}
+          <div className="sticky top-21 z-30 mb-3 flex justify-center">
+            <div className="w-11/12 max-w-[19rem] sm:max-w-xs md:max-w-2xl">
+              <label htmlFor="buscador" className="sr-only">
+                Buscar productos por nombre, ingrediente o código
+              </label>
+              <div className="relative">
+                <input
+                  id="buscador"
+                  type="search"
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  placeholder="Buscar por nombre, ingrediente o código…"
+                  autoComplete="off"
+                  className="
+                    w-full rounded-lg md:rounded-xl bg-gray-800 text-white placeholder-gray-400
+                    text-sm md:text-base
+                    h-9 md:h-11
+                    px-3 md:px-4
+                    pr-8 md:pr-10
+                    shadow-inner outline-none ring-1 ring-gray-700
+                    focus:ring-2 focus:ring-emerald-500 transition
+                  "
+                  aria-describedby="hint-busqueda"
+                />
+                {busqueda && (
+                  <button
+                    type="button"
+                    onClick={() => setBusqueda('')}
+                    aria-label="Limpiar búsqueda"
+                    className="absolute right-2 md:right-3 top-1/2 -translate-y-1/2 text-xs md:text-base text-gray-300 hover:text-white"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </div>
           </div>
+
 
           {/* Remount por categoría (la búsqueda NO remonta) */}
           <ListaProductos

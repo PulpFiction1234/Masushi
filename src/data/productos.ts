@@ -6,7 +6,7 @@ import type { StaticImageData } from "next/image";
 
 import AcevichadoRollImg from "@/public/images/Acevichado roll.webp";
 import MaguroRollImg from "@/public/images/Maguro roll.webp";
-
+import CevicheRollImg from "@/public/images/Ceviche roll.webp";
 
 //california rolls
 import californiaKaniCheeseImg from "@/public/images/California kani cheese.webp";
@@ -17,6 +17,14 @@ import CaliforniaSakeImg from "@/public/images/California sake.webp";
 import CaliforniaTakoImg from "@/public/images/California tako cheese.webp";
 import californiaEbiCheeseImg from "@/public/images/California ebi cheese.webp";
 import CaliforniaSakeCheeseImg from "@/public/images/california sake cheesse.webp";
+
+//Rolls vegetarianos
+import CaliforniaVeganoImg from "@/public/images/California vegano.webp";
+import CaliforniaVegetarianoImg from "@/public/images/California vegetariano.webp";
+import FunjiRollImg from "@/public/images/Funji roll.webp";
+import FunjiPankoImg from "@/public/images/Funji panko.webp";
+import MazorcaRollImg from "@/public/images/Mazorca roll.webp";
+import PalmaRollImg from "@/public/images/Palma roll.webp";
 
 //hot rolls 
 import MechadaPankoImg from "@/public/images/Mechada panko.webp";
@@ -46,6 +54,12 @@ import cevicheMixtoImg from "@/public/images/Ceviche mixto.webp";
 import nigiriSakeImg from "@/public/images/Nigiri sake.webp";
 import nigiriEbiImg from "@/public/images/Nigiri ebi.webp";
 import nigiriTakoImg from "@/public/images/Nigiri tako.webp";
+
+//chirashi
+import chirashiTeriImg from "@/public/images/Chirashi teri.webp";
+import chirashiSakeImg from "@/public/images/Chirashi sake.webp";
+import chirashiSakeEbiImg from "@/public/images/Chirashi sake ebi.webp";
+import chirashiTeriEbiImg from "@/public/images/Chirashi teri ebi.webp";
 
 //para picar
 import camaronFurayImg from "@/public/images/Camaron furay.webp";
@@ -165,6 +179,75 @@ const ENVOLTURA: ProductoOpcion[] = [
 
 // Definición normal (IDs y códigos únicos)
 const _productos: Producto[] = [
+
+    //handrolls
+  {
+    id: 57,
+    codigo: "057",
+    nombre: "Handroll",
+    descripcion: "Elige el relleno",
+    valor: 5500, // ajusta si corresponde
+    imagen: handrollImg,
+    categoria: "Handrolls",
+    topePalitosGratis: 0,
+    opciones: [
+      { id: "pollo",   label: " pollo" },
+      { id: "camaron", label: "camarón" },
+    ],
+    },
+   {
+    id: 57.1,
+    codigo: "0057",
+    nombre: "Promo handrolls",
+    descripcion: "Elige la combinación:",
+    valor: 10000, // ajusta si corresponde
+    imagen: promoHandrollImg,
+    categoria: "Handrolls",
+    salsasGratis: 2,
+    topePalitosGratis: 0,
+    opciones: [
+      { id: "2pollo",   label: "2 de pollo" },
+      { id: "2camaron", label: "2 de camarón" },
+      { id: "1y1",      label: "1 de pollo y 1 de camarón" },
+    ],
+  },
+
+// rolls especiales
+{ id: 1, codigo: "001", nombre: "Maguro roll", descripcion: "Camaron apanado - Palta - en Atun con salsa acevichada.", valor: 7500, imagen: MaguroRollImg, categoria: "Roll premium" },
+{ id: 2, codigo: "002", nombre: "Acevichado roll", descripcion: "Camarón - Queso crema -Palta - En salmon con salsa acevichada.", valor: 7100, imagen: AcevichadoRollImg, categoria: "Roll premium" },
+{ id: 3, codigo: "003", nombre: "Ceviche roll", descripcion: "Camarón - Queso crema - Cebollin - En panko con ceviche.", valor: 9900, imagen: CevicheRollImg, categoria: "Roll premium" },
+
+//en queso crema
+{ id: 9, codigo: "009", nombre: "Tako roll en queso crema", descripcion: "Pulpo - Palta - Cebollin - En Queso crema.", valor: 6900, imagen: TakoQuesoImg , categoria: "Rolls envueltos en queso crema" }, 
+{ id: 10, codigo: "010", nombre: "Teri roll en queso crema", descripcion: "Pollo - Palta - Cebollin - En Queso crema.", valor: 6000, imagen: TeriQuesoImg , categoria: "Rolls envueltos en queso crema" },
+{ id: 11, codigo: "011", nombre: "Shinsen roll", descripcion: "Salmon - Palta - Cebollin - En Queso crema.", valor: 6500, imagen: SakeQuesoImg , categoria: "Rolls envueltos en queso crema" },
+{ id: 12, codigo: "012", nombre: "Palm roll", descripcion: "Camaron - Palta - Cebollin - En Queso crema.", valor: 6500, imagen: EbiQuesoImg , categoria: "Rolls envueltos en queso crema" },
+{ id: 13, codigo: "013", nombre: "Sabi roll en queso crema", descripcion: "Salmon - Camaron - Palta - En Queso crema.", valor: 6600, imagen: SabiQuesoImg , categoria: "Rolls envueltos en queso crema" },
+{ id: 14, codigo: "014", nombre: "Ebi furay roll en queso crema", descripcion: "Camaron apanado - Palta - Cebollin - En Queso crema.", valor: 6500, imagen: EbyFurayQuesoImg , categoria: "Rolls envueltos en queso crema" },
+
+//en palta
+{ id: 15, codigo: "015", nombre: "Mechada cheese roll en palta", descripcion: "Carne mechada - Queso crema - Palta - En palta.", valor: 6900, imagen: MechadaCheesePaltaImg, categoria: "Rolls envueltos en palta" },
+{ id: 16, codigo: "016", nombre: "Teri roll en palta", descripcion: "Pollo - Palta - Cebollin - En palta.", valor: 6300, imagen: TeriRollPaltaImg, categoria: "Rolls envueltos en palta" },
+{ id: 17, codigo: "017", nombre: "Teri cheese roll en palta", descripcion: "Pollo - Queso crema - Cebollin - En palta.", valor: 6500, imagen: TeriCheesePaltaImg, categoria: "Rolls envueltos en palta" },
+{ id: 18, codigo: "018", nombre: "Teri furay en palta", descripcion: "Pollo apanado - Queso crema -Palta - En palta.", valor: 6700, imagen: TeriFurayPaltaImg, categoria: "Rolls envueltos en palta" },
+{ id: 19, codigo: "019", nombre: "Sake cheese roll en palta", descripcion: "Salmon - Queso crema - Palta - En palta.", valor: 6900, imagen: SakeCheesePaltaImg, categoria: "Rolls envueltos en palta" },
+{ id: 20, codigo: "020", nombre: "Ebi roll en palta", descripcion: "Camaron - Palta - Cebollin - En palta.", valor: 6000, imagen: EbiRollPaltaImg, categoria: "Rolls envueltos en palta" },
+{ id: 21, codigo: "021", nombre: "Ebi cheese roll en palta", descripcion: "Camaron - Queso crema - Palta - En palta.", valor: 6400, imagen: EbiCheesePaltaImg, categoria: "Rolls envueltos en palta" }, 
+{ id: 22, codigo: "022", nombre: "Sabi roll en palta", descripcion: "Salmon - Camaron - Queso crema - En palta.", valor: 6600, imagen: SabiCheesePaltaImg, categoria: "Rolls envueltos en palta" },  
+{ id: 23, codigo: "023", nombre: "Tako cheese roll en palta", descripcion: "Pulpo - Queso crema - Cebollin - En palta.", valor: 6900, imagen: TakoCheesePaltaImg, categoria: "Rolls envueltos en palta" },
+{ id: 24, codigo: "024", nombre: "Criss roll", descripcion: "Camaron apanado - Queso crema - Ciboulette - En palta.", valor: 6900, imagen: EbiFurayPaltaImg, categoria: "Rolls envueltos en palta" },
+
+
+//en salmon
+{ id: 25, codigo: "025", nombre: "Teri cheese roll en salmon", descripcion: "Pollo - Queso crema - Palta - En salmon.", valor: 6400, imagen: TeriCheeseSalmonImg, categoria: "Rolls envueltos en salmon" },
+{ id: 26, codigo: "026", nombre: "Sake roll en salmon", descripcion: "Salmon - Palta - Cebollin - En salmon.", valor: 6600, imagen: SakeSalmonImg, categoria: "Rolls envueltos en salmon" },
+{ id: 27, codigo: "027", nombre: "Sake cheese roll en salmon", descripcion: "Salmon - Queso crema - Palta - En salmon.", valor: 6900, imagen: SakeCheeseSalmonImg, categoria: "Rolls envueltos en salmon" },
+{ id: 28, codigo: "028", nombre: "Ebi cheese roll en salmon", descripcion: "Camaron - Queso crema - Palta - En salmon.", valor: 6700, imagen: EbiCheeseSalmonImg, categoria: "Rolls envueltos en salmon" },
+{ id: 29, codigo: "029", nombre: "Sabi roll en salmon", descripcion: "Salmon - Queso crema - Camaron - En salmon.", valor: 6900, imagen: SabiSalmonImg, categoria: "Rolls envueltos en salmon" },
+{ id: 30, codigo: "030", nombre: "Tako cheese roll en salmon", descripcion: "Pulpo - Queso crema - Palta - En salmon.", valor: 6900, imagen: TakoCheeseSalmonImg, categoria: "Rolls envueltos en salmon" },  
+{ id: 31, codigo: "031", nombre: "Ebi furay cheese roll en salmon", descripcion: "Camaron apanado - Queso crema - Cebollin - En salmon.", valor: 6900, imagen: EbiFuraySalmonImg, categoria: "Rolls envueltos en salmon" },
+
+//california rolls
     {
       id: 32,
       codigo: "032",
@@ -278,70 +361,39 @@ const _productos: Producto[] = [
     ],
     },
 
-    //handrolls
-  {
-    id: 57,
-    codigo: "057",
-    nombre: "Handroll",
-    descripcion: "Elige el relleno",
-    valor: 5500, // ajusta si corresponde
-    imagen: handrollImg,
-    categoria: "Handrolls",
-    topePalitosGratis: 0,
+//Rolls vegetarianos
+    {
+    id: 41,
+    codigo: "041",
+    nombre: "California vegano",
+    descripcion: "Palmito - Palta- Cebollin",
+    valor: 5100, // ajusta si corresponde
+    imagen: CaliforniaVeganoImg,
+    categoria: "Rolls vegetarianos",
     opciones: [
-      { id: "pollo",   label: " pollo" },
-      { id: "camaron", label: "camarón" },
+      { id: "Sesamo",   label: "Sesamo" },
+      { id: "Cibullete", label: "Cibullete" },
     ],
     },
-   {
-    id: 57.1,
-    codigo: "0057",
-    nombre: "Promo handrolls",
-    descripcion: "Elige la combinación:",
-    valor: 10000, // ajusta si corresponde
-    imagen: promoHandrollImg,
-    categoria: "Handrolls",
-    salsasGratis: 2,
-    topePalitosGratis: 0,
+    {
+    id: 42,
+    codigo: "042",
+    nombre: "California vegetariano",
+    descripcion: "Choclo baby - Queso crema - Palta",
+    valor: 5300, // ajusta si corresponde
+    imagen: CaliforniaVegetarianoImg,
+    categoria: "rolls vegetarianos",
     opciones: [
-      { id: "2pollo",   label: "2 de pollo" },
-      { id: "2camaron", label: "2 de camarón" },
-      { id: "1y1",      label: "1 de pollo y 1 de camarón" },
+      { id: "Sesamo",   label: "Sesamo" },
+      { id: "Cibullete", label: "Cibullete" },
     ],
-  },
+    },
+    { id: 43, codigo: "043", nombre: "Palma Roll", descripcion: "Palmito - Palta - Cebollin - En palta.", valor: 5400, imagen: PalmaRollImg, categoria: "Rolls vegetarianos" },
+    { id: 44, codigo: "044", nombre: "Mazorca roll", descripcion: "Choclo baby - Queso crema - Palta - En palta.", valor: 5600, imagen: MazorcaRollImg, categoria: "Rolls vegetarianos" },
+    { id: 45, codigo: "045", nombre: "Funji Roll", descripcion: "Champinon - Palta - Cebollin - En queso crema.", valor: 5900, imagen: FunjiRollImg, categoria: "Rolls vegetarianos" },
+    
+    { id: 47, codigo: "047", nombre: "Funji cheese panko", descripcion: "Champinon - Queso crema - Cebollin - En panko.", valor: 6000, imagen: FunjiPankoImg, categoria: "Rolls vegetarianos" },
 
-// rolls especiales
-{ id: 1, codigo: "001", nombre: "Maguro roll", descripcion: "Camaron apanado - Palta - en Atun con salsa acevichada.", valor: 7500, imagen: MaguroRollImg, categoria: "Roll premium" },
-{ id: 2, codigo: "002", nombre: "Acevichado roll", descripcion: "Camarón - Queso crema -Palta - En salmon con salsa acevichada.", valor: 7100, imagen: AcevichadoRollImg, categoria: "Roll premium" },
-//en queso crema
-{ id: 9, codigo: "009", nombre: "Tako roll en queso crema", descripcion: "Pulpo - Palta - Cebollin - En Queso crema.", valor: 6900, imagen: TakoQuesoImg , categoria: "Rolls envueltos en queso crema" }, 
-{ id: 10, codigo: "010", nombre: "Teri roll en queso crema", descripcion: "Pollo - Palta - Cebollin - En Queso crema.", valor: 6000, imagen: TeriQuesoImg , categoria: "Rolls envueltos en queso crema" },
-{ id: 11, codigo: "011", nombre: "Shinsen roll", descripcion: "Salmon - Palta - Cebollin - En Queso crema.", valor: 6500, imagen: SakeQuesoImg , categoria: "Rolls envueltos en queso crema" },
-{ id: 12, codigo: "012", nombre: "Palm roll", descripcion: "Camaron - Palta - Cebollin - En Queso crema.", valor: 6500, imagen: EbiQuesoImg , categoria: "Rolls envueltos en queso crema" },
-{ id: 13, codigo: "013", nombre: "Sabi roll en queso crema", descripcion: "Salmon - Camaron - Palta - En Queso crema.", valor: 6600, imagen: SabiQuesoImg , categoria: "Rolls envueltos en queso crema" },
-{ id: 14, codigo: "014", nombre: "Ebi furay roll en queso crema", descripcion: "Camaron apanado - Palta - Cebollin - En Queso crema.", valor: 6500, imagen: EbyFurayQuesoImg , categoria: "Rolls envueltos en queso crema" },
-
-//en palta
-{ id: 15, codigo: "015", nombre: "Mechada cheese roll en palta", descripcion: "Carne mechada - Queso crema - Palta - En palta.", valor: 6900, imagen: MechadaCheesePaltaImg, categoria: "Rolls envueltos en palta" },
-{ id: 16, codigo: "016", nombre: "Teri roll en palta", descripcion: "Pollo - Palta - Cebollin - En palta.", valor: 6300, imagen: TeriRollPaltaImg, categoria: "Rolls envueltos en palta" },
-{ id: 17, codigo: "017", nombre: "Teri cheese roll en palta", descripcion: "Pollo - Queso crema - Cebollin - En palta.", valor: 6500, imagen: TeriCheesePaltaImg, categoria: "Rolls envueltos en palta" },
-{ id: 18, codigo: "018", nombre: "Teri furay en palta", descripcion: "Pollo apanado - Queso crema -Palta - En palta.", valor: 6700, imagen: TeriFurayPaltaImg, categoria: "Rolls envueltos en palta" },
-{ id: 19, codigo: "019", nombre: "Sake cheese roll en palta", descripcion: "Salmon - Queso crema - Palta - En palta.", valor: 6900, imagen: SakeCheesePaltaImg, categoria: "Rolls envueltos en palta" },
-{ id: 20, codigo: "020", nombre: "Ebi roll en palta", descripcion: "Camaron - Palta - Cebollin - En palta.", valor: 6000, imagen: EbiRollPaltaImg, categoria: "Rolls envueltos en palta" },
-{ id: 21, codigo: "021", nombre: "Ebi cheese roll en palta", descripcion: "Camaron - Queso crema - Palta - En palta.", valor: 6400, imagen: EbiCheesePaltaImg, categoria: "Rolls envueltos en palta" }, 
-{ id: 22, codigo: "022", nombre: "Sabi roll en palta", descripcion: "Salmon - Camaron - Queso crema - En palta.", valor: 6600, imagen: SabiCheesePaltaImg, categoria: "Rolls envueltos en palta" },  
-{ id: 23, codigo: "023", nombre: "Tako cheese roll en palta", descripcion: "Pulpo - Queso crema - Cebollin - En palta.", valor: 6900, imagen: TakoCheesePaltaImg, categoria: "Rolls envueltos en palta" },
-{ id: 24, codigo: "024", nombre: "Criss roll", descripcion: "Camaron apanado - Queso crema - Ciboulette - En palta.", valor: 6900, imagen: EbiFurayPaltaImg, categoria: "Rolls envueltos en palta" },
-
-
-//en salmon
-{ id: 25, codigo: "025", nombre: "Teri cheese roll en salmon", descripcion: "Pollo - Queso crema - Palta - En salmon.", valor: 6400, imagen: TeriCheeseSalmonImg, categoria: "Rolls envueltos en salmon" },
-{ id: 26, codigo: "026", nombre: "Sake roll en salmon", descripcion: "Salmon - Palta - Cebollin - En salmon.", valor: 6600, imagen: SakeSalmonImg, categoria: "Rolls envueltos en salmon" },
-{ id: 27, codigo: "027", nombre: "Sake cheese roll en salmon", descripcion: "Salmon - Queso crema - Palta - En salmon.", valor: 6900, imagen: SakeCheeseSalmonImg, categoria: "Rolls envueltos en salmon" },
-{ id: 28, codigo: "028", nombre: "Ebi cheese roll en salmon", descripcion: "Camaron - Queso crema - Palta - En salmon.", valor: 6700, imagen: EbiCheeseSalmonImg, categoria: "Rolls envueltos en salmon" },
-{ id: 29, codigo: "029", nombre: "Sabi roll en salmon", descripcion: "Salmon - Queso crema - Camaron - En salmon.", valor: 6900, imagen: SabiSalmonImg, categoria: "Rolls envueltos en salmon" },
-{ id: 30, codigo: "030", nombre: "Tako cheese roll en salmon", descripcion: "Pulpo - Queso crema - Palta - En salmon.", valor: 6900, imagen: TakoCheeseSalmonImg, categoria: "Rolls envueltos en salmon" },  
-{ id: 31, codigo: "031", nombre: "Ebi furay cheese roll en salmon", descripcion: "Camaron apanado - Queso crema - Cebollin - En salmon.", valor: 6900, imagen: EbiFuraySalmonImg, categoria: "Rolls envueltos en salmon" },
 
 
 // Hot rolls
@@ -368,6 +420,13 @@ const _productos: Producto[] = [
 { id: 66, codigo: "066", nombre: "Nigiri sake", descripcion: "Bolita de arroz - Salmon.", valor: 3400, imagen: nigiriSakeImg, categoria: "Nigiri" },
 { id: 67, codigo: "067", nombre: "Nigiri ebi", descripcion: "Bolita de arroz - Camaron.", valor: 3400, imagen: nigiriEbiImg, categoria: "Nigiri" },
 { id: 68, codigo: "068", nombre: "Nigiri tako", descripcion: "Bolita de arroz - Pulpo.", valor: 3600, imagen: nigiriTakoImg, categoria: "Nigiri" },
+
+//chirashi
+{ id: 69, codigo: "069", nombre: "Chirashi teri", descripcion: "Arroz - Pollo furay - Queso crema - Palta - Cebollin - Sesamo.", valor: 7900, imagen: chirashiTeriImg, categoria: "Chirashi" },
+{ id: 70, codigo: "070", nombre: "Chirashi sake ebi", descripcion: "Arroz - Salmon - Camaron - Queso crema - Palta - Cebollin - Sesamo.", valor: 8900, imagen: chirashiSakeEbiImg, categoria: "Chirashi" },
+{ id: 71, codigo: "071", nombre: "Chirashi sake", descripcion: "Arroz - Salmon - Queso crema - Palta - Cebollin - Sesamo.", valor: 8900, imagen: chirashiSakeImg, categoria: "Chirashi" },
+{ id: 72, codigo: "072", nombre: "Chirashi teri ebi", descripcion: "Arroz - Pollo furay - Camaron - Queso crema - Palta - Cebollin - Sesamo.", valor: 8400, imagen: chirashiTeriEbiImg, categoria: "Chirashi" },
+
 
 // Para picar
 { id: 73, codigo: "073", nombre: "Camaron Ecuatoriano Furay", descripcion: "5 unidades", valor: 5900, imagen: camaronFurayImg, categoria: "Para picar" },

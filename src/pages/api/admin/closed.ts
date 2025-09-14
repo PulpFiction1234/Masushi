@@ -5,12 +5,23 @@ export default function handler(
   req: NextApiRequest,
   res: NextApiResponse<{ forceClosed: boolean }>,
 ) {
-  if (req.method === "POST") {
-    const { forceClosed: closed } = req.body ?? {};
-    setForceClosed(Boolean(closed));
+  if (req.method === "GET") {
     res.status(200).json({ forceClosed: getForceClosed() });
     return;
   }
 
-  res.status(200).json({ forceClosed: getForceClosed() });
+  if (req.method === "POST") {
+    const { forceClosed: closed } = req.body ?? {};
+    if (typeof closed !== "boolean") {
+      res.status(400).end();
+      return;
+    }
+
+    setForceClosed(closed);
+    res.status(200).json({ forceClosed: getForceClosed() });
+    return;
+  }
+
+  res.setHeader("Allow", ["GET", "POST"]);
+  res.status(405).end();
 }

@@ -88,24 +88,37 @@ function saveCartToStorage(items: CartItem[]) {
 }
 
 export function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
+  // 🔒 Normaliza ids para evitar duplicados por mayúsculas/acentos/espacios
+  function normId(s?: string | null) {
+    return (s ?? "base")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, ""); // quita acentos como "ciboulette" vs "ciboulleté"
+  }
+
   switch (action.type) {
     case ADD_ITEM: {
       const { prod, opcion, precioUnit } = action.payload;
-      const cartKey = `${prod.id}:${opcion?.id ?? "base"}`;
+      const cartKey = `${prod.id}:${normId(opcion?.id)}`;
+
       const idx = state.findIndex((it) => it.cartKey === cartKey);
       if (idx >= 0) {
         const copy = [...state];
         copy[idx] = {
           ...copy[idx],
           cantidad: copy[idx].cantidad + 1,
-          precioUnit,
+          // Si el precio pudiera variar por opción, mantén el existente para no sorprender al usuario:
+          // precioUnit: copy[idx].precioUnit,
         };
         return copy;
       }
-     const imagen = typeof prod.imagen === "string" ? prod.imagen : prod.imagen.src;
+
+      const imagen = typeof prod.imagen === "string" ? prod.imagen : (prod.imagen as any).src;
       const blurDataUrl =
         prod.blurDataUrl ??
-        (typeof prod.imagen === "object" ? prod.imagen.blurDataURL : undefined);
+        (typeof prod.imagen === "object" ? (prod.imagen as any).blurDataURL : undefined);
+
       return [
         ...state,
         {
@@ -117,10 +130,11 @@ export function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
           blurDataUrl,
           precioUnit,
           cantidad: 1,
-          opcion,
+          opcion, // guardamos label “bonito” para mostrar, el id ya se normaliza en la key
         },
       ];
     }
+
     case UPDATE_QUANTITY: {
       const { cartKey, cantidad } = action.payload;
       return state
@@ -129,16 +143,21 @@ export function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
         )
         .filter((it) => it.cantidad > 0);
     }
+
     case REMOVE_ITEM:
       return state.filter((it) => it.cartKey !== action.payload.cartKey);
+
     case CLEAR_CART:
       return [];
+
     case SET_CART:
       return action.payload;
+
     default:
       return state;
   }
 }
+
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // ⚠️ Inicializamos SIEMPRE vacío para que SSR y primer render del cliente coincidan

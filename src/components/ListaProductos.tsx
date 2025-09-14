@@ -65,38 +65,112 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada, 
   const onAdd = useCallback(
     (prod: Producto, selId: string, e: React.MouseEvent<HTMLButtonElement>) => {
       // caso configurable ("armalo")
-      if (prod.configuracion?.tipo === "armalo") {
-        if (!selId || !selId.startsWith("armalo:")) {
-          alert("Completa tu selección antes de agregar al carrito.");
-          return;
-        }
+  // caso configurable ("armalo")
+if (prod.configuracion?.tipo === "armalo") {
+  if (!selId || !selId.startsWith("armalo:")) {
+    alert("Completa tu selección antes de agregar al carrito.");
+    return;
+  }
 
-        let payload: ArmaloPayload | null = null;
-        try {
-          payload = JSON.parse(selId.slice(7)) as ArmaloPayload;
-        } catch {
-          alert("Hubo un problema con la selección. Intenta nuevamente.");
-          return;
-        }
+  // Parse seguro del payload que viene codificado en selId
+  let payloadRaw: unknown = null;
+  try {
+    payloadRaw = JSON.parse(selId.slice(7));
+  } catch {
+    alert("Hubo un problema con la selección. Intenta nuevamente.");
+    return;
+  }
 
-        if (!payload?.valid) {
-          alert("Elige 2 proteínas, 2 acompañamientos y una envoltura.");
-          return;
-        }
+  // Helpers para leer propiedades opcionales sin depender del tipo ArmaloPayload exacto
+  const isObject = (v: unknown): v is Record<string, unknown> =>
+    typeof v === "object" && v !== null;
 
-        const precioUnit = typeof payload.price === "number" ? payload.price : prod.valor;
+  const getStr = (o: unknown, key: string): string | undefined => {
+    if (!isObject(o)) return undefined;
+    const v = o[key];
+    return typeof v === "string" ? v : undefined;
+  };
 
-        addToCart(
-          prod,
-          {
-            opcion: { id: "armalo", label: payload.label },
-            precioUnit,
-          }
-        );
-        animateToCart(e.nativeEvent as unknown as MouseEvent);
-        return;
-      }
+  const getNum = (o: unknown, key: string): number | undefined => {
+    if (!isObject(o)) return undefined;
+    const v = o[key];
+    return typeof v === "number" && !Number.isNaN(v) ? v : undefined;
+  };
 
+  // Precio unitario desde payload.price si existe; si no, usa el valor del producto
+  const maybePrice = getNum(payloadRaw, "price");
+  const precioUnit = typeof maybePrice === "number" ? maybePrice : prod.valor;
+
+  // Normalizador sin usar propiedades unicode (compat amplio)
+  const norm = (s: unknown) =>
+    String(s ?? "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, ""); // quita diacríticos
+
+  // Intentamos armar una firma “estructurada” si el payload trae campos comunes.
+  // No asumimos un shape fijo: buscamos en payload.selection y en la raíz.
+  const root = isObject(payloadRaw) ? payloadRaw : {};
+  const selection = isObject((root as any).selection) ? ((root as any).selection as Record<string, unknown>) : undefined;
+
+  const pick = (obj: Record<string, unknown> | undefined, keys: string[]) => {
+    for (const k of keys) {
+      const v = obj?.[k];
+      if (typeof v === "string" || typeof v === "number") return v;
+    }
+    return undefined;
+  };
+
+  const parts = [
+    pick(selection, ["proteina1"]) ?? pick(root as Record<string, unknown>, ["proteina1", "p1"]),
+    pick(selection, ["proteina2"]) ?? pick(root as Record<string, unknown>, ["proteina2", "p2"]),
+    pick(selection, ["acomp1"])    ?? pick(root as Record<string, unknown>, ["acomp1", "a1"]),
+    pick(selection, ["acomp2"])    ?? pick(root as Record<string, unknown>, ["acomp2", "a2"]),
+    pick(selection, ["envoltura"]) ?? pick(root as Record<string, unknown>, ["envoltura", "wrap"]),
+  ].map(norm);
+
+  // Hash estable FNV-1a por si no hay estructura (mismas combinaciones → misma firma)
+  const fnv1a = (str: string) => {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
+    }
+    return (h >>> 0).toString(16).padStart(8, "0");
+  };
+
+  // Si encontramos algo estructurado, lo usamos; si no, caemos al hash del payload ordenado
+  const hasStructured = parts.some((x) => x.length > 0);
+
+  const sortObject = (x: unknown): unknown => {
+    if (Array.isArray(x)) return x.map(sortObject);
+    if (isObject(x)) {
+      return Object.keys(x)
+        .sort()
+        .reduce((acc: Record<string, unknown>, k) => {
+          acc[k] = sortObject((x as Record<string, unknown>)[k]);
+          return acc;
+        }, {});
+    }
+    return x;
+    };
+
+  const signature = hasStructured
+    ? parts.join("|")
+    : `hash:${fnv1a(JSON.stringify(sortObject(payloadRaw)))}`;
+
+  const armaloId = `armalo:${signature}`;
+  const label = getStr(payloadRaw, "label") ?? "Ármalo a tu gusto";
+
+  addToCart(prod, {
+    opcion: { id: armaloId, label },
+    precioUnit,
+  });
+
+  animateToCart(e.nativeEvent as unknown as MouseEvent);
+  return;
+}
       // caso normal
       let opt: ProductoOpcion | undefined;
       if (prod.opciones?.length) {

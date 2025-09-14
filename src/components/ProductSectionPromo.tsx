@@ -10,7 +10,7 @@ interface ProductSectionProps {
   linkBase: string;
 }
 
-export default function ProductSection({ title, productIds, linkBase }: ProductSectionProps) {
+export default function ProductSectionPromo({ title, productIds, linkBase }: ProductSectionProps) {
   const { addToCart } = useCart();
 
   const products: Producto[] = productIds
@@ -28,14 +28,14 @@ export default function ProductSection({ title, productIds, linkBase }: ProductS
           {products.map((p) => (
             <div
               key={p.id}
-              className="bg-gray-800 rounded-lg overflow-hidden shadow flex flex-col h-full min-h-[480px]"
+              className="bg-gray-800 rounded-lg overflow-hidden shadow flex flex-col h-full"
             >
               <Image
                 src={p.imagen}
                 alt={p.nombre}
                 width={500}
                 height={200}
-                className="w-full h-80 sm:h-80 object-cover"
+                className="w-full h-50 object-cover"
                 quality={60}
                 placeholder={
                   typeof p.imagen === "string"

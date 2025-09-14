@@ -27,7 +27,7 @@ const Footer: React.FC<FooterProps> = ({ showSocial = true, className = "" }) =>
                 <FaInstagram className="text-2xl text-pink-500 hover:text-gray-100" />
               </a>
               <a
-                href="https://www.facebook.com/mazushiltda"
+                href="https://www.facebook.com/masushiltda"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook de Masushi"

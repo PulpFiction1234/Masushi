@@ -4,6 +4,8 @@ import dynamic from "next/dynamic";
 import useSWR from "swr";
 import { useCart } from "@/context/CartContext";
 import Navbar from "@/components/Navbar";
+import { useEffect } from "react";
+
 
 
 
@@ -78,7 +80,7 @@ import {
   CartItemLike,
   priceOf,
   codePartOf,
-  nameWithTipo,
+  infoWithTipo,
   checkoutReducer,
   initialCheckoutState,
   PRECIO_SOYA_EXTRA,
@@ -114,6 +116,8 @@ const salsasGratisPorUnidad = (it: CartItemLike): number => {
   return 1;
 };
 
+
+
 export default function Checkout() {
   const { cart } = useCart();
   const [state, dispatch] = useReducer(checkoutReducer, initialCheckoutState);
@@ -145,6 +149,11 @@ export default function Checkout() {
 
   // Estado de apertura desde /api/open (refresca cada 60s)
   const { data: openData } = useSWR("/api/open", fetcher, { refreshInterval: 60_000 });
+  useEffect(() => {
+  if (deliveryType === "retiro" && paymentMethod !== "") {
+    dispatch({ type: "SET_FIELD", field: "paymentMethod", value: "" });
+  }
+  }, [deliveryType, paymentMethod, dispatch]);
   const abierto = openData?.abierto === true;
   const statusLabel =
     abierto
@@ -278,12 +287,14 @@ export default function Checkout() {
     deliveryType,
   ]);
 
+  const requiresPayment = deliveryType === "delivery";
+
   const canSubmitBase =
-    name.trim().length > 1 &&
-    lastName.trim().length > 1 &&
-    isValidChileanMobile(phone) &&
-    paymentMethod !== "" &&
-    (deliveryType === "retiro" || (coords && REGEX_NUMERO_CALLE.test(address)));
+  name.trim().length > 1 &&
+  lastName.trim().length > 1 &&
+  isValidChileanMobile(phone) &&
+  (!requiresPayment || paymentMethod !== "") &&
+  (deliveryType === "retiro" || (coords && REGEX_NUMERO_CALLE.test(address)));
 
   const canSubmit = canSubmitBase && abierto === true;
 
@@ -331,7 +342,7 @@ export default function Checkout() {
 
         const productosTexto = cartTyped
           .map((item) => {
-            const lineaNombre = `${codePartOf(item)}${nameWithTipo(item)}`;
+            const lineaNombre = `${codePartOf(item)} - ${infoWithTipo(item)}`;
             const totalLinea = fmt(priceOf(item) * item.cantidad);
             return ` ${lineaNombre} x${item.cantidad} — ${totalLinea}`;
           })
@@ -377,7 +388,7 @@ export default function Checkout() {
           (deliveryType === "delivery" ? `Dirección: ${shortAddress}\n` : "") +
           `Nombre: ${name} ${lastName}\n` +
           `Teléfono: ${phone}\n` +
-          `Método de pago: ${paymentLabel(paymentMethod)}\n` +
+          (deliveryType === "delivery" ? `Método de pago: ${paymentLabel(paymentMethod)}\n` : "") +
           `\n--- Productos ---\n${productosTexto}\n` +
           `\n--- Salsas y extras ---\n${extrasTexto}\n` +
           `\nTotal: ${fmt(totalFinal)}`;
@@ -494,7 +505,10 @@ export default function Checkout() {
                 </select>
               </div>
 
+              {deliveryType === "delivery" && (
               <PaymentSelector paymentMethod={paymentMethod} dispatch={dispatch} />
+              )}
+
 
               {deliveryType === "delivery" && (
                 <div>

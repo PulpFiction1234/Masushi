@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProductSection from "@/components/ProductSection";
+import ProductSectionPromo from "@/components/ProductSectionPromo";
 
 const HeroCarousel = dynamic(() => import("@/components/HeroCarousel"));
 const CarritoPanel = dynamic(
@@ -40,7 +41,7 @@ export default function Home() {
       />
 
       {/* Promociones */}
-       <ProductSection
+       <ProductSectionPromo
         title="Promociones"
         productIds={[200, 201, 202, 203, 204]}
         linkBase="/menu?producto="

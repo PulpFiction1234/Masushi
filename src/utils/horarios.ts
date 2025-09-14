@@ -14,7 +14,7 @@ export const HORARIO_SEMANAL: Record<DiaKey, Intervalo[]> = {
   wed: [["16:30", "22:30"]],
   thu: [["16:30", "22:30"]],
   fri: [["16:30", "23:00"]],
-  sat: [["13:30", "22:30"]],
+  sat: [["00:30", "22:30"]],
 };
 
 // Feriados / excepciones por fecha (YYYY-MM-DD). null o [] => cerrado todo el día.

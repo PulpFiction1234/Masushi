@@ -1,10 +1,10 @@
-// src/pages/api/open.ts
 import type { NextApiRequest, NextApiResponse } from "next";
 import { BUSINESS_TZ, estaAbiertoAhora, proximoCambio } from "@/utils/horarios";
+import { getForceClosed } from "./admin/closed";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const now = new Date();
-  const abierto = estaAbiertoAhora(now, BUSINESS_TZ);
+  const abierto = !getForceClosed() && estaAbiertoAhora(now, BUSINESS_TZ);
   const cambio = proximoCambio(now, BUSINESS_TZ);
 
   res.setHeader("Cache-Control", "no-store");

@@ -390,9 +390,9 @@ const _productos: Producto[] = [
     },
     { id: 43, codigo: "043", nombre: "Palma Roll", descripcion: "Palmito - Palta - Cebollin - En palta.", valor: 5400, imagen: PalmaRollImg, categoria: "Rolls vegetarianos" },
     { id: 44, codigo: "044", nombre: "Mazorca roll", descripcion: "Choclo baby - Queso crema - Palta - En palta.", valor: 5600, imagen: MazorcaRollImg, categoria: "Rolls vegetarianos" },
-    { id: 45, codigo: "045", nombre: "Funji Roll", descripcion: "Champinon - Palta - Cebollin - En queso crema.", valor: 5900, imagen: FunjiRollImg, categoria: "Rolls vegetarianos" },
+    { id: 45, codigo: "045", nombre: "Funji Roll", descripcion: "Champiñon - Palta - Cebollin - En queso crema.", valor: 5900, imagen: FunjiRollImg, categoria: "Rolls vegetarianos" },
     
-    { id: 47, codigo: "047", nombre: "Funji cheese panko", descripcion: "Champinon - Queso crema - Cebollin - En panko.", valor: 6000, imagen: FunjiPankoImg, categoria: "Rolls vegetarianos" },
+    { id: 47, codigo: "047", nombre: "Funji cheese panko", descripcion: "Champiñon - Queso crema - Cebollin - En panko.", valor: 6000, imagen: FunjiPankoImg, categoria: "Rolls vegetarianos" },
 
 
 

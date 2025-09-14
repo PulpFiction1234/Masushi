@@ -80,6 +80,9 @@ export const codePartOf = (item: CartItemLike) =>
 export const nameWithTipo = (item: CartItemLike) =>
   item.opcion?.label ? `${item.nombre} — ${item.opcion.label}` : item.nombre;
 
+export const infoWithTipo = (item: CartItemLike) =>
+  item.opcion?.label ? `${item.opcion.label}` : "";
+
 /** La dejamos exportada por compatibilidad (puede usarse para repartir s/ t gratis) */
 export function splitFreeEvenly(s: number, t: number, g: number) {
   if (g <= 0 || s + t === 0) return { freeSoya: 0, freeTeri: 0 };

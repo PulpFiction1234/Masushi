@@ -1,13 +1,10 @@
-// middleware.ts
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export function middleware(req: Request) {
+export function middleware(req: NextRequest) {
   const auth = req.headers.get('authorization');
 
   if (auth) {
-    const [user, pass] = Buffer.from(auth.split(' ')[1], 'base64')
-      .toString()
-      .split(':');
+    const [user, pass] = atob(auth.split(' ')[1]).split(':');
     if (
       user === process.env.ADMIN_USER &&
       pass === process.env.ADMIN_PASS

@@ -1,10 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-
-let forceClosed = false;
-
-export function getForceClosed(): boolean {
-  return forceClosed;
-}
+import { getForceClosed, setForceClosed } from "@/server/order-state";
 
 export default function handler(
   req: NextApiRequest,
@@ -12,10 +7,10 @@ export default function handler(
 ) {
   if (req.method === "POST") {
     const { forceClosed: closed } = req.body ?? {};
-    forceClosed = Boolean(closed);
-    res.status(200).json({ forceClosed });
+    setForceClosed(Boolean(closed));
+    res.status(200).json({ forceClosed: getForceClosed() });
     return;
   }
 
-  res.status(200).json({ forceClosed });
+  res.status(200).json({ forceClosed: getForceClosed() });
 }

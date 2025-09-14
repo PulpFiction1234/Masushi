@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { BUSINESS_TZ, estaAbiertoAhora, proximoCambio } from "@/utils/horarios";
-import { getForceClosed } from "./admin/closed";
+import { getForceClosed } from "@/server/order-state";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const now = new Date();

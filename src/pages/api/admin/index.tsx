@@ -1,4 +1,3 @@
-// src/pages/admin/index.tsx
 import { useEffect, useState } from 'react';
 
 export default function AdminPage() {

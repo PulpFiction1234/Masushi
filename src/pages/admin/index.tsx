@@ -14,7 +14,7 @@ export default function AdminPage() {
     await fetch('/api/admin/closed', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ closed: next }),
+      body: JSON.stringify({ forceClosed: next }),
     });
     setClosed(next);
   };

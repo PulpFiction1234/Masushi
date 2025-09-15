@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { compare } from 'bcryptjs';
-import { getUsersCollection } from './db';
+import prisma from './db';
 
 const JWT_SECRET: string = (() => {
   const secret = process.env.JWT_SECRET;
@@ -13,12 +13,14 @@ export async function validateCredentials(
   password?: string
 ): Promise<'admin' | 'user' | null> {
   if (!username || !password) return null;
-  const users = await getUsersCollection();
-  const user = await users.findOne({ username });
+  const user = await prisma.user.findUnique({ where: { username } });
   if (!user) return null;
   const valid = await compare(password, user.passwordHash);
   if (!valid) return null;
-  return user.role;
+  if (user.role === 'admin' || user.role === 'user') {
+    return user.role;
+  }
+  return null;
 }
 
 export function signToken(

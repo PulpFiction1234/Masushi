@@ -198,10 +198,10 @@ const _productos: Producto[] = [
 
 // rolls especiales
 
-    { id: 1, codigo: "001", nombre: "Maguro roll", descripcion: "Camaron apanado - Palta - en Atun con salsa acevichada.", valor: 7500, imagen: MaguroRollImg, categoria: "Roll premium" },
+    { id: 1, codigo: "001", nombre: "Maguro acevichado", descripcion: "Camaron apanado - Palta - en Atun con salsa acevichada.", valor: 7500, imagen: MaguroRollImg, categoria: "Roll premium" },
     { id: 2, codigo: "002", nombre: "Acevichado roll", descripcion: "Camarón - Queso crema -Palta - En salmon con salsa acevichada.", valor: 7100, imagen: AcevichadoRollImg, categoria: "Roll premium" },
     { id: 3, codigo: "003", nombre: "Ceviche roll", descripcion: "Camarón - Queso crema - Cebollin - En panko con ceviche.", valor: 9900, imagen: CevicheRollImg, categoria: "Roll premium" },
-    { id: 4, codigo: "004", nombre: "Ebi ahumado roll", descripcion: "Camaron - Queso crema - Palta - En salmon ahumado.", valor: 7100, imagen: ebiAhumadoImg, categoria: "Roll premium" },
+    { id: 4, codigo: "004", nombre: "Ebi ahumado", descripcion: "Camaron - Queso crema - Palta - En salmon ahumado.", valor: 7100, imagen: ebiAhumadoImg, categoria: "Roll premium" },
 
 //Sin arroz
 
@@ -324,7 +324,7 @@ const _productos: Producto[] = [
     codigo: "036",
     nombre: "California ebi cheese",
     descripcion: "Camaron - Queso crema - Palta",
-    valor: 5600, // ajusta si corresponde
+    valor: 5900, // ajusta si corresponde
     imagen: californiaEbiCheeseImg,
     categoria: "California rolls",
     opciones: [
@@ -352,7 +352,7 @@ const _productos: Producto[] = [
     codigo: "038",
     nombre: "California sake cheese",
     descripcion: "Salmon - Queso crema - Palta",
-    valor: 5600, // ajusta si corresponde
+    valor: 6000, // ajusta si corresponde
     imagen: CaliforniaSakeCheeseImg,
     categoria: "California rolls",
     opciones: [
@@ -408,20 +408,20 @@ const _productos: Producto[] = [
     { id: 43, codigo: "043", nombre: "Palma Roll", descripcion: "Palmito - Palta - Cebollin - En palta.", valor: 5400, imagen: PalmaRollImg, categoria: "Rolls vegetarianos" },
     { id: 44, codigo: "044", nombre: "Mazorca roll", descripcion: "Choclo baby - Queso crema - Palta - En palta.", valor: 5600, imagen: MazorcaRollImg, categoria: "Rolls vegetarianos" },
     { id: 45, codigo: "045", nombre: "Funji Roll", descripcion: "Champiñon - Palta - Cebollin - En queso crema.", valor: 5900, imagen: FunjiRollImg, categoria: "Rolls vegetarianos" },
-    { id: 46, codigo: "046", nombre: "Vegi oriental", descripcion: "Champiñon - Palmito - Queso Crema - Cebollin - En palta.", valor: 6900, imagen: vegiOrientalImg, categoria: "Rolls vegetarianos" },
+    { id: 46, codigo: "046", nombre: "Vegi oriental sin arroz", descripcion: "Champiñon - Palmito - Queso Crema - Cebollin - En palta.", valor: 6900, imagen: vegiOrientalImg, categoria: "Rolls vegetarianos" },
     { id: 47, codigo: "047", nombre: "Funji cheese panko", descripcion: "Champiñon - Queso crema - Cebollin - En panko.", valor: 6000, imagen: FunjiPankoImg, categoria: "Rolls vegetarianos" },
 
 
 
 // Hot rolls
 
-    { id: 48, codigo: "048", nombre: "Kani panko", descripcion: "Kanikama - Queso crema - Cebollin - En panko.", valor: 5900, imagen: KaniPankoImg, categoria: "Hot rolls" },
+    { id: 48, codigo: "048", nombre: "Kani cheese panko", descripcion: "Kanikama - Queso crema - Cebollin - En panko.", valor: 5900, imagen: KaniPankoImg, categoria: "Hot rolls" },
     { id: 49, codigo: "049", nombre: "Ebi cheese panko", descripcion: "Camaron - Queso crema - Cebollin - En panko.", valor: 6500, imagen: EbiPankoImg, categoria: "Hot rolls" },
     { id: 50, codigo: "050", nombre: "Teri tori", descripcion: "Pollo - Queso crema - Cebollin - En panko.", valor: 6400, imagen: TeriToriImg, categoria: "Hot rolls" },
-    { id: 51, codigo: "051", nombre: "Sabi panko", descripcion: "Salmon - Camaron - Queso crema - En panko.", valor: 6900, imagen: SabiPankoImg, categoria: "Hot rolls" },
+    { id: 51, codigo: "051", nombre: "Sabi cheese panko", descripcion: "Salmon - Camaron - Queso crema - En panko.", valor: 6900, imagen: SabiPankoImg, categoria: "Hot rolls" },
     { id: 52, codigo: "052", nombre: "Sake cheese panko", descripcion: "Salmon - Queso crema - Cebollin - En panko.", valor: 6800, imagen: SakePankoImg, categoria: "Hot rolls" },
-    { id: 53, codigo: "053", nombre: "Tako panko", descripcion: "Pulpo - Queso crema - Cebollin - En panko.", valor: 7100, imagen: TakoPankoImg, categoria: "Hot rolls" },
-    { id: 54, codigo: "054", nombre: "Hotate panko", descripcion: "Ostion furay - Queso crema - Cebollin - En panko.", valor: 7100, imagen: HotatePankoImg, categoria: "Hot rolls" },
+    { id: 53, codigo: "053", nombre: "Tako cheese panko", descripcion: "Pulpo - Queso crema - Cebollin - En panko.", valor: 7100, imagen: TakoPankoImg, categoria: "Hot rolls" },
+    { id: 54, codigo: "054", nombre: "Hotate panko", descripcion: "Ostion apanado - Queso crema - Cebollin - En panko.", valor: 7100, imagen: HotatePankoImg, categoria: "Hot rolls" },
     { id: 55, codigo: "055", nombre: "Futomaki", descripcion: "Camaron - Pollo - Queso crema - En nori y panko.", valor: 7100, imagen: FutomakiImg, categoria: "Hot rolls" },
     { id: 56, codigo: "056", nombre: "Mechada panko", descripcion: "Carne mechada - Queso crema - Cebollin - En panko.", valor: 7100, imagen: MechadaPankoImg, categoria: "Hot rolls" }, 
 
@@ -554,7 +554,7 @@ const _productos: Producto[] = [
     { id: 303, codigo: "83", nombre: "Sprite lata", descripcion: "Bebida gaseosa en lata 350 ml", valor: 1600, imagen: spriteLataImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
     { id: 304, codigo: "84", nombre: "Jumex mango lata", descripcion: "Nectar jumex mango 335ml", valor: 1600, imagen: JumexMangoImg  , categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
     { id: 305, codigo: "84", nombre: "Jumex piña lata", descripcion: "Nectar jumex piña 335ml", valor: 1600, imagen: JumexPinaImg , categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
-    { id: 306, codigo: "84", nombre: "Jumex piña-coco lata", descripcion: "Nectar jumex piña-coco 335ml", valor: 1600, imagen: JumexPinaCocoImg , categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
+    { id: 306, codigo: "84", nombre: "Jumex piña-coco lata", descripcion: "Nectar jumex piña coco 335ml", valor: 1600, imagen: JumexPinaCocoImg , categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
     { id: 307, codigo: "85", nombre: "Arizona Mango", descripcion: "Jugo en lata 500 ml", valor: 2500, imagen: arizonaMangoImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
     { id: 308, codigo: "85", nombre: "Arizona Sandía", descripcion: "Jugo en lata 500 ml", valor: 2500, imagen: arizonaSandiaImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
     { id: 309, codigo: "85", nombre: "Arizona Uva", descripcion: "Jugo en lata 500 ml", valor: 2500, imagen: arizonaUvaImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },

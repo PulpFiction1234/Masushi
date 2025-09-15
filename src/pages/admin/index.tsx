@@ -14,13 +14,25 @@ export default function AdminPage() {
   }, []);
 
   const toggle = async () => {
+    const previous = closed;
     const next = !closed;
-    await fetch('/api/admin/closed', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ forceClosed: next }),
-    });
     setClosed(next);
+    try {
+      const response = await fetch('/api/admin/closed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ forceClosed: next }),
+      });
+      if (!response.ok) {
+        throw new Error('Request failed');
+      }
+      const data = await response.json();
+      setClosed(data.forceClosed);
+    } catch (err) {
+      console.error(err);
+      alert('Error actualizando el estado');
+      setClosed(previous);
+    }
   };
 
   const logout = async () => {

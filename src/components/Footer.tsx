@@ -38,7 +38,7 @@ const Footer: React.FC<FooterProps> = ({ showSocial = true, className = "" }) =>
                 <FaFacebook className="text-2xl text-blue-500 hover:text-gray-100" />
               </a>
               <a
-                href="https://wa.me/56912345678"
+                href="https://wa.me/56940873865"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp de Masushi"

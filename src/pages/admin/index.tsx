@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
-import { supabase } from '@/utils/supabaseClient';
+import supabase from '@/utils/supabaseClient';
 
 export default function AdminPage() {
   const router = useRouter();

@@ -14,9 +14,9 @@ const LOCAL = {
   direccion: "Av. Parque del este 4400,Puente alto, RM",
   lat: -33.561967096006185,  // ← reemplaza por la lat real
   lng: -70.55042547663736,  // ← reemplaza por el lng real
-  telefono: "+56 9 5418 9200", // visible
-  telefonoPlain: "56954189200", // para los enlaces tel:
-  whatsapp: "56954189200",      // para wa.me
+  telefono: "(2) 2755 7931", // visible
+  telefonoPlain: "(2) 2755 7931", // para los enlaces tel:
+  whatsapp: "56940873865",      // para wa.me
   horarios: [
     { dia: "Lun - Jue", horas: "16:30 – 22:30" },
     { dia: "Viernes", horas: "16:30 – 23:00" },

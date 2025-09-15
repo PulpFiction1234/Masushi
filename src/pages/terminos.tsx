@@ -56,12 +56,10 @@ export default function TerminosPage() {
                 legal de la empresa]
               </li>
               <li>
-                <span className="text-gray-400">RUT:</span> [RUT de la empresa
-                o del titular]
+                <span className="text-gray-400">RUT:</span> 76.422.605-4
               </li>
               <li>
-                <span className="text-gray-400">Dirección:</span> [dirección
-                del local]
+                <span className="text-gray-400">Dirección:</span> Av. Parque Central 06477, Local 105, Puente Alto
               </li>
               <li>
                 <span className="text-gray-400">Teléfono/WhatsApp:</span>
@@ -70,7 +68,7 @@ export default function TerminosPage() {
               </li>
               <li>
                 <span className="text-gray-400">Correo electrónico:</span>{" "}
-                [correo de contacto]
+                masushi.spa@gmail.com
               </li>
             </ul>
           </li>
@@ -236,21 +234,21 @@ export default function TerminosPage() {
             <li>
               {' '}
               <a
-                href="mailto:[correo]"
+                href="mailto:masushi.spa@gmail.com"
                 className="underline decoration-gray-600 hover:decoration-white"
               >
-                [correo]
+                masushi.spa@gmail.com
               </a>
             </li>
             <li>
               {' '}
               <a
-                href="https://wa.me/[WhatsApp]"
+                href="https://wa.me/56940873865"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="underline decoration-gray-600 hover:decoration-white"
               >
-                [WhatsApp]
+                +56 9 4087 3865
               </a>
             </li>
           </ul>

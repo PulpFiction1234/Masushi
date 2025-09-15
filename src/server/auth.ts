@@ -11,24 +11,33 @@ const JWT_SECRET: string = (() => {
 export async function validateCredentials(
   username?: string,
   password?: string
-): Promise<boolean> {
-  if (!username || !password) return false;
+): Promise<'admin' | 'user' | null> {
+  if (!username || !password) return null;
   const users = await getUsersCollection();
   const user = await users.findOne({ username });
-  if (!user) return false;
-  return compare(password, user.passwordHash);
+  if (!user) return null;
+  const valid = await compare(password, user.passwordHash);
+  if (!valid) return null;
+  return user.role;
 }
 
-export function signToken(username: string): string {
-  return jwt.sign({ username }, JWT_SECRET, { expiresIn: '7d' });
+export function signToken(
+  username: string,
+  role: 'admin' | 'user',
+): string {
+  return jwt.sign({ username, role }, JWT_SECRET, { expiresIn: '7d' });
 }
 
-export function verifyToken(token?: string): boolean {
-  if (!token) return false;
+export function verifyToken(
+  token?: string,
+): { username: string; role: 'admin' | 'user' } | null {
+  if (!token) return null;
   try {
-    jwt.verify(token, JWT_SECRET);
-    return true;
+    return jwt.verify(token, JWT_SECRET) as {
+      username: string;
+      role: 'admin' | 'user';
+    };
   } catch {
-    return false;
+    return null;
   }
 }

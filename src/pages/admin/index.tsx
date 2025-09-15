@@ -84,9 +84,10 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     };
   }
 
-  try {
+    try {
     const { verifyToken } = await import('@/server/auth');
-    if (!verifyToken(token)) {
+    const payload = verifyToken(token);
+    if (!payload || payload.role !== 'admin') {
       return {
         redirect: {
           destination: '/login',

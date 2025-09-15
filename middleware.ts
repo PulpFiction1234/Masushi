@@ -6,7 +6,8 @@ export async function middleware(req: NextRequest) {
   if (token) {
     try {
       const { verifyToken } = await import('@/server/auth');
-      if (verifyToken(token)) {
+      const payload = verifyToken(token);
+      if (payload?.role === 'admin') {
         return NextResponse.next();
       }
     } catch (err) {

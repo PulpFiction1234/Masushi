@@ -3,6 +3,7 @@ import { MongoClient, Collection } from 'mongodb';
 export interface User {
   username: string;
   passwordHash: string;
+  role: 'admin' | 'user';
 }
 
 export interface Setting {

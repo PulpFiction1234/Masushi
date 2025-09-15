@@ -8,13 +8,20 @@ import {
   clearForceClosedDate,
   shouldResetForceClosed,
 } from "@/server/schedule";
+import { verifyToken } from "@/server/auth";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<{ forceClosed: boolean }>,
 ) {
   try {
-     if (req.method === "GET") {
+    const token = req.cookies?.token;
+    const payload = verifyToken(token);
+    if (payload?.role !== "admin") {
+      res.status(401).end();
+      return;
+    }
+    if (req.method === "GET") {
       let closed = await getStoredForceClosed();
       if (closed && shouldResetForceClosed()) {
         await setStoredForceClosed(false);
@@ -30,6 +37,7 @@ export default async function handler(
         res.status(400).end();
         return;
       }
+
 
       await setStoredForceClosed(closed);
       if (closed) {

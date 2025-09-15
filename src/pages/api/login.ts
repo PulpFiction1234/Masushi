@@ -7,8 +7,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  let signToken: (username: string) => string;
-  let validateCredentials: (username?: string, password?: string) => Promise<boolean>;
+   let signToken: (
+    username: string,
+    role: 'admin' | 'user',
+  ) => string;
+  let validateCredentials: (
+    username?: string,
+    password?: string,
+  ) => Promise<'admin' | 'user' | null>;
   try {
     ({ signToken, validateCredentials } = await import('@/server/auth'));
   } catch (err) {
@@ -18,13 +24,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const { username, password } = req.body ?? {};
-  const valid = await validateCredentials(username, password);
-  if (!valid) {
+  const role = await validateCredentials(username, password);
+  if (!role) {
     res.status(401).end();
     return;
   }
 
-  const token = signToken(username);
+  const token = signToken(username, role);
   res.setHeader('Set-Cookie', `token=${token}; Path=/; HttpOnly; SameSite=Lax`);
   res.status(200).json({ ok: true });
 }

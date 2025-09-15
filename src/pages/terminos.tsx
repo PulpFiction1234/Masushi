@@ -52,11 +52,10 @@ export default function TerminosPage() {
             </p>
             <ul className="list-disc pl-6 space-y-1 text-gray-200">
               <li>
-                <span className="text-gray-400">Razón social:</span> [nombre
-                legal de la empresa]
+                <span className="text-gray-400">Razón social:</span> Sociedad masushi spa
               </li>
               <li>
-                <span className="text-gray-400">RUT:</span> 76.422.605-4
+                <span className="text-gray-400">RUT:</span> 78.229.101-7
               </li>
               <li>
                 <span className="text-gray-400">Dirección:</span> Av. Parque Central 06477, Local 105, Puente Alto
@@ -64,7 +63,8 @@ export default function TerminosPage() {
               <li>
                 <span className="text-gray-400">Teléfono/WhatsApp:</span>
                 {" "}
-                [número de contacto]
+                227557931
+                / +56940873865
               </li>
               <li>
                 <span className="text-gray-400">Correo electrónico:</span>{" "}

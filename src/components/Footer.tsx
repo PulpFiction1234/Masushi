@@ -17,7 +17,7 @@ const Footer: React.FC<FooterProps> = ({ showSocial = true, className = "" }) =>
           {showSocial ? (
             <div className="justify-self-start flex items-center gap-5">
               <a
-                href="https://www.instagram.com/mazushiciudaddeleste"
+                href="https://www.instagram.com/masushiciudaddeleste"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram de Masushi"
@@ -55,6 +55,13 @@ const Footer: React.FC<FooterProps> = ({ showSocial = true, className = "" }) =>
           <p className="text-center">
             Masushi © {new Date().getFullYear()} - Todos los derechos reservados
           </p>
+
+           <a
+           href="/terminos" 
+           className="text-right">
+            Terminos y condiciones
+          </a>
+
 
           {/* Right: spacer */}
           <div className="justify-self-end" aria-hidden />

@@ -8,7 +8,7 @@ export const BUSINESS_TZ = "America/Santiago";
 // Horario MASUSHI (según tu LOCAL):
 // Lun-Jue 16:30–22:30 • Viernes 16:30–23:00 • Sábado 13:30–22:30 • Domingo cerrado
 export const HORARIO_SEMANAL: Record<DiaKey, Intervalo[]> = {
-  sun: [],
+  sun: [["16:30", "22:30"]],
   mon: [["16:30", "22:30"]],
   tue: [["16:30", "22:30"]],
   wed: [["16:30", "22:30"]],

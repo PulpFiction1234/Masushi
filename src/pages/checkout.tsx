@@ -6,9 +6,6 @@ import { useCart } from "@/context/CartContext";
 import Navbar from "@/components/Navbar";
 import { useEffect } from "react";
 
-
-
-
 // THEME
 const ACCENT_FROM = "from-emerald-500";
 const ACCENT_TO = "to-green-600";
@@ -116,8 +113,6 @@ const salsasGratisPorUnidad = (it: CartItemLike): number => {
   return 1;
 };
 
-
-
 export default function Checkout() {
   const { cart } = useCart();
   const [state, dispatch] = useReducer(checkoutReducer, initialCheckoutState);
@@ -150,9 +145,9 @@ export default function Checkout() {
   // Estado de apertura desde /api/open (refresca cada 60s)
   const { data: openData } = useSWR("/api/open", fetcher, { refreshInterval: 60_000 });
   useEffect(() => {
-  if (deliveryType === "retiro" && paymentMethod !== "") {
-    dispatch({ type: "SET_FIELD", field: "paymentMethod", value: "" });
-  }
+    if (deliveryType === "retiro" && paymentMethod !== "") {
+      dispatch({ type: "SET_FIELD", field: "paymentMethod", value: "" });
+    }
   }, [deliveryType, paymentMethod, dispatch]);
   const abierto = openData?.abierto === true;
   const statusLabel =
@@ -184,14 +179,8 @@ export default function Checkout() {
   // Cálculos monetarios/totales
   const {
     totalProductos,
-    freeSoya,
-    freeTeri,
-    paidSoya,
-    paidTeri,
     totalAcevichada,
     totalMaracuya,
-    costoSoyaExtra,
-    costoTeriExtra,
     costoJengibreExtras,
     costoWasabiExtras,
     // 👇 nuevos costos
@@ -290,11 +279,11 @@ export default function Checkout() {
   const requiresPayment = deliveryType === "delivery";
 
   const canSubmitBase =
-  name.trim().length > 1 &&
-  lastName.trim().length > 1 &&
-  isValidChileanMobile(phone) &&
-  (!requiresPayment || paymentMethod !== "") &&
-  (deliveryType === "retiro" || (coords && REGEX_NUMERO_CALLE.test(address)));
+    name.trim().length > 1 &&
+    lastName.trim().length > 1 &&
+    isValidChileanMobile(phone) &&
+    (!requiresPayment || paymentMethod !== "") &&
+    (deliveryType === "retiro" || (coords && REGEX_NUMERO_CALLE.test(address)));
 
   const canSubmit = canSubmitBase && abierto === true;
 
@@ -342,56 +331,76 @@ export default function Checkout() {
 
         const productosTexto = cartTyped
           .map((item) => {
-            const lineaNombre = `${codePartOf(item)} - ${infoWithTipo(item)}`;
+            const lineaNombre = `${codePartOf(item)}x ${item.cantidad}  - ${infoWithTipo(item)}`;
             const totalLinea = fmt(priceOf(item) * item.cantidad);
-            return ` ${lineaNombre} x${item.cantidad} — ${totalLinea}`;
+            return ` ${lineaNombre} — ${totalLinea}`;
           })
           .join("\n");
 
-        const extrasBasicasLineas = [
-          `Soya (gratis): ${Number(soya || 0)}`,
-          `Teriyaki (gratis): ${Number(teriyaki || 0)}`,
-          `Soya extra: ${Number(soyaExtra || 0)} = ${fmt(Number(soyaExtra || 0) * PRECIO_SOYA_EXTRA)}`,
-          `Teriyaki extra: ${Number(teriyakiExtra || 0)} = ${fmt(
-            Number(teriyakiExtra || 0) * PRECIO_TERIYAKI_EXTRA
-          )}`,
-        ];
+        // ========= NUEVO: Sección Salsas/Palitos condicional =========
+        // Normaliza cantidades a número
+        const nSoya           = Number(soya || 0);
+        const nTeri           = Number(teriyaki || 0);
+        const nSoyaExtra      = Number(soyaExtra || 0);
+        const nTeriExtra      = Number(teriyakiExtra || 0);
+        const nAcevichada     = Number(acevichada || 0);
+        const nMaracuya       = Number(maracuya || 0);
+        const nJenGratis      = Number(jengibre || 0);
+        const nWasGratis      = Number(wasabi || 0);
+        const nJenExtra       = Number(extraJengibre || 0);
+        const nWasExtra       = Number(extraWasabi || 0);
+        const nPalitosGratis  = Number(palitos || 0);
+        const nPalitosExtra   = Number(palitosExtra || 0);
+        const nAyudaPalitos   = Number(ayudaPalitos || 0);
 
-        const jwGratisLineas = [
-          `Jengibre (gratis): ${Number(jengibre || 0)}/${POOL_JW}`,
-          `Wasabi (gratis): ${Number(wasabi || 0)}/${POOL_JW}`,
-        ];
+        // Arma líneas **solo si hay cantidad**
+        const lineasSalsas: string[] = [];
+        if (nSoya > 0)        lineasSalsas.push(`Soya (gratis): ${nSoya}`);
+        if (nTeri > 0)        lineasSalsas.push(`Teriyaki (gratis): ${nTeri}`);
+        if (nSoyaExtra > 0)   lineasSalsas.push(`Soya extra: ${nSoyaExtra} = ${fmt(nSoyaExtra * PRECIO_SOYA_EXTRA)}`);
+        if (nTeriExtra > 0)   lineasSalsas.push(`Teriyaki extra: ${nTeriExtra} = ${fmt(nTeriExtra * PRECIO_TERIYAKI_EXTRA)}`);
+        if (nJenGratis > 0)   lineasSalsas.push(`Jengibre (gratis): ${nJenGratis}/${POOL_JW}`);
+        if (nWasGratis > 0)   lineasSalsas.push(`Wasabi (gratis): ${nWasGratis}/${POOL_JW}`);
+        if (nAcevichada > 0)  lineasSalsas.push(`Acevichada: ${nAcevichada} = ${fmt(totalAcevichada)}`);
+        if (nMaracuya > 0)    lineasSalsas.push(`Maracuyá: ${nMaracuya} = ${fmt(totalMaracuya)}`);
+        if (nJenExtra > 0)    lineasSalsas.push(`Extra jengibre: ${nJenExtra} = ${fmt(costoJengibreExtras)}`);
+        if (nWasExtra > 0)    lineasSalsas.push(`Extra wasabi: ${nWasExtra} = ${fmt(costoWasabiExtras)}`);
 
-        const palitosLineas = [
-          `Palitos (gratis): ${Number(palitos || 0)} / ${maxPalitosGratis}`,
-          `Palitos extra: ${Number(palitosExtra || 0)} = ${fmt(costoPalitosExtra)}`,
-          `Ayuda palitos: ${Number(ayudaPalitos || 0)} = ${fmt(costoAyudaPalitos)}`,
-        ];
+        const lineasPalitos: string[] = [];
+        if (nPalitosGratis > 0) lineasPalitos.push(`Palitos (gratis): ${nPalitosGratis} / ${maxPalitosGratis}`);
+        if (nPalitosExtra > 0)  lineasPalitos.push(`Palitos extra: ${nPalitosExtra} = ${fmt(costoPalitosExtra)}`);
+        if (nAyudaPalitos > 0)  lineasPalitos.push(`Ayuda palitos: ${nAyudaPalitos} = ${fmt(costoAyudaPalitos)}`);
 
-        const extrasTexto = [
-          ...extrasBasicasLineas,
-          ...jwGratisLineas,
-          ...palitosLineas,
-          `Acevichada: ${Number(acevichada || 0)} = ${fmt(totalAcevichada)}`,
-          `Maracuyá: ${Number(maracuya || 0)} = ${fmt(totalMaracuya)}`,
-          `Extra jengibre: ${Number(extraJengibre || 0)} = ${fmt(costoJengibreExtras)}`,
-          `Extra wasabi: ${Number(extraWasabi || 0)} = ${fmt(costoWasabiExtras)}`,
-          deliveryType === "delivery" ? `Delivery: ${fmt(deliveryFee)}` : "",
-          observacion ? `Observaciones: ${observacion}` : "",
-        ]
-          .filter(Boolean)
-          .join("\n");
+        // Une sólo si hay algo que mostrar
+        const bloqueSalsasPalitos =
+          [...lineasSalsas, ...lineasPalitos].length > 0
+            ? `\n--- Salsas y palitos ---\n${[...lineasSalsas, ...lineasPalitos].join("\n")}\n`
+            : "";
+        // ========= FIN NUEVO =========
+
+        // ✅ Normaliza a CRLF (WhatsApp respeta mejor los saltos con \r\n)
+        const NL = "\r\n";
+        const productosTextoCRLF = productosTexto.replace(/\n/g, NL);
+        const bloqueSalsasPalitosCRLF = (bloqueSalsasPalitos || "").replace(/\n/g, NL);
 
         const shortAddress = toShortCLAddress(address);
-        const msg =
-          `Tipo: ${deliveryType}\n` +
-          (deliveryType === "delivery" ? `Dirección: ${shortAddress}\n` : "") +
-          `Nombre: ${name} ${lastName}\n` +
-          `Teléfono: ${phone}\n` +
-          (deliveryType === "delivery" ? `Método de pago: ${paymentLabel(paymentMethod)}\n` : "") +
-          `\n--- Productos ---\n${productosTexto}\n` +
-          `\n--- Salsas y extras ---\n${extrasTexto}\n` +
-          `\nTotal: ${fmt(totalFinal)}`;
+        const lineaDelivery = deliveryType === "delivery" ? `Delivery: ${fmt(deliveryFee)}${NL}` : "";
+        const lineaObs = observacion ? `Observaciones: ${observacion}${NL}` : "";
+
+        const cuerpoAntesDeTotal =
+          `Tipo: ${deliveryType}${NL}` +
+          (deliveryType === "delivery" ? `Dirección: ${shortAddress}${NL}` : "") +
+          `Nombre: ${name} ${lastName}${NL}` +
+          `Teléfono: ${phone}${NL}` +
+          (deliveryType === "delivery" ? `Método de pago: ${paymentLabel(paymentMethod)}${NL}` : "") +
+          `${NL}--- Productos ---${NL}${productosTextoCRLF}${NL}` +
+          (bloqueSalsasPalitosCRLF ? bloqueSalsasPalitosCRLF : "") +
+          lineaDelivery +
+          lineaObs;
+
+        // 🧽 Quita saltos finales y agrega EXACTAMENTE dos antes de Total:
+        const msg = `${cuerpoAntesDeTotal.replace(/(\r?\n)+$/, "")}${NL}${NL}Total: ${fmt(totalFinal)}`;
+
         const mensaje = encodeURIComponent(msg);
         window.open(`https://wa.me/56951869402?text=${mensaje}`, "_blank");
       })
@@ -506,9 +515,8 @@ export default function Checkout() {
               </div>
 
               {deliveryType === "delivery" && (
-              <PaymentSelector paymentMethod={paymentMethod} dispatch={dispatch} />
+                <PaymentSelector paymentMethod={paymentMethod} dispatch={dispatch} />
               )}
-
 
               {deliveryType === "delivery" && (
                 <div>

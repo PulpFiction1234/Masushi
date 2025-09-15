@@ -1,0 +1,263 @@
+// src/pages/terminos.tsx
+import Head from "next/head";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+
+export default function TerminosPage() {
+  const lastUpdate = "[fecha de publicación]";
+
+  return (
+    <div className="bg-gray-950 text-white min-h-screen flex flex-col">
+      <Head>
+        <title>Términos y Condiciones – Masushi</title>
+        <meta
+          name="description"
+          content="Términos y Condiciones de Masushi: uso del sitio, pedidos, pagos, delivery, devoluciones, protección de datos y más."
+        />
+      </Head>
+
+      <Navbar />
+
+      <main className="max-w-4xl md:max-w-5xl lg:max-w-6xl mx-auto px-4 py-10 flex-1">
+        <h1 className="text-3xl md:text-4xl font-bold mb-2">
+          Términos y Condiciones – Masushi
+        </h1>
+        <p className="text-sm text-gray-400 mb-8">
+          Última actualización: {lastUpdate}
+        </p>
+        <p className="mb-6">
+          Bienvenido a Masushi. Al acceder y utilizar nuestro sitio web{" "}
+          <a
+            href="https://www.masushi.cl"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline decoration-gray-600 hover:decoration-white"
+          >
+            www.masushi.cl
+          </a>
+          , aceptas cumplir con los siguientes términos y condiciones. Si no
+          estás de acuerdo con ellos, te recomendamos no usar nuestro servicio.
+        </p>
+
+        <div className="h-px bg-gray-800 my-8" />
+
+        <ol className="list-decimal pl-6 space-y-8">
+          <li>
+            <h2 className="text-2xl font-semibold mb-3">
+              Identificación de la empresa
+            </h2>
+            <p className="mb-3">
+              Masushi es un negocio de comida japonesa que ofrece venta de
+              sushi a través de pedidos en línea y retiro/delivery.
+            </p>
+            <ul className="list-disc pl-6 space-y-1 text-gray-200">
+              <li>
+                <span className="text-gray-400">Razón social:</span> [nombre
+                legal de la empresa]
+              </li>
+              <li>
+                <span className="text-gray-400">RUT:</span> [RUT de la empresa
+                o del titular]
+              </li>
+              <li>
+                <span className="text-gray-400">Dirección:</span> [dirección
+                del local]
+              </li>
+              <li>
+                <span className="text-gray-400">Teléfono/WhatsApp:</span>
+                {" "}
+                [número de contacto]
+              </li>
+              <li>
+                <span className="text-gray-400">Correo electrónico:</span>{" "}
+                [correo de contacto]
+              </li>
+            </ul>
+          </li>
+
+          <li>
+            <h2 className="text-2xl font-semibold mb-3">Uso del sitio web</h2>
+            <p className="mb-3">El usuario se compromete a:</p>
+            <ul className="list-disc pl-6 space-y-1">
+              <li>
+                Entregar información veraz y actualizada al realizar pedidos.
+              </li>
+              <li>
+                No realizar usos indebidos del sitio (fraudes, suplantación de
+                identidad, intentos de hackeo, etc.).
+              </li>
+              <li>
+                Ser mayor de 18 años o contar con autorización de un adulto
+                responsable para comprar.
+              </li>
+            </ul>
+          </li>
+
+          <li>
+            <h2 className="text-2xl font-semibold mb-3">Productos y precios</h2>
+            <ul className="list-disc pl-6 space-y-1">
+              <li>
+                Los precios publicados en <span className="font-medium">www.masushi.cl</span> están
+                expresados en pesos chilenos (CLP) e incluyen impuestos cuando
+                corresponda.
+              </li>
+              <li>
+                Los precios y promociones pueden variar sin previo aviso, pero
+                los pedidos confirmados mantendrán las condiciones pactadas.
+              </li>
+              <li>
+                Las imágenes de los productos son referenciales, pudiendo
+                existir diferencias menores en presentación.
+              </li>
+            </ul>
+          </li>
+
+          <li>
+            <h2 className="text-2xl font-semibold mb-3">Pedidos y pagos</h2>
+            <ul className="list-disc pl-6 space-y-1">
+              <li>
+                El pedido se considerará confirmado solo una vez recibido el
+                pago a través de los medios habilitados en el sitio.
+              </li>
+              <li>
+                Aceptamos los siguientes métodos de pago: [transferencia
+                bancaria, tarjetas de crédito/débito, efectivo al momento del
+                retiro o entrega, etc.].
+              </li>
+              <li>
+                En caso de que un producto no esté disponible, se notificará al
+                cliente para ofrecer un reemplazo o la devolución del dinero.
+              </li>
+            </ul>
+          </li>
+
+          <li>
+            <h2 className="text-2xl font-semibold mb-3">
+              Delivery y tiempos de entrega
+            </h2>
+            <ul className="list-disc pl-6 space-y-1">
+              <li>
+                El servicio de reparto está disponible en sectores y comunas
+                específicas, indicadas en el sitio web.
+              </li>
+              <li>
+                Los tiempos de entrega son estimados y pueden variar según
+                factores externos (clima, tráfico, alta demanda).
+              </li>
+              <li>
+                El cliente es responsable de proporcionar una dirección correcta
+                y accesible. Si la entrega no puede realizarse por error en la
+                dirección o ausencia del cliente, se podrá reprogramar con un
+                costo adicional.
+              </li>
+            </ul>
+          </li>
+
+          <li>
+            <h2 className="text-2xl font-semibold mb-3">
+              Cambios, devoluciones y reclamos
+            </h2>
+            <ul className="list-disc pl-6 space-y-1">
+              <li>
+                Por tratarse de productos alimenticios frescos, no se aceptan
+                devoluciones una vez entregado el pedido.
+              </li>
+              <li>
+                En caso de recibir un producto en mal estado o distinto al
+                solicitado, el cliente debe contactarnos dentro de las 2 horas
+                posteriores a la entrega, enviando evidencia (fotos). Se
+                evaluará la reposición o devolución correspondiente.
+              </li>
+              <li>
+                Los reclamos pueden realizarse a través de nuestro correo o
+                directamente en el local.
+              </li>
+            </ul>
+          </li>
+
+          <li>
+            <h2 className="text-2xl font-semibold mb-3">Propiedad intelectual</h2>
+            <p>
+              Todo el contenido del sitio <span className="font-medium">www.masushi.cl</span> (logos,
+              imágenes, textos, diseño, software) es propiedad de Masushi y no
+              puede ser reproducido sin autorización previa.
+            </p>
+          </li>
+
+          <li>
+            <h2 className="text-2xl font-semibold mb-3">Protección de datos</h2>
+            <ul className="list-disc pl-6 space-y-1">
+              <li>
+                La información personal entregada por los clientes será
+                utilizada únicamente para la gestión de pedidos y fines
+                relacionados con el servicio.
+              </li>
+              <li>
+                Nos comprometemos a proteger la privacidad de los usuarios de
+                acuerdo con la legislación vigente en Chile (Ley N° 19.628
+                sobre protección de la vida privada).
+              </li>
+            </ul>
+          </li>
+
+          <li>
+            <h2 className="text-2xl font-semibold mb-3">Responsabilidad</h2>
+            <ul className="list-disc pl-6 space-y-1">
+              <li>
+                Masushi no se hace responsable por daños o perjuicios derivados
+                del uso incorrecto de los productos.
+              </li>
+              <li>
+                El consumo de alimentos es bajo responsabilidad del cliente,
+                especialmente en casos de alergias alimentarias. Se recomienda
+                revisar detalladamente la descripción de los productos.
+              </li>
+            </ul>
+          </li>
+
+          <li>
+            <h2 className="text-2xl font-semibold mb-3">Modificaciones</h2>
+            <p>
+              Masushi se reserva el derecho de modificar estos Términos y
+              Condiciones en cualquier momento. Los cambios se publicarán en
+              esta misma página y entrarán en vigencia desde su fecha de
+              publicación.
+            </p>
+          </li>
+        </ol>
+
+        <div className="h-px bg-gray-800 my-10" />
+
+        <section aria-labelledby="contacto">
+          <h2 id="contacto" className="text-2xl font-semibold mb-3">
+            📌 Contacto
+          </h2>
+          <ul className="list-none pl-0 space-y-1">
+            <li>
+              {' '}
+              <a
+                href="mailto:[correo]"
+                className="underline decoration-gray-600 hover:decoration-white"
+              >
+                [correo]
+              </a>
+            </li>
+            <li>
+              {' '}
+              <a
+                href="https://wa.me/[WhatsApp]"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline decoration-gray-600 hover:decoration-white"
+              >
+                [WhatsApp]
+              </a>
+            </li>
+          </ul>
+        </section>
+      </main>
+
+      <Footer />
+    </div>
+  );
+}

@@ -7,7 +7,6 @@ import { useCart } from "@/context/CartContext";
 import ProductCard from "./ProductCard";
 import { normalize } from "@/utils/strings";
 import { type FitMode } from "@/utils/constants";
-import type { ArmaloPayload } from "./BuildYourRollSelector";
 
 interface ListaProductosProps {
   categoriaSeleccionada: string | null;
@@ -112,7 +111,7 @@ if (prod.configuracion?.tipo === "armalo") {
   // Intentamos armar una firma “estructurada” si el payload trae campos comunes.
   // No asumimos un shape fijo: buscamos en payload.selection y en la raíz.
   const root = isObject(payloadRaw) ? payloadRaw : {};
-  const selection = isObject((root as any).selection) ? ((root as any).selection as Record<string, unknown>) : undefined;
+  const selection = isObject((root as Record<string, unknown>).selection) ? ((root as Record<string, unknown>).selection as Record<string, unknown>) : undefined;
 
   const pick = (obj: Record<string, unknown> | undefined, keys: string[]) => {
     for (const k of keys) {

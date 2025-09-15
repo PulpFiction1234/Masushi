@@ -9,6 +9,7 @@ import React, {
   useReducer,
   useState,
 } from "react";
+import type { StaticImageData } from "next/image";
 import type { Producto } from "@/data/productos";
 
 export type CartOpcion = { id: string; label: string };
@@ -113,11 +114,10 @@ export function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
         };
         return copy;
       }
-
-      const imagen = typeof prod.imagen === "string" ? prod.imagen : (prod.imagen as any).src;
+      const imagen = typeof prod.imagen === "string" ? prod.imagen : (prod.imagen as StaticImageData).src;
       const blurDataUrl =
         prod.blurDataUrl ??
-        (typeof prod.imagen === "object" ? (prod.imagen as any).blurDataURL : undefined);
+        (typeof prod.imagen === "object" ? (prod.imagen as StaticImageData).blurDataURL : undefined);
 
       return [
         ...state,

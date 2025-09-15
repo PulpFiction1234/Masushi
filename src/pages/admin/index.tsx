@@ -4,8 +4,8 @@ import { useRouter } from "next/router";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
-// 👇 signOut mediante helpers (react)
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import type { Session } from "@supabase/supabase-js"; // ⬅️ solo tipo
 
 export default function AdminPage() {
   const router = useRouter();
@@ -13,7 +13,7 @@ export default function AdminPage() {
   const [closed, setClosed] = useState(false);
 
   useEffect(() => {
-    fetch("/api/admin/closed")
+    fetch("/api/admin/closed", { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => setClosed(d.forceClosed))
       .catch(() => setClosed(false));
@@ -79,12 +79,15 @@ export default function AdminPage() {
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
+// ⬇️ Tipamos las props de la página para evitar "any"
+type AdminPageProps = { initialSession: Session | null };
+
+export const getServerSideProps: GetServerSideProps<AdminPageProps> = async (ctx) => {
   const supabase = createPagesServerClient(ctx);
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
     return { redirect: { destination: "/login", permanent: false } };
   }
-  return { props: { initialSession: session } as any };
+  return { props: { initialSession: session } };
 };

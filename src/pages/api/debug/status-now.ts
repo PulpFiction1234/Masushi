@@ -7,11 +7,20 @@ import { getForceClosedWithReset } from "@/server/admin-state";
 function nowParts(tz: string) {
   const fmt = new Intl.DateTimeFormat("en-CA", {
     timeZone: tz,
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", weekday: "short", hour12: false
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    weekday: "short",
+    hour12: false,
   });
-  // @ts-ignore
-  const parts = Object.fromEntries(fmt.formatToParts(new Date()).map(p => [p.type, p.value]));
+  const parts = fmt
+    .formatToParts(new Date())
+    .reduce<Record<string, string>>((acc, p) => {
+      if (p.type) acc[p.type] = String(p.value ?? "");
+      return acc;
+    }, {});
   return parts;
 }
 

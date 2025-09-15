@@ -51,7 +51,7 @@ export default function LoginPage() {
           />
           {errorMessage && (
             <p className="text-red-400 text-sm text-center">{errorMessage}</p>
-          )}␊
+          )}
           <button
             type="submit"
             className="w-full py-2 rounded bg-red-500 hover:bg-red-600 transition-colors font-semibold"

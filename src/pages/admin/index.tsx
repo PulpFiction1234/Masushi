@@ -3,6 +3,7 @@ import type { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
 import { supabase } from '@/utils/supabaseClient';
 
 export default function AdminPage() {
@@ -15,7 +16,7 @@ export default function AdminPage() {
       .then(d => setClosed(d.forceClosed));
   }, []);
 
-   const toggle = async () => {
+  const toggle = async () => {
     const previous = closed;
     const next = !closed;
     setClosed(next);
@@ -82,29 +83,15 @@ export default function AdminPage() {
 }
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const token = ctx.req.cookies?.token;
-  if (!token) {
-    return {
-      redirect: {
-        destination: '/login',
-        permanent: false,
-      },
-    };
-  }
+  const supabase = createPagesServerClient(ctx);
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
 
-    try {
-    const { verifyToken } = await import('@/server/auth');
-    const payload = verifyToken(token);
-    if (!payload || payload.role !== 'admin') {
-      return {
-        redirect: {
-          destination: '/login',
-          permanent: false,
-        },
-      };
-    }
-  } catch (err) {
-    console.error(err);
+  const role = session?.user.user_metadata?.role;
+
+  if (error || !session || role !== 'admin') {
     return {
       redirect: {
         destination: '/login',

@@ -1,27 +1,28 @@
+import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function middleware(req: NextRequest) {
-  const token = req.cookies.get('token')?.value;
+  const res = NextResponse.next();
+  const supabase = createMiddlewareClient({ req, res });
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
 
-  if (token) {
-    try {
-      const { verifyToken } = await import('@/server/auth');
-      const payload = verifyToken(token);
-      if (payload?.role === 'admin') {
-        return NextResponse.next();
-      }
-    } catch (err) {
-      console.error(err);
-      return new NextResponse('Server misconfigured', { status: 500 });
-    }
+  const role = session?.user.user_metadata?.role;
+
+  if (!error && session && role === 'admin') {
+    return res;
   }
 
   if (req.nextUrl.pathname.startsWith('/api/')) {
     return new NextResponse('Auth required', { status: 401 });
   }
 
-  const url = new URL('/login', req.url);
-  return NextResponse.redirect(url);
+  const redirectUrl = req.nextUrl.clone();
+  redirectUrl.pathname = '/login';
+  redirectUrl.search = '';
+  return NextResponse.redirect(redirectUrl);
 }
 // Protege /admin y los endpoints /api/admin/**
 export const config = {

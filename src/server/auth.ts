@@ -1,4 +1,3 @@
-import jwt from 'jsonwebtoken';
 import { compare } from 'bcryptjs';
 import supabase from './supabase';
 
@@ -7,12 +6,6 @@ type UserRow = {
   passwordHash: string;
   role: 'admin' | 'user' | string;
 };
-
-const JWT_SECRET: string = (() => {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) throw new Error('JWT_SECRET is not defined');
-  return secret;
-})();
 
 export async function validateCredentials(
   username?: string,
@@ -37,25 +30,4 @@ export async function validateCredentials(
   if (!valid) return null;
 
   return data.role === 'admin' || data.role === 'user' ? data.role : null;
-}
-
-export function signToken(
-  username: string,
-  role: 'admin' | 'user',
-): string {
-  return jwt.sign({ username, role }, JWT_SECRET, { expiresIn: '7d' });
-}
-
-export function verifyToken(
-  token?: string,
-): { username: string; role: 'admin' | 'user' } | null {
-  if (!token) return null;
-  try {
-    return jwt.verify(token, JWT_SECRET) as {
-      username: string;
-      role: 'admin' | 'user';
-    };
-  } catch {
-    return null;
-  }
 }

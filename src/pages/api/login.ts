@@ -1,38 +1,45 @@
+import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+type LoginResponse =
+  | { ok: true; role: 'admin' | 'user' }
+  | { ok: false; error: string };
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<LoginResponse>
+) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
     res.status(405).end();
     return;
   }
 
-   let signToken: (
-    username: string,
-    role: 'admin' | 'user',
-  ) => string;
-  let validateCredentials: (
-    username?: string,
-    password?: string,
-  ) => Promise<'admin' | 'user' | null>;
-  try {
-    ({ signToken, validateCredentials } = await import('@/server/auth'));
-  } catch (err) {
-    console.error(err);
-    res.status(500).end();
-    return;
-  }
-
   const { username, password } = req.body ?? {};
-  const role = await validateCredentials(username, password);
-  if (!role) {
-    res.status(401).end();
+
+  if (typeof username !== 'string' || typeof password !== 'string') {
+    res.status(400).json({ ok: false, error: 'Missing credentials' });
     return;
   }
 
-    const token = signToken(username, role);
-  // In production, send cookies only over HTTPS. For local tests you can omit this flag.
-  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-  res.setHeader('Set-Cookie', `token=${token}; Path=/; HttpOnly; SameSite=Lax${secure}`);
-  res.status(200).json({ ok: true });
+  const supabase = createPagesServerClient({ req, res });
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: username,
+    password,
+  });
+
+  if (error || !data.session || !data.user) {
+    res.status(401).json({ ok: false, error: error?.message ?? 'Invalid credentials' });
+    return;
+  }
+
+  const role = data.user.user_metadata?.role;
+
+  if (role !== 'admin' && role !== 'user') {
+    await supabase.auth.signOut();
+    res.status(403).json({ ok: false, error: 'Unauthorized role' });
+    return;
+  }
+
+  res.status(200).json({ ok: true, role });
 }

@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import {
   getForceClosed as getStoredForceClosed,
   setForceClosed as setStoredForceClosed,
@@ -8,16 +9,19 @@ import {
   clearForceClosedDate,
   shouldResetForceClosed,
 } from "@/server/schedule";
-import { verifyToken } from "@/server/auth";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<{ forceClosed: boolean }>,
 ) {
   try {
-    const token = req.cookies?.token;
-    const payload = verifyToken(token);
-    if (payload?.role !== "admin") {
+    const supabase = createPagesServerClient({ req, res });
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
+    const role = session?.user.user_metadata?.role;
+    if (error || !session || role !== "admin") {
       res.status(401).end();
       return;
     }
@@ -37,8 +41,6 @@ export default async function handler(
         res.status(400).end();
         return;
       }
-
-
       await setStoredForceClosed(closed);
       if (closed) {
         recordForceClosed();

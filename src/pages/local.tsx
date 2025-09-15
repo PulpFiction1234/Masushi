@@ -115,18 +115,22 @@ export default function LocalPage() {
         {/* GALERÍA */}
         <section className="max-w-6xl mx-auto px-4 pb-12">
           <h2 className="text-2xl font-bold mb-6">Galería</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {/* Reemplaza las imágenes por las tuyas */}
-            <img
+            <Image
               src="/images/puente-interior.webp"
-              alt="Interior del local "
+              alt="Interior del local"
+              width={500}
+              height={500}
               className="w-full h-40 sm:h-48 object-cover rounded-xl border border-gray-800"
             />
-            <img
+            <Image
               src="/images/puente-exterior.webp"
-              alt="Exterior del local "
+              alt="Exterior del local"
+              width={500}
+              height={500}
               className="w-full h-40 sm:h-48 object-cover rounded-xl border border-gray-800"
-            />    
+            />
           </div>
         </section>
       </main>

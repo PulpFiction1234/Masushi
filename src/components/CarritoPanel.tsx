@@ -120,7 +120,8 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
             >
               Vaciar carrito
             </button>
-            <p>Las fotografías tienen fines ilustrativos; no constituyen una representación exacta del producto final.
+            <p className="italic">
+              Las fotografías tienen fines ilustrativos; no constituyen una representación exacta del producto final.
             </p>
           </div>
         )}

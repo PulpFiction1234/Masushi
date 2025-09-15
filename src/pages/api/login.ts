@@ -30,7 +30,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  const token = signToken(username, role);
-  res.setHeader('Set-Cookie', `token=${token}; Path=/; HttpOnly; SameSite=Lax`);
+    const token = signToken(username, role);
+  // In production, send cookies only over HTTPS. For local tests you can omit this flag.
+  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+  res.setHeader('Set-Cookie', `token=${token}; Path=/; HttpOnly; SameSite=Lax${secure}`);
   res.status(200).json({ ok: true });
 }

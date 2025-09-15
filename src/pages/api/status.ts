@@ -1,3 +1,5 @@
+export const runtime = 'nodejs';
+
 import type { NextApiRequest, NextApiResponse } from "next";
 import { BUSINESS_TZ, estaAbiertoAhora, proximoCambio } from "@/utils/horarios";
 import { getForceClosedWithReset } from "@/server/admin-state";
@@ -5,9 +7,7 @@ import { getForceClosedWithReset } from "@/server/admin-state";
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const now = new Date();
 
-  // Resetea en DB si corresponde y obtiene el estado real
   const forceClosed = await getForceClosedWithReset();
-
   const abierto = !forceClosed && estaAbiertoAhora(now, BUSINESS_TZ);
   const cambio = proximoCambio(now, BUSINESS_TZ);
 

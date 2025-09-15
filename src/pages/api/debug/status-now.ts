@@ -1,3 +1,5 @@
+export const runtime = 'nodejs';
+
 import type { NextApiRequest, NextApiResponse } from "next";
 import { BUSINESS_TZ, estaAbiertoAhora, proximoCambio, HORARIO_SEMANAL, OVERRIDES } from "@/utils/horarios";
 import { getForceClosedWithReset } from "@/server/admin-state";

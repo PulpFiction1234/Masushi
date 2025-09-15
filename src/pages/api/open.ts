@@ -1,10 +1,13 @@
+export const runtime = 'nodejs';
+
 import type { NextApiRequest, NextApiResponse } from "next";
 import { BUSINESS_TZ, estaAbiertoAhora, proximoCambio } from "@/utils/horarios";
-import { getForceClosed } from "@/server/order-state";
+import { getForceClosedWithReset } from "@/server/admin-state";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const now = new Date();
-  const abierto = !(await getForceClosed()) && estaAbiertoAhora(now, BUSINESS_TZ);
+  const forceClosed = await getForceClosedWithReset();
+  const abierto = !forceClosed && estaAbiertoAhora(now, BUSINESS_TZ);
   const cambio = proximoCambio(now, BUSINESS_TZ);
 
   res.setHeader("Cache-Control", "no-store");
@@ -15,6 +18,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     nextClose: cambio.isOpen ? (cambio.nextClose ?? null) : null,
     generatedAt: now.toISOString(),
   });
-  }
-
-  
+}

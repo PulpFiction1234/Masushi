@@ -1,17 +1,26 @@
 "use client";
-import { useMemo, useReducer } from "react";
+import { useMemo, useReducer, useEffect } from "react";
 import dynamic from "next/dynamic";
 import useSWR from "swr";
 import { useCart } from "@/context/CartContext";
 import Navbar from "@/components/Navbar";
-import { useEffect } from "react";
 
 // THEME
 const ACCENT_FROM = "from-emerald-500";
 const ACCENT_TO = "to-green-600";
 
-// SWR fetcher
-const fetcher = (url: string) => fetch(url, { cache: "no-store" }).then((r) => r.json());
+// Tipado del endpoint /api/status
+type StatusApi = {
+  timeZone: string;
+  abierto: boolean;
+  nextOpen: { ymd: string; hhmm: string; human: string } | null;
+  nextClose: { ymd: string; hhmm: string; human: string } | null;
+  generatedAt: string;
+};
+
+// SWR fetcher (fuerza no-cache y evita dedupe agresivo)
+const fetcher = (url: string) =>
+  fetch(`${url}?t=${Date.now()}`, { cache: "no-store" }).then((r) => r.json() as Promise<StatusApi>);
 
 const polygonCoords: [number, number][] = [
   [-70.56792278176697, -33.54740779939201],
@@ -87,7 +96,6 @@ import {
   PRECIO_JENGIBRE_EXTRA,
   PRECIO_WASABI_EXTRA,
   COSTO_DELIVERY,
-  // 👇 nuevos imports para palitos
   PRECIO_PALITO_EXTRA,
   PRECIO_AYUDA_PALITOS,
   maxPalitosGratisFromCart,
@@ -100,16 +108,16 @@ import PaymentSelector from "@/components/checkout/PaymentSelector";
 import { productos } from "@/data/productos";
 type ProductoMin = { id: number; categoria?: string; salsasGratis?: number };
 
-const AddressSearch = dynamic(() => import("../components/AddressSearch"), { ssr: false });
+// 👉 usa alias absoluto (más robusto)
+const AddressSearch = dynamic(() => import("@/components/AddressSearch"), { ssr: false });
 
 // Index por id del catálogo
 const byId = new Map(productos.map((p) => [p.id, p]));
 
-// Salsas gratis por unidad según catálogo (sin `any`)
+// Salsas gratis por unidad según catálogo
 const salsasGratisPorUnidad = (it: CartItemLike): number => {
   const p = byId.get(it.id) as ProductoMin | undefined;
   if (p && typeof p.salsasGratis === "number") return Math.max(0, p.salsasGratis);
-  // Fallback: 1 (en catálogo las bebidas ya vienen con 0)
   return 1;
 };
 
@@ -131,32 +139,43 @@ export default function Checkout() {
     acevichada,
     maracuya,
     palitos,
-    jengibre, // pool gratis J/W (número)
-    wasabi,   // pool gratis J/W (número)
+    jengibre,
+    wasabi,
     extraJengibre,
     extraWasabi,
-    // 👇 nuevos en state (definidos en utils/checkout.ts)
     palitosExtra,
     ayudaPalitos,
     observacion,
     paymentMethod,
   } = state;
 
-  // Estado de apertura desde /api/open (refresca cada 60s)
-  const { data: openData } = useSWR("/api/open", fetcher, { refreshInterval: 60_000 });
+  // Estado de apertura desde /api/status (refresca cada 60s)
+  const { data: statusData, isLoading: loadingStatus } = useSWR<StatusApi>(
+    "/api/status",
+    fetcher,
+    {
+      refreshInterval: 60_000,
+      revalidateOnFocus: true,
+      dedupingInterval: 5_000,
+    }
+  );
+
   useEffect(() => {
     if (deliveryType === "retiro" && paymentMethod !== "") {
       dispatch({ type: "SET_FIELD", field: "paymentMethod", value: "" });
     }
   }, [deliveryType, paymentMethod, dispatch]);
-  const abierto = openData?.abierto === true;
+
+  const abierto = statusData?.abierto === true;
   const statusLabel =
-    abierto
-      ? openData?.nextClose
-        ? `Abierto • cierra ${openData.nextClose.human}`
+    loadingStatus
+      ? "Comprobando horario…"
+      : abierto
+      ? statusData?.nextClose
+        ? `Abierto • cierra ${statusData.nextClose.human}`
         : "Abierto"
-      : openData?.nextOpen
-      ? `Cerrado • abrimos ${openData.nextOpen.human}`
+      : statusData?.nextOpen
+      ? `Cerrado • abrimos ${statusData.nextOpen.human}`
       : "Cerrado";
 
   // Cart tipado
@@ -170,7 +189,7 @@ export default function Checkout() {
   // Pool gratis J/W fijo en 2
   const POOL_JW = 2;
 
-  // Tope de palitos gratis desde catálogo (1 por roll por defecto, bebidas 0, promos con tope definido)
+  // Tope de palitos gratis desde catálogo
   const maxPalitosGratis = useMemo(
     () => maxPalitosGratisFromCart(cartTyped, byId as Map<number, ProductoMinPalitos>),
     [cartTyped]
@@ -183,7 +202,6 @@ export default function Checkout() {
     totalMaracuya,
     costoJengibreExtras,
     costoWasabiExtras,
-    // 👇 nuevos costos
     costoPalitosExtra,
     costoAyudaPalitos,
     deliveryFee,
@@ -192,7 +210,7 @@ export default function Checkout() {
   } = useMemo(() => {
     const prod = subtotalProductos;
 
-    // Pool de salsas gratis (soya/teriyaki) según catálogo
+    // Pool de salsas gratis según catálogo
     const gratis = cartTyped.reduce(
       (sum, item) => sum + salsasGratisPorUnidad(item) * item.cantidad,
       0
@@ -218,11 +236,9 @@ export default function Checkout() {
     const eJen = Number(extraJengibre || 0) * PRECIO_JENGIBRE_EXTRA;
     const eWas = Number(extraWasabi || 0) * PRECIO_WASABI_EXTRA;
 
-    // extras explícitos de soya/teriyaki
     const costoSoyaPlus = Number(soyaExtra || 0) * PRECIO_SOYA_EXTRA;
     const costoTeriPlus = Number(teriyakiExtra || 0) * PRECIO_TERIYAKI_EXTRA;
 
-    // 👇 nuevos: palitos extra y ayuda palitos
     const cPalitosExtra = Number(palitosExtra || 0) * PRECIO_PALITO_EXTRA;
     const cAyudaPalitos = Number(ayudaPalitos || 0) * PRECIO_AYUDA_PALITOS;
 
@@ -244,14 +260,8 @@ export default function Checkout() {
 
     return {
       totalProductos: prod,
-      freeSoya: freeS,
-      freeTeri: freeT,
-      paidSoya: pSoya,
-      paidTeri: pTeri,
       totalAcevichada: ace,
       totalMaracuya: mar,
-      costoSoyaExtra: costoSoya + costoSoyaPlus,
-      costoTeriExtra: costoTeri + costoTeriPlus,
       costoJengibreExtras: eJen,
       costoWasabiExtras: eWas,
       costoPalitosExtra: cPalitosExtra,
@@ -285,7 +295,8 @@ export default function Checkout() {
     (!requiresPayment || paymentMethod !== "") &&
     (deliveryType === "retiro" || (coords && REGEX_NUMERO_CALLE.test(address)));
 
-  const canSubmit = canSubmitBase && abierto === true;
+  // ⚠️ No permitir enviar si el estado aún está cargando
+  const canSubmit = canSubmitBase && abierto === true && !loadingStatus;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -295,9 +306,9 @@ export default function Checkout() {
       return;
     }
 
-    // Verificación inmediata en servidor
-    fetch("/api/open", { cache: "no-store" })
-      .then((r) => r.json())
+    // Verificación inmediata en servidor contra /api/status
+    fetch(`/api/status?t=${Date.now()}`, { cache: "no-store" })
+      .then((r) => r.json() as Promise<StatusApi>)
       .then(async (od) => {
         if (!od?.abierto) {
           alert(
@@ -317,9 +328,7 @@ export default function Checkout() {
             alert("Debe ingresar un número de domicilio (ej.: N° 1234 o #1234).");
             return;
           }
-          const { default: booleanPointInPolygon } = await import(
-            "@turf/boolean-point-in-polygon"
-          );
+          const { default: booleanPointInPolygon } = await import("@turf/boolean-point-in-polygon");
           const { polygon, point } = await import("@turf/helpers");
           const zonaPolygon = polygon([[...polygonCoords, polygonCoords[0]]]);
           const inside = booleanPointInPolygon(point(coords), zonaPolygon);
@@ -337,48 +346,45 @@ export default function Checkout() {
           })
           .join("\n");
 
-        // ========= NUEVO: Sección Salsas/Palitos condicional =========
-        // Normaliza cantidades a número
-        const nSoya           = Number(soya || 0);
-        const nTeri           = Number(teriyaki || 0);
-        const nSoyaExtra      = Number(soyaExtra || 0);
-        const nTeriExtra      = Number(teriyakiExtra || 0);
-        const nAcevichada     = Number(acevichada || 0);
-        const nMaracuya       = Number(maracuya || 0);
-        const nJenGratis      = Number(jengibre || 0);
-        const nWasGratis      = Number(wasabi || 0);
-        const nJenExtra       = Number(extraJengibre || 0);
-        const nWasExtra       = Number(extraWasabi || 0);
-        const nPalitosGratis  = Number(palitos || 0);
-        const nPalitosExtra   = Number(palitosExtra || 0);
-        const nAyudaPalitos   = Number(ayudaPalitos || 0);
+        // ========= Salsas/Palitos =========
+        const POOL_JW = 2;
+        const nSoya = Number(soya || 0);
+        const nTeri = Number(teriyaki || 0);
+        const nSoyaExtra = Number(soyaExtra || 0);
+        const nTeriExtra = Number(teriyakiExtra || 0);
+        const nAcevichada = Number(acevichada || 0);
+        const nMaracuya = Number(maracuya || 0);
+        const nJenGratis = Number(jengibre || 0);
+        const nWasGratis = Number(wasabi || 0);
+        const nJenExtra = Number(extraJengibre || 0);
+        const nWasExtra = Number(extraWasabi || 0);
+        const nPalitosGratis = Number(palitos || 0);
+        const nPalitosExtra = Number(palitosExtra || 0);
+        const nAyudaPalitos = Number(ayudaPalitos || 0);
 
-        // Arma líneas **solo si hay cantidad**
         const lineasSalsas: string[] = [];
-        if (nSoya > 0)        lineasSalsas.push(`Soya (gratis): ${nSoya}`);
-        if (nTeri > 0)        lineasSalsas.push(`Teriyaki (gratis): ${nTeri}`);
-        if (nSoyaExtra > 0)   lineasSalsas.push(`Soya extra: ${nSoyaExtra} = ${fmt(nSoyaExtra * PRECIO_SOYA_EXTRA)}`);
-        if (nTeriExtra > 0)   lineasSalsas.push(`Teriyaki extra: ${nTeriExtra} = ${fmt(nTeriExtra * PRECIO_TERIYAKI_EXTRA)}`);
-        if (nJenGratis > 0)   lineasSalsas.push(`Jengibre (gratis): ${nJenGratis}/${POOL_JW}`);
-        if (nWasGratis > 0)   lineasSalsas.push(`Wasabi (gratis): ${nWasGratis}/${POOL_JW}`);
-        if (nAcevichada > 0)  lineasSalsas.push(`Acevichada: ${nAcevichada} = ${fmt(totalAcevichada)}`);
-        if (nMaracuya > 0)    lineasSalsas.push(`Maracuyá: ${nMaracuya} = ${fmt(totalMaracuya)}`);
-        if (nJenExtra > 0)    lineasSalsas.push(`Extra jengibre: ${nJenExtra} = ${fmt(costoJengibreExtras)}`);
-        if (nWasExtra > 0)    lineasSalsas.push(`Extra wasabi: ${nWasExtra} = ${fmt(costoWasabiExtras)}`);
+        if (nSoya > 0) lineasSalsas.push(`Soya (gratis): ${nSoya}`);
+        if (nTeri > 0) lineasSalsas.push(`Teriyaki (gratis): ${nTeri}`);
+        if (nSoyaExtra > 0) lineasSalsas.push(`Soya extra: ${nSoyaExtra} = ${fmt(nSoyaExtra * PRECIO_SOYA_EXTRA)}`);
+        if (nTeriExtra > 0) lineasSalsas.push(`Teriyaki extra: ${nTeriExtra} = ${fmt(nTeriExtra * PRECIO_TERIYAKI_EXTRA)}`);
+        if (nJenGratis > 0) lineasSalsas.push(`Jengibre (gratis): ${nJenGratis}/${POOL_JW}`);
+        if (nWasGratis > 0) lineasSalsas.push(`Wasabi (gratis): ${nWasGratis}/${POOL_JW}`);
+        if (nAcevichada > 0) lineasSalsas.push(`Acevichada: ${nAcevichada} = ${fmt(totalAcevichada)}`);
+        if (nMaracuya > 0) lineasSalsas.push(`Maracuyá: ${nMaracuya} = ${fmt(totalMaracuya)}`);
+        if (nJenExtra > 0) lineasSalsas.push(`Extra jengibre: ${nJenExtra} = ${fmt(costoJengibreExtras)}`);
+        if (nWasExtra > 0) lineasSalsas.push(`Extra wasabi: ${nWasExtra} = ${fmt(costoWasabiExtras)}`);
 
         const lineasPalitos: string[] = [];
-        if (nPalitosGratis > 0) lineasPalitos.push(`Palitos (gratis): ${nPalitosGratis} / ${maxPalitosGratis}`);
-        if (nPalitosExtra > 0)  lineasPalitos.push(`Palitos extra: ${nPalitosExtra} = ${fmt(costoPalitosExtra)}`);
-        if (nAyudaPalitos > 0)  lineasPalitos.push(`Ayuda palitos: ${nAyudaPalitos} = ${fmt(costoAyudaPalitos)}`);
+        if (nPalitosGratis > 0) lineasPalitos.push(`Palitos (gratis): ${nPalitosGratis}`);
+        if (nPalitosExtra > 0) lineasPalitos.push(`Palitos extra: ${nPalitosExtra} = ${fmt(costoPalitosExtra)}`);
+        if (nAyudaPalitos > 0) lineasPalitos.push(`Ayuda palitos: ${nAyudaPalitos} = ${fmt(costoAyudaPalitos)}`);
 
-        // Une sólo si hay algo que mostrar
         const bloqueSalsasPalitos =
           [...lineasSalsas, ...lineasPalitos].length > 0
             ? `\n--- Salsas y palitos ---\n${[...lineasSalsas, ...lineasPalitos].join("\n")}\n`
             : "";
-        // ========= FIN NUEVO =========
+        // ========= FIN =========
 
-        // ✅ Normaliza a CRLF (WhatsApp respeta mejor los saltos con \r\n)
         const NL = "\r\n";
         const productosTextoCRLF = productosTexto.replace(/\n/g, NL);
         const bloqueSalsasPalitosCRLF = (bloqueSalsasPalitos || "").replace(/\n/g, NL);
@@ -398,7 +404,6 @@ export default function Checkout() {
           lineaDelivery +
           lineaObs;
 
-        // 🧽 Quita saltos finales y agrega EXACTAMENTE dos antes de Total:
         const msg = `${cuerpoAntesDeTotal.replace(/(\r?\n)+$/, "")}${NL}${NL}Total: ${fmt(totalFinal)}`;
 
         const mensaje = encodeURIComponent(msg);
@@ -407,7 +412,6 @@ export default function Checkout() {
       .catch(() => alert("No se pudo verificar el estado del local. Intenta de nuevo."));
   };
 
-  // UI
   const inputBase =
     "w-full rounded-xl border border-white/10 bg-neutral-800/80 px-3 py-2 text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent";
   const card = "border border-white/10 rounded-2xl bg-neutral-900/70 shadow-xl";
@@ -426,7 +430,7 @@ export default function Checkout() {
               {/* Estado de apertura */}
               <div className="rounded-xl bg-neutral-800/70 border border-white/10 p-3 text-sm flex items-center justify-between">
                 <span className={abierto ? "text-emerald-300" : "text-amber-300"}>{statusLabel}</span>
-                {openData?.timeZone && <span className="text-neutral-400"></span>}
+                {statusData?.timeZone && <span className="text-neutral-400" />}
               </div>
 
               {cartTyped.length > 0 && (
@@ -439,7 +443,6 @@ export default function Checkout() {
                   deliveryFee={deliveryFee}
                   maxGratisBasicas={gratisBasicas}
                   maxGratisJWas={POOL_JW}
-                  // 👇 pásale el tope de palitos gratis al panel (y de ahí a ExtrasSelector)
                   maxPalitosGratis={maxPalitosGratis}
                 />
               )}
@@ -541,9 +544,11 @@ export default function Checkout() {
                 className={`w-full rounded-xl px-4 py-2 font-medium text-white bg-gradient-to-b ${ACCENT_FROM} ${ACCENT_TO} shadow hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed`}
               >
                 {abierto === false
-                  ? openData?.nextOpen
-                    ? `Cerrado • abrimos ${openData.nextOpen.human}`
+                  ? statusData?.nextOpen
+                    ? `Cerrado • abrimos ${statusData.nextOpen.human}`
                     : "Cerrado"
+                  : loadingStatus
+                  ? "Comprobando horario…"
                   : "Hacer pedido"}
               </button>
             </form>
@@ -553,5 +558,3 @@ export default function Checkout() {
     </>
   );
 }
-
-

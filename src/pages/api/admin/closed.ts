@@ -1,3 +1,5 @@
+export const runtime = 'nodejs';
+
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { getForceClosedWithReset, setForceClosed } from "@/server/admin-state";
@@ -10,7 +12,6 @@ export default async function handler(
     const supabase = createPagesServerClient({ req, res });
     const { data: { session } } = await supabase.auth.getSession();
 
-    // Solo autenticado
     if (!session) return res.status(401).end();
 
     if (req.method === "GET") {

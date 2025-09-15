@@ -13,7 +13,7 @@ export default function AdminPage() {
       .then(d => setClosed(d.forceClosed));
   }, []);
 
-  const toggle = async () => {
+   const toggle = async () => {
     const previous = closed;
     const next = !closed;
     setClosed(next);

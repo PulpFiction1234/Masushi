@@ -120,7 +120,10 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
             >
               Vaciar carrito
             </button>
-            <p className="italic">
+            <p 
+            className="italic"
+            style={{ fontSize: '15px'}}
+            >
               Las fotografías tienen fines ilustrativos; no constituyen una representación exacta del producto final.
             </p>
           </div>

@@ -407,7 +407,7 @@ export default function Checkout() {
         const msg = `${cuerpoAntesDeTotal.replace(/(\r?\n)+$/, "")}${NL}${NL}Total: ${fmt(totalFinal)}`;
 
         const mensaje = encodeURIComponent(msg);
-        window.open(`https://wa.me/56951869402?text=${mensaje}`, "_blank");
+        window.open(`https://wa.me/56940873865?text=${mensaje}`, "_blank");
       })
       .catch(() => alert("No se pudo verificar el estado del local. Intenta de nuevo."));
   };

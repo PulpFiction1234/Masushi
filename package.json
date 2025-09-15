@@ -12,10 +12,10 @@
   },
   "dependencies": {
     "@mapbox/mapbox-gl-geocoder": "^5.1.0",
+    "@supabase/supabase-js": "^2.57.4",
     "@turf/boolean-point-in-polygon": "^7.2.0",
     "@turf/helpers": "^7.2.0",
     "@turf/turf": "^7.2.0",
-    "@supabase/supabase-js": "^2.48.0",
     "bcryptjs": "^3.0.2",
     "jsonwebtoken": "^9.0.2",
     "leaflet": "^1.9.4",

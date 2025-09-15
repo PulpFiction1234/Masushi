@@ -1,6 +1,12 @@
 import jwt from 'jsonwebtoken';
 import { compare } from 'bcryptjs';
-import prisma from './db';
+import supabase from './supabase';
+
+type UserRow = {
+  username: string;
+  passwordHash: string;
+  role: string;
+};
 
 const JWT_SECRET: string = (() => {
   const secret = process.env.JWT_SECRET;
@@ -13,8 +19,18 @@ export async function validateCredentials(
   password?: string
 ): Promise<'admin' | 'user' | null> {
   if (!username || !password) return null;
-  const user = await prisma.user.findUnique({ where: { username } });
+  const { data: user, error } = await supabase
+    .from<UserRow>('User')
+    .select('passwordHash, role')
+    .eq('username', username)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to retrieve user credentials: ${error.message}`);
+  }
+
   if (!user) return null;
+
   const valid = await compare(password, user.passwordHash);
   if (!valid) return null;
   if (user.role === 'admin' || user.role === 'user') {

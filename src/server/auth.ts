@@ -5,7 +5,7 @@ import supabase from './supabase';
 type UserRow = {
   username: string;
   passwordHash: string;
-  role: string;
+  role: 'admin' | 'user' | string;
 };
 
 const JWT_SECRET: string = (() => {
@@ -19,24 +19,24 @@ export async function validateCredentials(
   password?: string
 ): Promise<'admin' | 'user' | null> {
   if (!username || !password) return null;
-  const { data: user, error } = await supabase
-    .from<UserRow>('User')
+
+  // No tipamos .from(); tipamos el resultado con maybeSingle<...>
+  const { data, error } = await supabase
+    .from('User')
     .select('passwordHash, role')
     .eq('username', username)
-    .maybeSingle();
+    .maybeSingle<Pick<UserRow, 'passwordHash' | 'role'>>();
 
   if (error) {
     throw new Error(`Failed to retrieve user credentials: ${error.message}`);
   }
 
-  if (!user) return null;
+  if (!data) return null;
 
-  const valid = await compare(password, user.passwordHash);
+  const valid = await compare(password, data.passwordHash);
   if (!valid) return null;
-  if (user.role === 'admin' || user.role === 'user') {
-    return user.role;
-  }
-  return null;
+
+  return data.role === 'admin' || data.role === 'user' ? data.role : null;
 }
 
 export function signToken(

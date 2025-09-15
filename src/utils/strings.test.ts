@@ -6,3 +6,4 @@ import { normalize } from './strings';
 test('normalize removes accents, trims, and lowercases', () => {
   assert.equal(normalize(' ÁÉÍÓÚ '), 'aeiou');
 });
+

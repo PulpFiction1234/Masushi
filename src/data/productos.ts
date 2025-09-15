@@ -570,3 +570,4 @@ const _productos: Producto[] = [
 // ❄️ congela cada item y luego el array (inmutabilidad defensiva)
 _productos.forEach((p) => Object.freeze(p));
 export const productos: ReadonlyArray<Readonly<Producto>> = Object.freeze(_productos);
+

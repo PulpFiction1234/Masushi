@@ -278,3 +278,4 @@ if (prod.configuracion?.tipo === "armalo") {
 };
 
 export default ListaProductos;
+

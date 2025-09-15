@@ -13,3 +13,4 @@ export type OrderData = {
   items: CartItem[];
   total: number;
 };
+

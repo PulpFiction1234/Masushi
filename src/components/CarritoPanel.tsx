@@ -137,3 +137,4 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
 };
 
 export default CarritoPanel;
+

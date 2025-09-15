@@ -119,3 +119,4 @@ const ProductCard: React.FC<Props> = ({
 };
 
 export default React.memo(ProductCard);
+

@@ -12,3 +12,4 @@ export const isPointInPolygon = (
   const polygon = createPolygonFeature(polygonCoords);
   return turf.booleanPointInPolygon(point, polygon);
 };
+

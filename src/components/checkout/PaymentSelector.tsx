@@ -33,3 +33,4 @@ export default function PaymentSelector({ paymentMethod, dispatch }: Props) {
     </div>
   );
 }
+

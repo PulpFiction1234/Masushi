@@ -30,3 +30,4 @@ export function animateToCart(evt: MouseEvent) {
     { duration: 3000, easing: "cubic-bezier(0.22, 1, 0.36, 1)" }
   ).onfinish = () => dot.remove();
 }
+

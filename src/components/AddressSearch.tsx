@@ -196,3 +196,4 @@ const fetchSuggestions = useCallback(
 };
 
 export default AddressSearch;
+

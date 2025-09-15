@@ -133,3 +133,4 @@ export function proximoCambio(now: Date = new Date(), tz = BUSINESS_TZ) {
   }
   return { isOpen:false, nextOpen:null };
 }
+

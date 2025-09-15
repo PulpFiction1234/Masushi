@@ -11,3 +11,4 @@ export function validateCredentials(username?: string, password?: string): boole
     password === process.env.ADMIN_PASS
   );
 }
+

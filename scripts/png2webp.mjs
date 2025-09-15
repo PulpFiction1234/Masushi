@@ -85,3 +85,4 @@ console.log(`\n✅ Conversión terminada:
 console.log(
   `Opciones: ${JSON.stringify({ lossless, quality, alphaQuality, keepPng, force })}`
 );
+

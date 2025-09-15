@@ -70,3 +70,4 @@ const Footer: React.FC<FooterProps> = ({ showSocial = true, className = "" }) =>
 };
 
 export default Footer;
+

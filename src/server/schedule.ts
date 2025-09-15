@@ -20,3 +20,4 @@ export function shouldResetForceClosed(now: Date = new Date()): boolean {
   });
   return fmt.format(now) !== fmt.format(lastForceClosedAt);
 }
+

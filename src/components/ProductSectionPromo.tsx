@@ -89,3 +89,4 @@ export default function ProductSectionPromo({ title, productIds, linkBase }: Pro
     </section>
   );
 }
+

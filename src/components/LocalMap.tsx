@@ -37,3 +37,4 @@ export default function LocalMap({ lat, lng }: LocalMapProps) {
 
   return <div ref={mapContainerRef} className="w-full h-[360px]" />;
 }
+

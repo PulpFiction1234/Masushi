@@ -10,3 +10,4 @@ export const fmtMiles = new Intl.NumberFormat("es-CL", {
   minimumFractionDigits: 0,
   maximumFractionDigits: 0,
 });
+

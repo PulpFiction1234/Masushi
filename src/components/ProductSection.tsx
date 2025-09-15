@@ -89,3 +89,4 @@ export default function ProductSection({ title, productIds, linkBase }: ProductS
     </section>
   );
 }
+

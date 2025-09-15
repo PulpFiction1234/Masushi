@@ -52,3 +52,4 @@ export const deliveryZone: [number, number][] = [
   [-33.54776077757733, -70.55676992666348],
   [-33.54740779939201, -70.56792278176697] // mismo que el primero
 ];
+

@@ -6,15 +6,15 @@ import supabase from '@/utils/supabaseClient';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
-    const { error } = await supabase.auth.signInWithPassword({
-      email: username,
+     const { error } = await supabase.auth.signInWithPassword({
+      email,
       password,
     });
 
@@ -37,9 +37,9 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold text-center">Iniciar sesión</h1>
           <input
             type="text"
-            placeholder="Usuario"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Correo electrónico"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
           />
           <input

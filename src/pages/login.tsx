@@ -2,26 +2,28 @@ import { useState } from 'react';
 import { useRouter } from 'next/router';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { supabase } from '@/utils/supabaseClient';
 
 export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
+    setErrorMessage('');
+    const { error } = await supabase.auth.signInWithPassword({
+      email: username,
+      password,
     });
-    if (res.ok) {
-      router.push('/admin');
-    } else {
-      setError('Credenciales inválidas');
+
+    if (error) {
+      setErrorMessage(error.message);
+      return;
     }
+
+    router.push('/admin');
   };
 
   return (
@@ -47,9 +49,9 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
           />
-          {error && (
-            <p className="text-red-400 text-sm text-center">{error}</p>
-          )}
+          {errorMessage && (
+            <p className="text-red-400 text-sm text-center">{errorMessage}</p>
+          )}␊
           <button
             type="submit"
             className="w-full py-2 rounded bg-red-500 hover:bg-red-600 transition-colors font-semibold"
@@ -62,5 +64,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-

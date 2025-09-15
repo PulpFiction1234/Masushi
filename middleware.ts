@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getExpectedToken } from '@/server/auth';
+import { verifyToken } from '@/server/auth';
 
 export function middleware(req: NextRequest) {
   const token = req.cookies.get('token')?.value;
-  const expected = getExpectedToken();
 
-  if (expected && token === expected) {
+  if (token && verifyToken(token)) {
     return NextResponse.next();
   }
 
@@ -20,4 +19,3 @@ export function middleware(req: NextRequest) {
 export const config = {
   matcher: ['/admin/:path*', '/api/admin/:path*'],
 };
-

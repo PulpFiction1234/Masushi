@@ -1,14 +1,30 @@
-export function getExpectedToken(): string | null {
-  const user = process.env.ADMIN_USER;
-  const pass = process.env.ADMIN_PASS;
-  if (!user || !pass) return null;
-  return Buffer.from(`${user}:${pass}`).toString('base64');
+import jwt from 'jsonwebtoken';
+import { compare } from 'bcryptjs';
+import { getUsersCollection } from './db';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
+
+export async function validateCredentials(
+  username?: string,
+  password?: string
+): Promise<boolean> {
+  if (!username || !password) return false;
+  const users = await getUsersCollection();
+  const user = await users.findOne({ username });
+  if (!user) return false;
+  return compare(password, user.passwordHash);
 }
 
-export function validateCredentials(username?: string, password?: string): boolean {
-  return (
-    username === process.env.ADMIN_USER &&
-    password === process.env.ADMIN_PASS
-  );
+export function signToken(username: string): string {
+  return jwt.sign({ username }, JWT_SECRET, { expiresIn: '7d' });
 }
 
+export function verifyToken(token?: string): boolean {
+  if (!token) return false;
+  try {
+    jwt.verify(token, JWT_SECRET);
+    return true;
+  } catch {
+    return false;
+  }
+}

@@ -1,16 +1,29 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getForceClosed, setForceClosed } from "@/server/order-state";
+import {
+  getForceClosed as getStoredForceClosed,
+  setForceClosed as setStoredForceClosed,
+} from "@/server/state";
+import {
+  recordForceClosed,
+  clearForceClosedDate,
+  shouldResetForceClosed,
+} from "@/server/schedule";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<{ forceClosed: boolean }>,
 ) {
   try {
-    if (req.method === "GET") {
-      res.status(200).json({ forceClosed: await getForceClosed() });
+     if (req.method === "GET") {
+      let closed = await getStoredForceClosed();
+      if (closed && shouldResetForceClosed()) {
+        await setStoredForceClosed(false);
+        clearForceClosedDate();
+        closed = false;
+      }
+      res.status(200).json({ forceClosed: closed });
       return;
     }
-
     if (req.method === "POST") {
       const { forceClosed: closed } = req.body ?? {};
       if (typeof closed !== "boolean") {
@@ -18,8 +31,13 @@ export default async function handler(
         return;
       }
 
-      await setForceClosed(closed);
-      res.status(200).json({ forceClosed: await getForceClosed() });
+      await setStoredForceClosed(closed);
+      if (closed) {
+        recordForceClosed();
+      } else {
+        clearForceClosedDate();
+      }
+      res.status(200).json({ forceClosed: await getStoredForceClosed() });
       return;
     }
   } catch {

@@ -1,29 +1,30 @@
-import { useState } from 'react';
-import { useRouter } from 'next/router';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import supabase from '@/utils/supabaseClient';
+import { useState } from "react";
+import { useRouter } from "next/router";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+// 👇 useSupabaseClient viene de *react*
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const supabase = useSupabaseClient();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage('');
-     const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    setErrorMessage("");
 
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setErrorMessage(error.message);
       return;
     }
 
-    router.push('/admin');
+    // La cookie ya quedó; el middleware permitirá /admin
+    router.replace("/admin");
   };
 
   return (
@@ -36,7 +37,7 @@ export default function LoginPage() {
         >
           <h1 className="text-2xl font-bold text-center">Iniciar sesión</h1>
           <input
-            type="text"
+            type="email"
             placeholder="Correo electrónico"
             value={email}
             onChange={(e) => setEmail(e.target.value)}

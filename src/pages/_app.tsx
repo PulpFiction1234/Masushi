@@ -1,15 +1,20 @@
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
-import { CartProvider, useCart } from "@/context/CartContext";
-import CarritoPanel from "@/components/CarritoPanel";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { RiShoppingBag4Fill } from "react-icons/ri";
 
+import { CartProvider, useCart } from "@/context/CartContext";
+import CarritoPanel from "@/components/CarritoPanel";
+
+// 👇 OJO: Provider desde *react*, browser client desde *nextjs*
+import { SessionContextProvider } from "@supabase/auth-helpers-react";
+import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+
 function FloatingCartButton({ onClick }: { onClick: () => void }) {
   const { cart } = useCart();
 
-  // ← Flag de montaje: evita que el HTML inicial difiera del SSR
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -40,14 +45,14 @@ export default function App({ Component, pageProps }: AppProps) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const router = useRouter();
 
-  // Escucha eventos del "bus" para abrir/cerrar el carrito
+  // Cliente de Supabase del navegador (helpers)
+  const [supabaseClient] = useState(() => createBrowserSupabaseClient());
+
   useEffect(() => {
     const open = () => setIsCartOpen(true);
     const toggle = () => setIsCartOpen((v) => !v);
-
     window.addEventListener("open-cart", open);
     window.addEventListener("toggle-cart", toggle);
-
     return () => {
       window.removeEventListener("open-cart", open);
       window.removeEventListener("toggle-cart", toggle);
@@ -55,17 +60,16 @@ export default function App({ Component, pageProps }: AppProps) {
   }, []);
 
   return (
-    <CartProvider>
-      <Component {...pageProps} />
+    <SessionContextProvider supabaseClient={supabaseClient} initialSession={pageProps.initialSession}>
+      <CartProvider>
+        <Component {...pageProps} />
 
-      {/* Mostrar el botón flotante solo si NO estamos en /checkout */}
-      {router.pathname !== "/checkout" && (
-        <FloatingCartButton onClick={() => setIsCartOpen(true)} />
-      )}
+        {router.pathname !== "/checkout" && (
+          <FloatingCartButton onClick={() => setIsCartOpen(true)} />
+        )}
 
-      <CarritoPanel open={isCartOpen} onClose={() => setIsCartOpen(false)} />
-    </CartProvider>
+        <CarritoPanel open={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      </CartProvider>
+    </SessionContextProvider>
   );
 }
-
-

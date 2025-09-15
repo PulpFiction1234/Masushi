@@ -1,40 +1,41 @@
-import { useEffect, useState } from 'react';
-import type { GetServerSideProps } from 'next';
-import { useRouter } from 'next/router';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
-import supabase from '@/utils/supabaseClient';
+import { useEffect, useState } from "react";
+import type { GetServerSideProps } from "next";
+import { useRouter } from "next/router";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
+// 👇 signOut mediante helpers (react)
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 
 export default function AdminPage() {
   const router = useRouter();
+  const supabase = useSupabaseClient();
   const [closed, setClosed] = useState(false);
 
   useEffect(() => {
-    fetch('/api/admin/closed')
-      .then(r => r.json())
-      .then(d => setClosed(d.forceClosed));
+    fetch("/api/admin/closed")
+      .then((r) => r.json())
+      .then((d) => setClosed(d.forceClosed))
+      .catch(() => setClosed(false));
   }, []);
 
   const toggle = async () => {
-    const previous = closed;
+    const prev = closed;
     const next = !closed;
     setClosed(next);
     try {
-      const response = await fetch('/api/admin/closed', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/admin/closed", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ forceClosed: next }),
       });
-      if (!response.ok) {
-        throw new Error('Request failed');
-      }
+      if (!response.ok) throw new Error("Request failed");
       const data = await response.json();
       setClosed(data.forceClosed);
     } catch (err) {
       console.error(err);
-      alert('Error actualizando el estado');
-      setClosed(previous);
+      alert("Error actualizando el estado");
+      setClosed(prev);
     }
   };
 
@@ -42,10 +43,10 @@ export default function AdminPage() {
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error(error);
-      alert('Error cerrando sesión');
+      alert("Error cerrando sesión");
       return;
     }
-    router.push('/login');
+    router.push("/login");
   };
 
   return (
@@ -62,18 +63,14 @@ export default function AdminPage() {
               Cerrar sesión
             </button>
           </div>
-          <p>
-            Estado actual: {closed ? 'CERRADO' : 'ABIERTO'}
-          </p>
+          <p>Estado actual: {closed ? "CERRADO" : "ABIERTO"}</p>
           <button
             onClick={toggle}
             className={`px-4 py-2 rounded font-semibold text-white ${
-              closed
-                ? 'bg-green-600 hover:bg-green-700'
-                : 'bg-red-600 hover:bg-red-700'
+              closed ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
             }`}
           >
-            {closed ? 'Abrir pedidos' : 'Cerrar pedidos'}
+            {closed ? "Abrir pedidos" : "Cerrar pedidos"}
           </button>
         </div>
       </main>
@@ -84,21 +81,10 @@ export default function AdminPage() {
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const supabase = createPagesServerClient(ctx);
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession();
+  const { data: { session } } = await supabase.auth.getSession();
 
-  const role = session?.user.user_metadata?.role;
-
-  if (error || !session || role !== 'admin') {
-    return {
-      redirect: {
-        destination: '/login',
-        permanent: false,
-      },
-    };
+  if (!session) {
+    return { redirect: { destination: "/login", permanent: false } };
   }
-
-  return { props: {} };
+  return { props: { initialSession: session } as any };
 };

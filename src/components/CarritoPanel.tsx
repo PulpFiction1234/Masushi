@@ -3,10 +3,7 @@
 import React, { useMemo } from "react";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
-// Si usas App Router:
-import { useRouter } from "next/navigation";
-// Si usas Pages Router, comenta la línea de arriba y descomenta esta:
-// import { useRouter } from "next/router";
+import { useRouter } from "next/navigation"; // App Router
 import { formatCLP } from "@/utils/format";
 
 interface Props {
@@ -18,7 +15,7 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
   const { cart, total, removeFromCart, updateQuantity, clearCart, ready } = useCart();
   const router = useRouter();
 
-  // Mientras no esté listo el provider, no mostramos datos reales para evitar parpadeo/hidratación
+  // Mientras no esté listo el provider, evita parpadeo
   const safeCart = ready ? cart : [];
   const hasItems = safeCart.length > 0;
 
@@ -26,7 +23,6 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
 
   const handlePedido = () => {
     onClose();
-    // @ts-ignore (para compatibilidad con Pages Router, si lo usas)
     router.push("/checkout");
   };
 

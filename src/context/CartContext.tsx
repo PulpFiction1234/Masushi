@@ -59,22 +59,59 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 // === Persistencia ===
 const STORAGE_KEY = "mazushi_cart_v1";
 
+// Helpers de tipos (evitan `any`)
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return !!v && typeof v === "object" && !Array.isArray(v);
+}
+function isCartOpcion(v: unknown): v is CartOpcion {
+  if (!isRecord(v)) return false;
+  return typeof v.id === "string" && typeof v.label === "string";
+}
+function isCartItem(v: unknown): v is CartItem {
+  if (!isRecord(v)) return false;
+  const idOk = typeof v.id === "number";
+  const cartKeyOk = typeof v.cartKey === "string";
+  const nombreOk = typeof v.nombre === "string";
+  const imagenOk = typeof v.imagen === "string";
+  const precioOk = typeof v.precioUnit === "number";
+  const cantOk = typeof v.cantidad === "number";
+  const opcionOk =
+    v.opcion === undefined || (isRecord(v.opcion) && isCartOpcion(v.opcion));
+  const blurOk =
+    v.blurDataUrl === undefined || typeof v.blurDataUrl === "string";
+  const codigoOk = v.codigo === undefined || typeof v.codigo === "string";
+  return (
+    idOk &&
+    cartKeyOk &&
+    nombreOk &&
+    imagenOk &&
+    precioOk &&
+    cantOk &&
+    opcionOk &&
+    blurOk &&
+    codigoOk
+  );
+}
+
 function loadCartFromStorage(): { items: CartItem[]; updatedAt: number } {
   try {
     if (typeof window === "undefined") return { items: [], updatedAt: 0 };
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return { items: [], updatedAt: 0 };
-    const parsed = JSON.parse(raw);
-    const items = Array.isArray(parsed?.items) ? parsed.items : Array.isArray(parsed) ? parsed : [];
-    const safe: CartItem[] = items.filter(
-      (it: any) =>
-        typeof it?.cartKey === "string" &&
-        typeof it?.id === "number" &&
-        typeof it?.nombre === "string" &&
-        typeof it?.precioUnit === "number" &&
-        typeof it?.cantidad === "number"
-    );
-    return { items: safe, updatedAt: typeof parsed?.updatedAt === "number" ? parsed.updatedAt : 0 };
+    const parsed: unknown = JSON.parse(raw);
+
+    let rawItems: unknown = [];
+    let updatedAt = 0;
+
+    if (isRecord(parsed)) {
+      if (Array.isArray(parsed.items)) rawItems = parsed.items;
+      if (typeof parsed.updatedAt === "number") updatedAt = parsed.updatedAt;
+    } else if (Array.isArray(parsed)) {
+      rawItems = parsed;
+    }
+
+    const items = (Array.isArray(rawItems) ? rawItems : []).filter(isCartItem);
+    return { items, updatedAt };
   } catch {
     return { items: [], updatedAt: 0 };
   }
@@ -110,10 +147,7 @@ export function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
       const idx = state.findIndex((it) => it.cartKey === cartKey);
       if (idx >= 0) {
         const copy = [...state];
-        copy[idx] = {
-          ...copy[idx],
-          cantidad: copy[idx].cantidad + 1,
-        };
+        copy[idx] = { ...copy[idx], cantidad: copy[idx].cantidad + 1 };
         return copy;
       }
 
@@ -192,9 +226,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const onStorage = (e: StorageEvent) => {
       if (e.key !== STORAGE_KEY || e.newValue == null) return;
       try {
-        const parsed = JSON.parse(e.newValue);
-        const items: CartItem[] = Array.isArray(parsed?.items) ? parsed.items : [];
-        const updatedAt: number = typeof parsed?.updatedAt === "number" ? parsed.updatedAt : 0;
+        const parsed = JSON.parse(e.newValue) as { items?: unknown; updatedAt?: unknown };
+        const items = Array.isArray(parsed?.items) ? parsed.items.filter(isCartItem) : [];
+        const updatedAt = typeof parsed?.updatedAt === "number" ? parsed.updatedAt : 0;
 
         // Si llega una versión más vieja o igual a la ya aplicada, ignorar
         if (updatedAt <= lastSavedAtRef.current) return;

@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import type { GetServerSideProps } from 'next';
+import { useRouter } from 'next/router';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { supabase } from '@/utils/supabaseClient';
 
 export default function AdminPage() {
+  const router = useRouter();
   const [closed, setClosed] = useState(false);
 
   useEffect(() => {
@@ -35,8 +38,13 @@ export default function AdminPage() {
   };
 
   const logout = async () => {
-    await fetch('/api/logout');
-    window.location.href = '/login';
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error(error);
+      alert('Error cerrando sesión');
+      return;
+    }
+    router.push('/login');
   };
 
   return (

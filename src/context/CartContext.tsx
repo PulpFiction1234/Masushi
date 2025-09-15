@@ -7,6 +7,7 @@ import React, {
   useEffect,
   useMemo,
   useReducer,
+  useRef,
   useState,
 } from "react";
 import type { StaticImageData } from "next/image";
@@ -15,7 +16,7 @@ import type { Producto } from "@/data/productos";
 export type CartOpcion = { id: string; label: string };
 
 export type CartItem = {
-  cartKey: string;   // prodId + opcionId (p.ej., "210:2pollo")
+  cartKey: string; // prodId + opcionId (p.ej., "210:2pollo")
   id: number;
   codigo?: string;
   nombre: string;
@@ -46,7 +47,7 @@ export type CartAction =
 type CartContextType = {
   cart: CartItem[];
   total: number;
-  ready: boolean; // ← NUEVO: indica si ya hidratamos desde storage
+  ready: boolean; // indica si ya hidratamos desde storage
   addToCart: (prod: Producto, opts?: { opcion?: CartOpcion; precioUnit?: number }) => void;
   updateQuantity: (cartKey: string, cantidad: number) => void;
   removeFromCart: (cartKey: string) => void;
@@ -58,44 +59,47 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 // === Persistencia ===
 const STORAGE_KEY = "mazushi_cart_v1";
 
-function loadCartFromStorage(): CartItem[] {
+function loadCartFromStorage(): { items: CartItem[]; updatedAt: number } {
   try {
-    if (typeof window === "undefined") return [];
+    if (typeof window === "undefined") return { items: [], updatedAt: 0 };
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
+    if (!raw) return { items: [], updatedAt: 0 };
     const parsed = JSON.parse(raw);
     const items = Array.isArray(parsed?.items) ? parsed.items : Array.isArray(parsed) ? parsed : [];
-    if (!Array.isArray(items)) return [];
-    return items.filter(
-      (it) =>
+    const safe: CartItem[] = items.filter(
+      (it: any) =>
         typeof it?.cartKey === "string" &&
         typeof it?.id === "number" &&
         typeof it?.nombre === "string" &&
         typeof it?.precioUnit === "number" &&
         typeof it?.cantidad === "number"
     );
+    return { items: safe, updatedAt: typeof parsed?.updatedAt === "number" ? parsed.updatedAt : 0 };
   } catch {
-    return [];
+    return { items: [], updatedAt: 0 };
   }
 }
 
-function saveCartToStorage(items: CartItem[]) {
+function saveCartToStorage(items: CartItem[]): number {
   try {
-    if (typeof window === "undefined") return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ items, updatedAt: Date.now() }));
+    if (typeof window === "undefined") return 0;
+    const updatedAt = Date.now();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ items, updatedAt }));
+    return updatedAt;
   } catch {
     // almacenamiento lleno o bloqueado -> ignorar
+    return 0;
   }
 }
 
 export function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
-  // 🔒 Normaliza ids para evitar duplicados por mayúsculas/acentos/espacios
+  // Normaliza ids para evitar duplicados por mayúsculas/acentos/espacios
   function normId(s?: string | null) {
     return (s ?? "base")
       .trim()
       .toLowerCase()
       .normalize("NFD")
-      .replace(/\p{Diacritic}/gu, ""); // quita acentos como "ciboulette" vs "ciboulleté"
+      .replace(/\p{Diacritic}/gu, ""); // quita acentos
   }
 
   switch (action.type) {
@@ -109,15 +113,17 @@ export function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
         copy[idx] = {
           ...copy[idx],
           cantidad: copy[idx].cantidad + 1,
-          // Si el precio pudiera variar por opción, mantén el existente para no sorprender al usuario:
-          // precioUnit: copy[idx].precioUnit,
         };
         return copy;
       }
-      const imagen = typeof prod.imagen === "string" ? prod.imagen : (prod.imagen as StaticImageData).src;
+
+      const imagen =
+        typeof prod.imagen === "string" ? prod.imagen : (prod.imagen as StaticImageData).src;
       const blurDataUrl =
         prod.blurDataUrl ??
-        (typeof prod.imagen === "object" ? (prod.imagen as StaticImageData).blurDataURL : undefined);
+        (typeof prod.imagen === "object"
+          ? (prod.imagen as StaticImageData).blurDataURL
+          : undefined);
 
       return [
         ...state,
@@ -130,7 +136,7 @@ export function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
           blurDataUrl,
           precioUnit,
           cantidad: 1,
-          opcion, // guardamos label “bonito” para mostrar, el id ya se normaliza en la key
+          opcion,
         },
       ];
     }
@@ -158,35 +164,46 @@ export function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
   }
 }
 
-
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // ⚠️ Inicializamos SIEMPRE vacío para que SSR y primer render del cliente coincidan
+  // Inicializamos vacío para que SSR y primer render del cliente coincidan
   const [cart, dispatch] = useReducer(cartReducer, []);
   const [ready, setReady] = useState(false);
+  // reloj local para comparar versiones entre pestañas
+  const lastSavedAtRef = useRef(0);
 
-  // Hidratar desde localStorage **después** del mount
+  // Hidratar desde localStorage DESPUÉS del mount
   useEffect(() => {
-    const items = loadCartFromStorage();
+    const { items, updatedAt } = loadCartFromStorage();
     if (items.length) {
       dispatch({ type: SET_CART, payload: items });
     }
+    lastSavedAtRef.current = updatedAt;
     setReady(true);
   }, []);
 
-  // Guardar en storage cuando cambie
+  // Guardar en storage cuando cambie, SOLO si ya hidratamos
   useEffect(() => {
-    saveCartToStorage(cart);
-  }, [cart]);
+    if (!ready) return;
+    lastSavedAtRef.current = saveCartToStorage(cart);
+  }, [cart, ready]);
 
-  // Sincronizar entre pestañas
+  // Sincronizar entre pestañas: ignorar estados viejos
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
       if (e.key !== STORAGE_KEY || e.newValue == null) return;
       try {
         const parsed = JSON.parse(e.newValue);
-        const items = Array.isArray(parsed?.items) ? parsed.items : [];
+        const items: CartItem[] = Array.isArray(parsed?.items) ? parsed.items : [];
+        const updatedAt: number = typeof parsed?.updatedAt === "number" ? parsed.updatedAt : 0;
+
+        // Si llega una versión más vieja o igual a la ya aplicada, ignorar
+        if (updatedAt <= lastSavedAtRef.current) return;
+
+        lastSavedAtRef.current = updatedAt;
         dispatch({ type: SET_CART, payload: items });
-      } catch {}
+      } catch {
+        // ignorar
+      }
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
@@ -220,21 +237,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     []
   );
 
-  const clearCart = useCallback<CartContextType["clearCart"]>(
-    () => dispatch({ type: CLEAR_CART }),
-    []
-  );
+  const clearCart = useCallback<CartContextType["clearCart"]>(() => {
+    dispatch({ type: CLEAR_CART });
+  }, []);
 
   const value = useMemo(
     () => ({ cart, total, ready, addToCart, updateQuantity, removeFromCart, clearCart }),
     [cart, total, ready, addToCart, updateQuantity, removeFromCart, clearCart]
   );
 
-  return (
-    <CartContext.Provider value={value}>
-      {children}
-    </CartContext.Provider>
-  );
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
 
 export const useCart = () => {

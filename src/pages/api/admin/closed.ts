@@ -1,12 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getForceClosed, setForceClosed } from "@/server/order-state";
 
-export default function handler(
+export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<{ forceClosed: boolean }>,
 ) {
   if (req.method === "GET") {
-    res.status(200).json({ forceClosed: getForceClosed() });
+    res.status(200).json({ forceClosed: await getForceClosed() });
     return;
   }
 
@@ -17,11 +17,11 @@ export default function handler(
       return;
     }
 
-    setForceClosed(closed);
-    res.status(200).json({ forceClosed: getForceClosed() });
+    await setForceClosed(closed);
+    res.status(200).json({ forceClosed: await getForceClosed() });
     return;
   }
 
   res.setHeader("Allow", ["GET", "POST"]);
   res.status(405).end();
-}
+  }

@@ -3,19 +3,22 @@ import {
   clearForceClosedDate,
   shouldResetForceClosed,
 } from "@/server/schedule";
+import { getItem, setItem } from "@/server/storage";
 
-let forceClosed = false;
+const FORCE_CLOSED_KEY = "forceClosed";
 
-export function getForceClosed(): boolean {
-  if (forceClosed && shouldResetForceClosed()) {
-    forceClosed = false;
+export async function getForceClosed(): Promise<boolean> {
+  const closed = (await getItem<boolean>(FORCE_CLOSED_KEY)) ?? false;
+  if (closed && shouldResetForceClosed()) {
+    await setItem(FORCE_CLOSED_KEY, false);
     clearForceClosedDate();
+    return false;
   }
-  return forceClosed;
+  return closed;
 }
 
-export function setForceClosed(closed: boolean): void {
-  forceClosed = closed;
+export async function setForceClosed(closed: boolean): Promise<void> {
+  await setItem(FORCE_CLOSED_KEY, closed);
   if (closed) {
     recordForceClosed();
   } else {

@@ -1,24 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getExpectedToken } from '@/server/auth';
 
 export function middleware(req: NextRequest) {
-  const auth = req.headers.get('authorization');
+  const token = req.cookies.get('token')?.value;
+  const expected = getExpectedToken();
 
-  if (auth) {
-    const [user, pass] = atob(auth.split(' ')[1]).split(':');
-    if (
-      user === process.env.ADMIN_USER &&
-      pass === process.env.ADMIN_PASS
-    ) {
-      return NextResponse.next();
-    }
+  if (expected && token === expected) {
+    return NextResponse.next();
   }
 
-  return new NextResponse('Auth required', {
-    status: 401,
-    headers: { 'WWW-Authenticate': 'Basic realm="Admin Area"' },
-  });
-}
+  if (req.nextUrl.pathname.startsWith('/api/')) {
+    return new NextResponse('Auth required', { status: 401 });
+  }
 
+  const url = new URL('/login', req.url);
+  return NextResponse.redirect(url);
+}
 // Protege /admin y los endpoints /api/admin/**
 export const config = {
   matcher: ['/admin/:path*', '/api/admin/:path*'],

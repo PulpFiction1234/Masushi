@@ -379,19 +379,28 @@ export default function Checkout() {
         if (nPalitosExtra > 0) lineasPalitos.push(`Palitos extra: ${nPalitosExtra} = ${fmt(costoPalitosExtra)}`);
         if (nAyudaPalitos > 0) lineasPalitos.push(`Ayuda palitos: ${nAyudaPalitos} = ${fmt(costoAyudaPalitos)}`);
 
-        const bloqueSalsasPalitos =
+       const bloqueSalsasPalitos =
           [...lineasSalsas, ...lineasPalitos].length > 0
             ? `\n--- Salsas y palitos ---\n${[...lineasSalsas, ...lineasPalitos].join("\n")}\n`
             : "";
         // ========= FIN =========
 
         const NL = "\r\n";
-        const productosTextoCRLF = productosTexto.replace(/\n/g, NL);
-        const bloqueSalsasPalitosCRLF = (bloqueSalsasPalitos || "").replace(/\n/g, NL);
+        const productosTextoCRLF = productosTexto.replace(/\r?\n/g, NL);
+
+        // salto en blanco ANTES del bloque de salsas/palitos (si existe)
+        const bloqueSalsasPalitosRaw = bloqueSalsasPalitos ? `\n${bloqueSalsasPalitos}` : "";
+        const bloqueSalsasPalitosCRLF = bloqueSalsasPalitosRaw.replace(/\r?\n/g, NL);
+
+        // bloque de Observaciones separado y con encabezado
+        const bloqueObsCRLF =
+          observacion && observacion.trim()
+            ? `${NL}--- Observaciones ---${NL}${observacion.replace(/\r?\n/g, NL)}${NL}`
+            : "";
 
         const shortAddress = toShortCLAddress(address);
-        const lineaDelivery = deliveryType === "delivery" ? `Delivery: ${fmt(deliveryFee)}${NL}` : "";
-        const lineaObs = observacion ? `Observaciones: ${observacion}${NL}` : "";
+        const lineaDelivery =
+          deliveryType === "delivery" ? `Delivery: ${fmt(deliveryFee)}${NL}` : "";
 
         const cuerpoAntesDeTotal =
           `Tipo: ${deliveryType}${NL}` +
@@ -400,9 +409,9 @@ export default function Checkout() {
           `Teléfono: ${phone}${NL}` +
           (deliveryType === "delivery" ? `Método de pago: ${paymentLabel(paymentMethod)}${NL}` : "") +
           `${NL}--- Productos ---${NL}${productosTextoCRLF}${NL}` +
-          (bloqueSalsasPalitosCRLF ? bloqueSalsasPalitosCRLF : "") +
+          bloqueSalsasPalitosCRLF +
           lineaDelivery +
-          lineaObs;
+          bloqueObsCRLF;
 
         const msg = `${cuerpoAntesDeTotal.replace(/(\r?\n)+$/, "")}${NL}${NL}Total: ${fmt(totalFinal)}`;
 

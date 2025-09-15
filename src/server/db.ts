@@ -1,3 +1,6 @@
+import fs from 'fs';
+import { MongoClient, Collection, MongoClientOptions } from 'mongodb';
+
 export interface User {
   username: string;
   passwordHash: string;
@@ -17,7 +20,7 @@ if (!uri) {
 const options: MongoClientOptions = {
   tls: true,
   tlsAllowInvalidCertificates: process.env.NODE_ENV !== 'production',
-  minTLSVersion: 'TLS1.2',
+  // Enforce TLS 1.2 via NODE_OPTIONS="--tls-min-v1.2" or server configuration
 };
 
 if (process.env.MONGODB_CA) {
@@ -36,7 +39,7 @@ export async function getUsersCollection(): Promise<Collection<User>> {
   return conn.db().collection<User>('users');
 }
 
-export async function getSettingsCollection(): Promise<Collection<Setting>> {␊
-  const conn = await clientPromise;␊
-  return conn.db().collection<Setting>('settings');␊
+export async function getSettingsCollection(): Promise<Collection<Setting>> {
+  const conn = await clientPromise;
+  return conn.db().collection<Setting>('settings');
 }

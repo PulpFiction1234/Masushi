@@ -15,9 +15,11 @@ async function request(
     Authorization: `Bearer ${readOnly ? READ_TOKEN : TOKEN}`,
     "Content-Type": "application/json",
   };
-  const res = await fetch(`${BASE_URL}/${path}`, {
+   const res = await fetch(`${BASE_URL}/${path}`, {
     ...options,
     headers: { ...headers, ...(options.headers as Record<string, string> | undefined) },
+    cache: "no-store",
+    next: { revalidate: 0 },
   });
   if (!res.ok) {
     throw new Error(`KV request failed with ${res.status}`);

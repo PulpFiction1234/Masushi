@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { FaInstagram, FaFacebook, FaWhatsapp } from "react-icons/fa";
 
 interface FooterProps {
@@ -56,12 +57,9 @@ const Footer: React.FC<FooterProps> = ({ showSocial = true, className = "" }) =>
             Masushi © {new Date().getFullYear()} - Todos los derechos reservados
           </p>
 
-           <a
-           href="/terminos" 
-           className="text-right">
+          <Link href="/terminos" className="text-right">
             Terminos y condiciones
-          </a>
-
+          </Link>
 
           {/* Right: spacer */}
           <div className="justify-self-end" aria-hidden />

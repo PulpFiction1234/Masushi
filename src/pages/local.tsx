@@ -4,9 +4,6 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import heroLocalImg from "@/public/images/hero-local.webp";
-import puenteInteriorImg from "@/public/images/puente-interior.webp";
-import puenteExteriorImg from "@/public/images/puente-exterior.webp";
 
 const LocalMap = dynamic(() => import("@/components/LocalMap"), {
   ssr: false,

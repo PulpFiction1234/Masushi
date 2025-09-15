@@ -1,4 +1,4 @@
-const BASE_URL = process.env.KV_REST_API_URL;
+const BASE_URL = process.env.KV_REST_API_URL?.replace(/\/$/, "");
 const TOKEN = process.env.KV_REST_API_TOKEN;
 const READ_TOKEN = process.env.KV_REST_API_READ_ONLY_TOKEN || TOKEN;
 
@@ -11,11 +11,12 @@ async function request(
   options: RequestInit = {},
   readOnly = false,
 ): Promise<Response> {
-  const headers: Record<string, string> = {
+    const headers: Record<string, string> = {
     Authorization: `Bearer ${readOnly ? READ_TOKEN : TOKEN}`,
     "Content-Type": "application/json",
   };
-   const res = await fetch(`${BASE_URL}/${path}`, {
+  const url = `${BASE_URL}/${path.replace(/^\//, "")}`;
+  const res = await fetch(url, {
     ...options,
     headers: { ...headers, ...(options.headers as Record<string, string> | undefined) },
     cache: "no-store",

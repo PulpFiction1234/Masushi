@@ -1,10 +1,19 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { signToken, validateCredentials } from '@/server/auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
     res.status(405).end();
+    return;
+  }
+
+  let signToken: (username: string) => string;
+  let validateCredentials: (username?: string, password?: string) => Promise<boolean>;
+  try {
+    ({ signToken, validateCredentials } = await import('@/server/auth'));
+  } catch (err) {
+    console.error(err);
+    res.status(500).end();
     return;
   }
 

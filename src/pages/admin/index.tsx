@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import type { GetServerSideProps } from 'next';
-import { verifyToken } from '@/server/auth';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -76,7 +75,7 @@ export default function AdminPage() {
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const token = ctx.req.cookies?.token;
-  if (!token || !verifyToken(token)) {
+  if (!token) {
     return {
       redirect: {
         destination: '/login',
@@ -84,5 +83,26 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       },
     };
   }
+
+  try {
+    const { verifyToken } = await import('@/server/auth');
+    if (!verifyToken(token)) {
+      return {
+        redirect: {
+          destination: '/login',
+          permanent: false,
+        },
+      };
+    }
+  } catch (err) {
+    console.error(err);
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false,
+      },
+    };
+  }
+
   return { props: {} };
 };

@@ -2,7 +2,11 @@ import jwt from 'jsonwebtoken';
 import { compare } from 'bcryptjs';
 import { getUsersCollection } from './db';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
+const JWT_SECRET: string = (() => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('JWT_SECRET is not defined');
+  return secret;
+})();
 
 export async function validateCredentials(
   username?: string,

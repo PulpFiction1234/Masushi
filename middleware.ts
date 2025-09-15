@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/server/auth';
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const token = req.cookies.get('token')?.value;
 
-  if (token && verifyToken(token)) {
-    return NextResponse.next();
+  if (token) {
+    try {
+      const { verifyToken } = await import('@/server/auth');
+      if (verifyToken(token)) {
+        return NextResponse.next();
+      }
+    } catch (err) {
+      console.error(err);
+      return new NextResponse('Server misconfigured', { status: 500 });
+    }
   }
 
   if (req.nextUrl.pathname.startsWith('/api/')) {

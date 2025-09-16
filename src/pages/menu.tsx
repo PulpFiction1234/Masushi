@@ -104,7 +104,16 @@ export default function MenuPage() {
       )}
 
       <Navbar />
-
+      <div className="bg-gray-950 flex justify-center ">
+            <header className="w-11/12 max-w-[19rem] sm:max-w-xs md:max-w-2xl text-center px-2 mb-3">
+              <h1 className="text-[22px] font-semibold text-neutral-100">
+                Carta Masushi Ciudad del Este
+              </h1>
+              <p className="text-[16px]  text-neutral-100 mt-1">
+                Carta Masushi: calidad y frescura en cada roll. Delivery en Puente Alto y retiro en local.
+              </p>
+            </header>
+          </div>
       {/* BOTÓN FLOTANTE (solo móvil). Se oculta cuando el menú está abierto */}
       {!menuAbierto && (
         <button
@@ -186,16 +195,7 @@ export default function MenuPage() {
         {/* Contenido */}
         <main className="min-h-screen p-6 text-center bg-gray-950 md:ml-56">
           {/* H1 + descripción centrados como el buscador */}
-          <div className="flex justify-center mt-2">
-            <header className="w-11/12 max-w-[19rem] sm:max-w-xs md:max-w-2xl text-center px-2 mb-3">
-              <h1 className="text-[22px] font-semibold text-neutral-100">
-                Carta Masushi Ciudad del Este
-              </h1>
-              <p className="text-[16px]  text-neutral-100 mt-1">
-                Carta Masushi: calidad y frescura en cada roll. Delivery en Puente Alto y retiro en local.
-              </p>
-            </header>
-          </div>
+          
 
           {/* 🔎 Mini buscador (más angosto en móvil) */}
           <div className="sticky top-21 z-30 mb-3 flex justify-center">

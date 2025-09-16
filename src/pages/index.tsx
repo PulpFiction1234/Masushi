@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Head from "next/head";
 import dynamic from "next/dynamic";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -16,7 +17,7 @@ const CarritoPanel = dynamic(() => import("@/components/CarritoPanel"), {
   loading: () => <div className="p-4 text-white">Cargando carrito...</div>,
 });
 
-// Origen absoluto para OG/LD (configura SITE_URL o NEXT_PUBLIC_SITE_URL en Vercel)
+// URL absoluta del sitio (configura en Vercel: NEXT_PUBLIC_SITE_URL = https://www.masushi.cl)
 const ORIGIN =
   process.env.NEXT_PUBLIC_SITE_URL ||
   process.env.SITE_URL ||
@@ -29,15 +30,38 @@ export default function Home() {
 
   return (
     <div className="bg-gray-950 text-white">
-      {/* Metadatos SEO */}
+      {/* SEO: título con marca al inicio */}
       <Seo
-        title="Sushi a domicilio en Puente Alto | Masushi"
+        title="Masushi — Sushi a domicilio en Puente Alto"
         description="Sushi fresco y de calidad. Delivery en Puente Alto (Ciudad del Este, El Alba, Dehesa de la Viña y Camilo Henríquez) y retiro en tienda. Promos, hot rolls y handrolls."
         canonicalPath="/"
         image={ogImage}
       />
 
-      {/* Datos estructurados (no visible) */}
+      {/* JSON-LD: WebSite (refuerza el nombre del sitio) */}
+      {ORIGIN && (
+        <Head>
+          <script
+            type="application/ld+json"
+            // schema.org/WebSite con SearchAction (el buscador de la carta)
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                name: "Masushi",
+                url: ORIGIN,
+                potentialAction: {
+                  "@type": "SearchAction",
+                  target: `${ORIGIN}/menu?search={search_term_string}`,
+                  "query-input": "required name=search_term_string",
+                },
+              }),
+            }}
+          />
+        </Head>
+      )}
+
+      {/* JSON-LD: LocalBusiness (ya lo tenías) */}
       {ORIGIN && (
         <LocalBusinessJsonLd
           name="Masushi"
@@ -81,40 +105,33 @@ export default function Home() {
       {/* Navbar */}
       <Navbar />
 
-      {/* H1 SEO: claro para Google (puede ser visible si quieres) */}
-      <h1 className="sr-only">
-        Masushi — Sushi a domicilio en Puente Alto (Ciudad del Este, El Alba, Dehesa de la Viña y Camilo Henríquez)
-      </h1>
+      {/* Hero con carrusel */}
+      <HeroCarousel intervalMs={9000} />
 
-      <main role="main">
-        {/* Panel del carrito */}
-        <CarritoPanel open={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      {/* H1 visible (clave para que Google no coja un producto como título) */}
+      <h1
+  className="mx-auto mt-4 max-w-3xl px-4 text-center text-[15px] leading-tight text-neutral-300/80 font-medium"
+>
+  Masushi — Sushi a domicilio en Puente Alto (Ciudad del Este, El Alba y Dehesa de la Viña)
+</h1>
 
-        {/* Hero con carrusel */}
-        <section aria-label="Promociones destacadas">
-          <HeroCarousel intervalMs={9000} />
-        </section>
 
-        {/* Top Rolls */}
-        <section aria-labelledby="top-rolls" className="mt-4">
-          <h2 id="top-rolls" className="sr-only">Top Rolls</h2>
-          <ProductSection
-            title="Top Rolls"
-            productIds={[1, 3, 50, 56]}
-            linkBase="/menu?producto="
-          />
-        </section>
+      {/* Top Rolls */}
+      <ProductSection
+        title="Top Rolls"
+        productIds={[1, 3, 50, 56]}
+        linkBase="/menu?producto="
+      />
 
-        {/* Promociones */}
-        <section aria-labelledby="promociones" className="mt-4">
-          <h2 id="promociones" className="sr-only">Promociones</h2>
-          <ProductSectionPromo
-            title="Promociones"
-            productIds={[200, 201, 202, 203, 204]}
-            linkBase="/menu?producto="
-          />
-        </section>
-      </main>
+      {/* Promociones */}
+      <ProductSectionPromo
+        title="Promociones"
+        productIds={[200, 201, 202, 203, 204]}
+        linkBase="/menu?producto="
+      />
+
+      {/* Panel del carrito */}
+      <CarritoPanel open={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
       {/* Footer */}
       <Footer />

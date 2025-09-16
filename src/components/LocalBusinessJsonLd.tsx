@@ -1,99 +1,95 @@
+// src/components/LocalBusinessJsonLd.tsx
 import Head from "next/head";
-import { HORARIO_SEMANAL } from "@/utils/horarios";
+import React from "react";
 
-type Props = {
+type LocalBusinessJsonLdProps = {
   name: string;
-  url: string;                // absoluto
-  telephone: string;          // +56...
-  image?: string;             // logo/fachada absoluto
+  url: string;
+  telephone: string;          // E.164 recomendado: +56227557931
+  image: string;              // URL absoluta o relativa
   streetAddress: string;
-  addressLocality: string;
-  addressRegion: string;
+  addressLocality: string;    // Puente Alto, etc.
+  addressRegion: string;      // Región Metropolitana, etc.
   postalCode?: string;
-  addressCountry?: string;    // "CL"
-  sameAs?: string[];
-  alternateNames?: string[] | string;
-  serviceAreas?: string[];
-  /** 👇 Nuevos opcionales */
-  menuUrl?: string;           // URL absoluta de /menu
-  priceRange?: string;        // "$" | "$$"
+  sameAs?: string[];          // redes, whatsapp…
+  alternateNames?: string[];  // “Mazushi”, etc.
+  serviceAreas?: string[];    // sectores de cobertura
+  menuUrl?: string;           // URL del menú
+  priceRange?: string;        // $, $$, $$$
   acceptsReservations?: boolean;
 };
 
-const mapDay: Record<string, string> = {
-  mon: "Monday",
-  tue: "Tuesday",
-  wed: "Wednesday",
-  thu: "Thursday",
-  fri: "Friday",
-  sat: "Saturday",
-  sun: "Sunday",
-};
+function dedupeNonEmpty(arr?: string[]): string[] | undefined {
+  if (!arr || arr.length === 0) return undefined;
+  const set = new Set<string>();
+  for (const v of arr) {
+    const s = (v ?? "").trim();
+    if (s) set.add(s);
+  }
+  return set.size ? Array.from(set) : undefined;
+}
 
-export default function LocalBusinessJsonLd({
-  name, url, telephone, image,
-  streetAddress, addressLocality, addressRegion, postalCode,
-  addressCountry = "CL", sameAs = [],
-  alternateNames, serviceAreas,
-  menuUrl, priceRange, acceptsReservations,
-}: Props) {
-  const openingHoursSpecification = Object.entries(HORARIO_SEMANAL).flatMap(([k, intervals]) => {
-    const dayOfWeek = mapDay[k] || "Monday";
-    if (!intervals || intervals.length === 0) return [];
-    return intervals.map(([open, close]) => ({
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek,
-      opens: `${open}:00`,
-      closes: `${close}:00`,
-    }));
-  });
-
-  const jsonLd: Record<string, any> = {
-    "@context": "https://schema.org",
-    "@type": "Restaurant",
+export default function LocalBusinessJsonLd(props: LocalBusinessJsonLdProps) {
+  const {
     name,
     url,
     telephone,
     image,
-    servesCuisine: ["Sushi", "Japonesa"],
+    streetAddress,
+    addressLocality,
+    addressRegion,
+    postalCode,
+    sameAs,
+    alternateNames,
+    serviceAreas,
+    menuUrl,
+    priceRange,
+    acceptsReservations,
+  } = props;
+
+  const sameAsClean = dedupeNonEmpty(sameAs);
+  const altNamesClean = dedupeNonEmpty(alternateNames);
+
+  const areaServed =
+    serviceAreas && serviceAreas.length
+      ? serviceAreas
+          .map((area) => (area || "").trim())
+          .filter(Boolean)
+          .map((area) => ({
+            "@type": "AdministrativeArea" as const,
+            name: area,
+          }))
+      : undefined;
+
+  const jsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Restaurant", // más específico que LocalBusiness
+    name,
+    url,
+    telephone,
+    image,
     address: {
       "@type": "PostalAddress",
       streetAddress,
       addressLocality,
       addressRegion,
-      postalCode,
-      addressCountry,
+      ...(postalCode ? { postalCode } : {}),
     },
-    openingHoursSpecification,
-    sameAs,
+    ...(sameAsClean ? { sameAs: sameAsClean } : {}),
+    ...(altNamesClean ? { alternateName: altNamesClean } : {}),
+    ...(areaServed ? { areaServed } : {}),
+    ...(menuUrl ? { menu: menuUrl } : {}),
+    ...(priceRange ? { priceRange } : {}),
+    ...(typeof acceptsReservations === "boolean"
+      ? { acceptsReservations }
+      : {}),
   };
-
-  if (alternateNames && (Array.isArray(alternateNames) ? alternateNames.length : true)) {
-    jsonLd.alternateName = Array.isArray(alternateNames) ? alternateNames : [alternateNames];
-  }
-
-  if (serviceAreas && serviceAreas.length) {
-    jsonLd.areaServed = serviceAreas.map((n) => ({
-      "@type": "Place",
-      name: n,
-      address: {
-        "@type": "PostalAddress",
-        addressLocality: "Puente Alto",
-        addressRegion: "Región Metropolitana",
-        addressCountry: "CL",
-      },
-    }));
-  }
-
-  if (menuUrl) jsonLd.menu = menuUrl;
-  if (priceRange) jsonLd.priceRange = priceRange;
-  if (typeof acceptsReservations === "boolean") jsonLd.acceptsReservations = acceptsReservations;
 
   return (
     <Head>
       <script
         type="application/ld+json"
-        // @ts-ignore
+        // JSON.stringify omite las claves con undefined, así que no hace falta limpiar más.
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
     </Head>

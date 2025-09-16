@@ -5,37 +5,40 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import type { Session } from "@supabase/supabase-js"; // ⬅️ solo tipo
+import type { Session } from "@supabase/supabase-js";
+
+type AdminMode = "normal" | "forceClosed" | "forceOpen";
 
 export default function AdminPage() {
   const router = useRouter();
   const supabase = useSupabaseClient();
-  const [closed, setClosed] = useState(false);
+  const [mode, setMode] = useState<AdminMode>("normal");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/admin/closed", { cache: "no-store" })
+    fetch("/api/admin/mode", { cache: "no-store" })
       .then((r) => r.json())
-      .then((d) => setClosed(d.forceClosed))
-      .catch(() => setClosed(false));
+      .then((d) => setMode(d.mode as AdminMode))
+      .catch(() => setMode("normal"))
+      .finally(() => setLoading(false));
   }, []);
 
-  const toggle = async () => {
-    const prev = closed;
-    const next = !closed;
-    setClosed(next);
+  const applyMode = async (next: AdminMode) => {
+    const prev = mode;
+    setMode(next);
     try {
-      const response = await fetch("/api/admin/closed", {
+      const r = await fetch("/api/admin/mode", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ forceClosed: next }),
+        body: JSON.stringify({ mode: next }),
       });
-      if (!response.ok) throw new Error("Request failed");
-      const data = await response.json();
-      setClosed(data.forceClosed);
-    } catch (err) {
-      console.error(err);
+      if (!r.ok) throw new Error("Request failed");
+      const data = await r.json();
+      setMode(data.mode as AdminMode);
+    } catch (e) {
+      console.error(e);
       alert("Error actualizando el estado");
-      setClosed(prev);
+      setMode(prev);
     }
   };
 
@@ -48,6 +51,11 @@ export default function AdminPage() {
     }
     router.push("/login");
   };
+
+  const badge =
+    mode === "forceOpen" ? "FORZADO ABIERTO"
+    : mode === "forceClosed" ? "FORZADO CERRADO"
+    : "NORMAL (según horario)";
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-950 text-white">
@@ -63,15 +71,55 @@ export default function AdminPage() {
               Cerrar sesión
             </button>
           </div>
-          <p>Estado actual: {closed ? "CERRADO" : "ABIERTO"}</p>
-          <button
-            onClick={toggle}
-            className={`px-4 py-2 rounded font-semibold text-white ${
-              closed ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"
-            }`}
-          >
-            {closed ? "Abrir pedidos" : "Cerrar pedidos"}
-          </button>
+
+          <p className="text-sm text-gray-300">
+            Modo actual: <span className="font-semibold">{badge}</span>
+          </p>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <button
+              disabled={loading}
+              onClick={() => applyMode("normal")}
+              className={`px-4 py-3 rounded font-semibold border ${
+                mode === "normal"
+                  ? "bg-emerald-600 border-emerald-500"
+                  : "bg-gray-800 border-gray-700 hover:bg-gray-700"
+              }`}
+            >
+              Normal
+              <div className="text-xs text-gray-200 font-normal">Respeta horario</div>
+            </button>
+
+            <button
+              disabled={loading}
+              onClick={() => applyMode("forceOpen")}
+              className={`px-4 py-3 rounded font-semibold border ${
+                mode === "forceOpen"
+                  ? "bg-green-700 border-green-600"
+                  : "bg-gray-800 border-gray-700 hover:bg-gray-700"
+              }`}
+            >
+              Forzar ABIERTO
+              <div className="text-xs text-gray-200 font-normal">Solo hoy</div>
+            </button>
+
+            <button
+              disabled={loading}
+              onClick={() => applyMode("forceClosed")}
+              className={`px-4 py-3 rounded font-semibold border ${
+                mode === "forceClosed"
+                  ? "bg-rose-700 border-rose-600"
+                  : "bg-gray-800 border-gray-700 hover:bg-gray-700"
+              }`}
+            >
+              Forzar CERRADO
+              <div className="text-xs text-gray-200 font-normal">Solo hoy</div>
+            </button>
+          </div>
+
+          <p className="text-xs text-gray-400">
+            * Los modos “Forzar” se limpian automáticamente al cambiar el día en America/Santiago.
+          </p>
         </div>
       </main>
       <Footer />
@@ -79,15 +127,11 @@ export default function AdminPage() {
   );
 }
 
-// ⬇️ Tipamos las props de la página para evitar "any"
 type AdminPageProps = { initialSession: Session | null };
 
 export const getServerSideProps: GetServerSideProps<AdminPageProps> = async (ctx) => {
   const supabase = createPagesServerClient(ctx);
   const { data: { session } } = await supabase.auth.getSession();
-
-  if (!session) {
-    return { redirect: { destination: "/login", permanent: false } };
-  }
+  if (!session) return { redirect: { destination: "/login", permanent: false } };
   return { props: { initialSession: session } };
 };

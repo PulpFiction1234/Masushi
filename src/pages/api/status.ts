@@ -2,21 +2,27 @@ export const runtime = 'nodejs';
 
 import type { NextApiRequest, NextApiResponse } from "next";
 import { BUSINESS_TZ, estaAbiertoAhora, proximoCambio } from "@/utils/horarios";
-import { getForceClosedWithReset } from "@/server/admin-state";
+import { getStateWithReset } from "@/server/admin-state";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const now = new Date();
+  const state = await getStateWithReset();
 
-  const forceClosed = await getForceClosedWithReset();
-  const abierto = !forceClosed && estaAbiertoAhora(now, BUSINESS_TZ);
+  const forceOpen = !!state?.force_open;
+  const forceClosed = !!state?.force_closed;
+
+  const abiertoHorario = estaAbiertoAhora(now, BUSINESS_TZ);
+  const abierto = forceOpen || (!forceClosed && abiertoHorario);
+
   const cambio = proximoCambio(now, BUSINESS_TZ);
 
   res.setHeader("Cache-Control", "no-store");
   res.status(200).json({
     timeZone: BUSINESS_TZ,
     abierto,
-    nextOpen: cambio.isOpen ? null : cambio.nextOpen ?? null,
-    nextClose: cambio.isOpen ? cambio.nextClose ?? null : null,
+    nextOpen: abierto ? null : (cambio.nextOpen ?? null),
+    nextClose: abierto ? (cambio.nextClose ?? null) : null,
     generatedAt: now.toISOString(),
+    overrides: { forceOpen, forceClosed }, // útil para UI/debug
   });
 }

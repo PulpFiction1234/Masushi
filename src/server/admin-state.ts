@@ -1,56 +1,89 @@
 import supabaseAdmin from "@/server/supabase";
 import { BUSINESS_TZ } from "@/utils/horarios";
 
+export type AdminMode = "normal" | "forceClosed" | "forceOpen";
+
 type Row = {
   id: number;
   force_closed: boolean;
   force_closed_ymd: string | null;
-  force_closed_at: string | null; // timestamptz en texto ISO
+  force_closed_at: string | null;
+  force_open: boolean;
+  force_open_at: string | null;
 };
 
-/** Llama a la función SQL para resetear si cambió el día en America/Santiago. */
 async function resetIfNewDayInDB(): Promise<void> {
-  // Ignoramos el boolean de retorno; solo nos interesa que ejecute.
   const { error } = await supabaseAdmin.rpc("reset_admin_state_if_new_day");
-  if (error) {
-    // No interrumpas el flujo si falla; registramos para depurar
-    console.warn("[admin-state] reset_admin_state_if_new_day error:", error.message);
-  }
+  if (error) console.warn("[admin-state] reset_admin_state_if_new_day error:", error.message);
 }
 
-/** Devuelve si está forzado cerrado, con reseteo en DB si corresponde. */
-export async function getForceClosedWithReset(): Promise<boolean> {
+export async function getStateWithReset(): Promise<Row | null> {
   await resetIfNewDayInDB();
-
   const { data, error } = await supabaseAdmin
     .from("admin_state")
-    .select("force_closed, force_closed_ymd, force_closed_at")
+    .select("*")
     .eq("id", 1)
     .maybeSingle<Row>();
-
   if (error) throw new Error(error.message);
-  return data?.force_closed ?? false;
+  return data ?? null;
 }
 
-/** Setea/limpia el cierre forzado y marca la fecha/hora actual en DB. */
-export async function setForceClosed(closed: boolean): Promise<void> {
-  const patch = closed
-    ? {
-        force_closed: true,
-        // guardamos ambos por compatibilidad/visibilidad
-        force_closed_ymd: new Intl.DateTimeFormat("en-CA", {
-          timeZone: BUSINESS_TZ,
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-        }).format(new Date()),
-        force_closed_at: new Date().toISOString(),
-      }
-    : { force_closed: false, force_closed_ymd: null, force_closed_at: null };
+export async function getAdminModeWithReset(): Promise<AdminMode> {
+  const row = await getStateWithReset();
+  if (!row) return "normal";
+  if (row.force_open) return "forceOpen";
+  if (row.force_closed) return "forceClosed";
+  return "normal";
+}
+
+export async function setAdminMode(mode: AdminMode): Promise<void> {
+  const nowIso = new Date().toISOString();
+  const ymd = new Intl.DateTimeFormat("en-CA", {
+    timeZone: BUSINESS_TZ,
+    year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(new Date());
+
+  const base: Partial<Row> =
+    mode === "normal"
+      ? {
+          force_closed: false,
+          force_closed_ymd: null,
+          force_closed_at: null,
+          force_open: false,
+          force_open_at: null,
+        }
+      : mode === "forceClosed"
+      ? {
+          force_closed: true,
+          force_closed_ymd: ymd,
+          force_closed_at: nowIso,
+          force_open: false,
+          force_open_at: null,
+        }
+      : {
+          force_open: true,
+          force_open_at: nowIso,
+          force_closed: false,
+          force_closed_ymd: null,
+          force_closed_at: null,
+        };
 
   const { error } = await supabaseAdmin
     .from("admin_state")
-    .upsert({ id: 1, ...patch }, { onConflict: "id" });
-
+    .upsert({ id: 1, ...base }, { onConflict: "id" });
   if (error) throw new Error(error.message);
+}
+
+/* Compat para código viejo: */
+export async function getForceClosedWithReset(): Promise<boolean> {
+  const row = await getStateWithReset();
+  return !!row?.force_closed;
+}
+export async function setForceClosed(closed: boolean): Promise<void> {
+  await setAdminMode(closed ? "forceClosed" : "normal");
+}
+
+/* Safe helpers (opcional): */
+export async function getForceClosedSafe(): Promise<boolean> {
+  try { return await getForceClosedWithReset(); } catch { return false; }
 }

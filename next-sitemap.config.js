@@ -8,7 +8,7 @@ const SITE =
 module.exports = {
   siteUrl: SITE,
   generateRobotsTxt: true,
-  generateIndexSitemap: false, // un solo sitemap
+  generateIndexSitemap: false,
   exclude: ['/admin', '/login', '/checkout', '/api/*', '/api/admin/*', '/api/debug/*'],
   robotsTxtOptions: {
     policies: [
@@ -19,7 +19,6 @@ module.exports = {
       },
     ],
   },
-  // Opcional: hreflang para Chile/español
   alternateRefs: [
     { href: SITE, hreflang: 'es-cl' },
     { href: SITE, hreflang: 'es' },

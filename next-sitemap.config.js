@@ -7,10 +7,15 @@ const SITE =
 
 module.exports = {
   siteUrl: SITE,
-  generateRobotsTxt: false,           // 👈 usas el de /public
+  generateRobotsTxt: true,         // 👈 lo genera automáticamente
   generateIndexSitemap: false,
   exclude: ['/admin', '/login', '/checkout', '/api/*', '/api/admin/*', '/api/debug/*'],
-  // robotsTxtOptions eliminado porque no aplica si generateRobotsTxt=false
+  robotsTxtOptions: {
+    policies: [
+      { userAgent: '*', allow: '/' },
+      { userAgent: '*', disallow: ['/admin', '/login', '/checkout', '/api/'] },
+    ],
+  },
   alternateRefs: [
     { href: SITE, hreflang: 'es-cl' },
     { href: SITE, hreflang: 'es' },

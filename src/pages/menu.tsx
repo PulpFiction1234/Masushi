@@ -1,10 +1,12 @@
+// src/pages/menu.tsx
 "use client";
 
 import React, { useEffect, useState, useDeferredValue } from "react";
-import Head from "next/head"; // 👈 para inyectar JSON-LD
+import Head from "next/head";
+import { useRouter } from "next/router";
 import ListaProductos from "@/components/ListaProductos";
 import Navbar from "@/components/Navbar";
-import Seo from "@/components/Seo"; // metadatos SEO (no visible)
+import Seo from "@/components/Seo";
 
 // Origen absoluto para OG/LD (configura SITE_URL o NEXT_PUBLIC_SITE_URL en Vercel)
 const ORIGIN =
@@ -29,6 +31,12 @@ export default function MenuPage() {
   const [busqueda, setBusqueda] = useState("");
   const busquedaDeferida = useDeferredValue(busqueda);
 
+  // Router para detectar ?producto=
+  const router = useRouter();
+  const hasProductParam =
+    typeof router.query?.producto === "string" &&
+    router.query.producto.trim() !== "";
+
   // Bloquear scroll y cerrar con ESC cuando el menú móvil está abierto
   useEffect(() => {
     if (!menuAbierto) return;
@@ -44,48 +52,56 @@ export default function MenuPage() {
 
   return (
     <>
-      {/* 🔒 Metadatos SEO */}
+      {/* 🔒 Metadatos SEO base de la carta */}
       <Seo
-  title="Carta Masushi | Sushi en Puente Alto"
-  description="Carta Masushi: roll premium, hot rolls, handrolls, sin arroz, salmón, palta, queso y promos. Delivery en Puente Alto o retiro en tienda. También nos buscan como “Mazushi”."
-  canonicalPath="/menu"
-  image={ogImage}
-/>
+        title="Carta Masushi | Sushi en Puente Alto"
+        description="Carta Masushi: roll premium, hot rolls, handrolls, sin arroz, salmón, palta, queso y promos. Delivery en Puente Alto o retiro en tienda. También nos buscan como “Mazushi”."
+        canonicalPath="/menu"
+        image={ogImage}
+      />
 
-{/* JSON-LD: Migas + Menu (ayuda a Google a reconocer la carta) */}
-{ORIGIN && (
-  <Head>
-    {/* Migas */}
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{
-        __html: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "BreadcrumbList",
-          "itemListElement": [
-            { "@type": "ListItem", "position": 1, "name": "Inicio", "item": ORIGIN },
-            { "@type": "ListItem", "position": 2, "name": "Carta",  "item": `${ORIGIN}/menu` }
-          ]
-        }),
-      }}
-    />
-    {/* Menu */}
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{
-        __html: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Menu",
-          "name": "Carta Masushi",
-          "url": `${ORIGIN}/menu`,
-          "hasMenuSection": categorias.map((name) => ({
-            "@type": "MenuSection", name
-          }))
-        }),
-      }}
-    />
-  </Head>
-)}
+      {/* 👇 Si está en /menu?producto=..., pedimos no indexar esa URL y canonical a /menu */}
+      {hasProductParam && (
+        <Head>
+          <meta name="robots" content="noindex,follow" />
+          {ORIGIN && <link rel="canonical" href={`${ORIGIN}/menu`} />}
+        </Head>
+      )}
+
+      {/* JSON-LD: Migas + Menu (ayuda a Google a reconocer la carta) */}
+      {ORIGIN && (
+        <Head>
+          {/* Migas */}
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                  { "@type": "ListItem", "position": 1, "name": "Inicio", "item": ORIGIN },
+                  { "@type": "ListItem", "position": 2, "name": "Carta",  "item": `${ORIGIN}/menu` }
+                ]
+              }),
+            }}
+          />
+          {/* Menu */}
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Menu",
+                "name": "Carta Masushi",
+                "url": `${ORIGIN}/menu`,
+                "hasMenuSection": categorias.map((name) => ({
+                  "@type": "MenuSection", name
+                }))
+              }),
+            }}
+          />
+        </Head>
+      )}
 
       <Navbar />
 
@@ -169,16 +185,18 @@ export default function MenuPage() {
 
         {/* Contenido */}
         <main className="min-h-screen p-6 text-center bg-gray-950 md:ml-56">
+          {/* H1 + descripción centrados como el buscador */}
           <div className="flex justify-center mt-2">
             <header className="w-11/12 max-w-[19rem] sm:max-w-xs md:max-w-2xl text-center px-2 mb-3">
-              <h1 className="text-base md:text-xl font-semibold text-[22px] text-neutral-100">
+              <h1 className="text-[22px] font-semibold text-neutral-100">
                 Carta Masushi Ciudad del Este
               </h1>
-              <p className="text-[18px] md:text-sm text-neutral-100 mt-1">
+              <p className="text-[16px]  text-neutral-100 mt-1">
                 Carta Masushi: calidad y frescura en cada roll. Delivery en Puente Alto y retiro en local.
               </p>
             </header>
           </div>
+
           {/* 🔎 Mini buscador (más angosto en móvil) */}
           <div className="sticky top-21 z-30 mb-3 flex justify-center">
             <div className="w-11/12 max-w-[19rem] sm:max-w-xs md:max-w-2xl">
@@ -207,7 +225,7 @@ export default function MenuPage() {
                 {busqueda && (
                   <button
                     type="button"
-                    onClick={() => setBusqueda('')}
+                    onClick={() => setBusqueda("")}
                     aria-label="Limpiar búsqueda"
                     className="absolute right-2 md:right-3 top-1/2 -translate-y-1/2 text-xs md:text-base text-gray-300 hover:text-white"
                   >

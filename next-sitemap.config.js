@@ -7,7 +7,7 @@ const SITE =
 
 module.exports = {
   siteUrl: SITE,
-  generateRobotsTxt: true,
+  generateRobotsTxt: false,
   generateIndexSitemap: false,
   exclude: ['/admin', '/login', '/checkout', '/api/*', '/api/admin/*', '/api/debug/*'],
   robotsTxtOptions: {

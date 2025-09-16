@@ -10,7 +10,7 @@ import CarritoPanel from "@/components/CarritoPanel";
 
 // 👇 OJO: Provider desde *react*, browser client desde *nextjs*
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
-import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 
 function FloatingCartButton({ onClick }: { onClick: () => void }) {
   const { cart } = useCart();
@@ -46,7 +46,7 @@ export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
 
   // Cliente de Supabase del navegador (helpers)
-  const [supabaseClient] = useState(() => createBrowserSupabaseClient());
+  const [supabaseClient] = useState(() => createPagesBrowserClient());
 
   useEffect(() => {
     const open = () => setIsCartOpen(true);

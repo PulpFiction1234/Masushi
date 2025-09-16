@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import type { Session } from "@supabase/supabase-js";
+import Seo from "@/components/Seo";
 
 type AdminMode = "normal" | "forceClosed" | "forceOpen";
 
@@ -59,6 +60,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-950 text-white">
+      <Seo title="Panel de administración — Masushi" canonicalPath="/admin" noIndex />
       <Navbar />
       <main className="flex-1 p-6">
         <div className="max-w-3xl mx-auto bg-gray-900 p-6 rounded-xl shadow space-y-6">

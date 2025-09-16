@@ -1,8 +1,18 @@
 "use client";
 
 import React, { useEffect, useState, useDeferredValue } from "react";
+import Head from "next/head"; // 👈 para inyectar JSON-LD
 import ListaProductos from "@/components/ListaProductos";
 import Navbar from "@/components/Navbar";
+import Seo from "@/components/Seo"; // metadatos SEO (no visible)
+
+// Origen absoluto para OG/LD (configura SITE_URL o NEXT_PUBLIC_SITE_URL en Vercel)
+const ORIGIN =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.SITE_URL ||
+  "";
+
+const ogImage = ORIGIN ? `${ORIGIN}/images/logo-masushi.webp` : "/images/logo-masushi.webp";
 
 const categorias = [
   "Roll premium", "Roll sin arroz", "Rolls envueltos en queso crema",
@@ -15,7 +25,7 @@ export default function MenuPage() {
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string | null>(null);
   const [menuAbierto, setMenuAbierto] = useState(false);
 
-  // 🔎 NUEVO: estado del buscador
+  // 🔎 estado del buscador
   const [busqueda, setBusqueda] = useState("");
   const busquedaDeferida = useDeferredValue(busqueda);
 
@@ -34,6 +44,43 @@ export default function MenuPage() {
 
   return (
     <>
+      {/* 🔒 Metadatos SEO */}
+      <Seo
+        title="Carta de Sushi y Promos en Puente Alto | Masushi"
+        description="Explora nuestra carta: hot rolls, handrolls, rolls sin arroz, salmón, palta, queso y promociones. Pide online para delivery en Puente Alto o retiro en tienda."
+        canonicalPath="/menu"
+        image={ogImage}
+      />
+
+      {/* JSON-LD de migas (Home > Carta) */}
+      {ORIGIN && (
+        <Head>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                "itemListElement": [
+                  {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "Inicio",
+                    "item": ORIGIN
+                  },
+                  {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": "Carta",
+                    "item": `${ORIGIN}/menu`
+                  }
+                ]
+              }),
+            }}
+          />
+        </Head>
+      )}
+
       <Navbar />
 
       {/* BOTÓN FLOTANTE (solo móvil). Se oculta cuando el menú está abierto */}
@@ -155,12 +202,11 @@ export default function MenuPage() {
             </div>
           </div>
 
-
           {/* Remount por categoría (la búsqueda NO remonta) */}
           <ListaProductos
             key={`cat-${categoriaSeleccionada ?? "todas"}`}
             categoriaSeleccionada={categoriaSeleccionada}
-            busqueda={busquedaDeferida} // ← NUEVO
+            busqueda={busquedaDeferida}
           />
         </main>
       </div>
@@ -176,5 +222,3 @@ export default function MenuPage() {
     </>
   );
 }
-
-

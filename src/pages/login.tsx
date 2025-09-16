@@ -4,6 +4,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 // 👇 useSupabaseClient viene de *react*
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import Seo from "@/components/Seo"; 
+
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,6 +31,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-950 text-white">
+      <Seo title="Iniciar sesión — Masushi" canonicalPath="/login" noIndex />
       <Navbar />
       <main className="flex flex-1 items-center justify-center p-4">
         <form

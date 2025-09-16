@@ -5,35 +5,81 @@ import Footer from "@/components/Footer";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 
+import Seo from "@/components/Seo"; // 👈 metadatos (no visible)
+import LocalBusinessJsonLd from "@/components/LocalBusinessJsonLd"; // 👈 JSON-LD (no visible)
+
 const LocalMap = dynamic(() => import("@/components/LocalMap"), {
   ssr: false,
 });
 
+// Origen absoluto para OG/LD (configura SITE_URL o NEXT_PUBLIC_SITE_URL en Vercel)
+const ORIGIN =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.SITE_URL ||
+  "";
+
+const ogImage = ORIGIN ? `${ORIGIN}/images/logo-masushi.webp` : "/images/logo-masushi.webp";
+
 const LOCAL = {
   nombre: "Masushi",
-  direccion: "Av. Parque del este 4400,Puente alto, RM",
-  lat: -33.561967096006185,  // ← reemplaza por la lat real
-  lng: -70.55042547663736,  // ← reemplaza por el lng real
-  telefono: "(2) 2755 7931", // visible
-  telefonoPlain: "(2) 2755 7931", // para los enlaces tel:
-  whatsapp: "56940873865",      // para wa.me
+  direccion: "Av. Parque del Este 4400, Puente Alto, RM",
+  lat: -33.561967096006185,
+  lng: -70.55042547663736,
+  telefono: "(2) 2755 7931",       // visible
+  // Recomendado en formato E.164 para enlaces tel:
+  telefonoPlain: "+56227557931",   // 👈 mejor así para <a href="tel:...">
+  whatsapp: "56940873865",         // para wa.me
   horarios: [
     { dia: "Lun - Jue", horas: "16:30 – 22:30" },
     { dia: "Viernes", horas: "16:30 – 23:00" },
     { dia: "Sábado", horas: "13:30 – 22:30" },
-    ],
+  ],
 };
 
 export default function LocalPage() {
   return (
     <>
+      {/* 🔒 Metadatos SEO */}
+      <Seo
+        title="Horarios, dirección y zona de reparto | Masushi Puente Alto"
+        description="Revisa horarios de atención, dirección y cómo llegar. Delivery en Puente Alto con cobertura en Ciudad del Este, El Alba y Dehesa de la Viña."
+        canonicalPath="/local"
+        image={ogImage}
+      />
+
+      {/* 🔒 Datos estructurados (no visible) */}
+      {ORIGIN && (
+        <LocalBusinessJsonLd
+          name="Masushi"
+          url={ORIGIN}
+          telephone="+56227557931" // mismo número en todo el sitio
+          image={`${ORIGIN}/images/logo-masushi.webp`}
+          streetAddress="Av. Parque del Este 4400"
+          addressLocality="Puente Alto"
+          addressRegion="Región Metropolitana"
+          postalCode="8150000"
+          sameAs={[
+            "https://www.instagram.com/masushiciudaddeleste",
+            "https://www.facebook.com/masushiltda",
+            "https://wa.me/56940873865",
+          ]}
+          alternateNames={["Mazushi", "Ma Sushi", "Masushi Puente Alto"]}
+          serviceAreas={[
+            "Puente Alto",
+            "Ciudad del Este",
+            "El Alba",
+            "Dehesa de la Viña",
+          ]}
+        />
+      )}
+
       <Navbar />
 
       <main className="bg-gray-950 text-white">
         {/* HERO */}
         <section
           className="relative h-[300px] sm:h-[380px] bg-cover bg-center flex items-center justify-center"
-          style={{ backgroundImage: "url('/images/hero-local.webp')" }} // ← pon tu foto
+          style={{ backgroundImage: "url('/images/hero-local.webp')" }}
         >
           <div className="absolute inset-0 bg-black/50" />
           <div className="relative z-10 text-center px-4">
@@ -92,9 +138,11 @@ export default function LocalPage() {
                   ))}
                 </ul>
               </div>
+
               <div className="pt-4">
                 <p>Valor de delivery $1500</p>
               </div>
+
               <div className="pt-4">
                 <Link
                   href="/menu"
@@ -106,7 +154,7 @@ export default function LocalPage() {
             </div>
           </div>
 
-            {/* Mapa */}
+          {/* Mapa */}
           <div className="bg-gray-900 rounded-2xl overflow-hidden shadow-lg">
             <LocalMap lat={LOCAL.lat} lng={LOCAL.lng} />
           </div>
@@ -115,8 +163,7 @@ export default function LocalPage() {
         {/* GALERÍA */}
         <section className="max-w-6xl mx-auto px-4 pb-12">
           <h2 className="text-2xl font-bold mb-6">Galería</h2>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {/* Reemplaza las imágenes por las tuyas */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <Image
               src="/images/puente-interior.webp"
               alt="Interior del local"
@@ -134,9 +181,8 @@ export default function LocalPage() {
           </div>
         </section>
       </main>
+
       <Footer />
     </>
   );
 }
-
-

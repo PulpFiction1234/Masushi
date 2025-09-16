@@ -1,20 +1,82 @@
 // src/pages/terminos.tsx
+"use client";
+
 import Head from "next/head";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import Seo from "@/components/Seo";
+
+const ORIGIN =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.SITE_URL ||
+  "";
+
+const ogImage = ORIGIN ? `${ORIGIN}/images/logo-masushi.webp` : "/images/logo-masushi.webp";
 
 export default function TerminosPage() {
-  const lastUpdate = "[fecha de publicación]";
+  const lastUpdate = new Date().toLocaleDateString("es-CL", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   return (
     <div className="bg-gray-950 text-white min-h-screen flex flex-col">
-      <Head>
-        <title>Términos y Condiciones – Masushi</title>
-        <meta
-          name="description"
-          content="Términos y Condiciones de Masushi: uso del sitio, pedidos, pagos, delivery, devoluciones, protección de datos y más."
-        />
-      </Head>
+      {/* Metadatos SEO */}
+      <Seo
+        title="Términos y Condiciones | Masushi"
+        description="Condiciones de uso del sitio, pedidos, pagos, delivery, cambios/devoluciones y protección de datos de Masushi."
+        canonicalPath="/terminos"
+        image={ogImage}
+      />
+
+      {/* JSON-LD: migas + WebPage */}
+      {ORIGIN && (
+        <Head>
+          {/* Breadcrumbs (Inicio > Términos y Condiciones) */}
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "BreadcrumbList",
+                itemListElement: [
+                  {
+                    "@type": "ListItem",
+                    position: 1,
+                    name: "Inicio",
+                    item: ORIGIN,
+                  },
+                  {
+                    "@type": "ListItem",
+                    position: 2,
+                    name: "Términos y Condiciones",
+                    item: `${ORIGIN}/terminos`,
+                  },
+                ],
+              }),
+            }}
+          />
+          {/* WebPage (página legal) */}
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "WebPage",
+                name: "Términos y Condiciones – Masushi",
+                url: `${ORIGIN}/terminos`,
+                inLanguage: "es-CL",
+                isPartOf: {
+                  "@type": "WebSite",
+                  url: ORIGIN,
+                  name: "Masushi",
+                },
+              }),
+            }}
+          />
+        </Head>
+      )}
 
       <Navbar />
 
@@ -25,6 +87,7 @@ export default function TerminosPage() {
         <p className="text-sm text-gray-400 mb-8">
           Última actualización: {lastUpdate}
         </p>
+
         <p className="mb-6">
           Bienvenido a Masushi. Al acceder y utilizar nuestro sitio web{" "}
           <a
@@ -61,10 +124,7 @@ export default function TerminosPage() {
                 <span className="text-gray-400">Dirección:</span> Av. Parque Central 06477, Local 105, Puente Alto
               </li>
               <li>
-                <span className="text-gray-400">Teléfono/WhatsApp:</span>
-                {" "}
-                227557931
-                / +56940873865
+                <span className="text-gray-400">Teléfono/WhatsApp:</span> 227557931 / +56 9 4087 3865
               </li>
               <li>
                 <span className="text-gray-400">Correo electrónico:</span>{" "}
@@ -77,9 +137,7 @@ export default function TerminosPage() {
             <h2 className="text-2xl font-semibold mb-3">Uso del sitio web</h2>
             <p className="mb-3">El usuario se compromete a:</p>
             <ul className="list-disc pl-6 space-y-1">
-              <li>
-                Entregar información veraz y actualizada al realizar pedidos.
-              </li>
+              <li>Entregar información veraz y actualizada al realizar pedidos.</li>
               <li>
                 No realizar usos indebidos del sitio (fraudes, suplantación de
                 identidad, intentos de hackeo, etc.).
@@ -232,7 +290,6 @@ export default function TerminosPage() {
           </h2>
           <ul className="list-none pl-0 space-y-1">
             <li>
-              {' '}
               <a
                 href="mailto:masushi.spa@gmail.com"
                 className="underline decoration-gray-600 hover:decoration-white"
@@ -241,7 +298,6 @@ export default function TerminosPage() {
               </a>
             </li>
             <li>
-              {' '}
               <a
                 href="https://wa.me/56940873865"
                 target="_blank"
@@ -259,5 +315,3 @@ export default function TerminosPage() {
     </div>
   );
 }
-
-

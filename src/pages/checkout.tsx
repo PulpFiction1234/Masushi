@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import useSWR from "swr";
 import { useCart } from "@/context/CartContext";
 import Navbar from "@/components/Navbar";
+import Seo from "@/components/Seo";
 
 // THEME
 const ACCENT_FROM = "from-emerald-500";
@@ -427,6 +428,7 @@ export default function Checkout() {
 
   return (
     <>
+    <Seo title="Panel de administración — Masushi" canonicalPath="/admin" noIndex />
       <Navbar />
       <div className="min-h-screen bg-neutral-950 text-neutral-100">
         <div className="mx-auto max-w-5xl px-4 py-6">

@@ -7,31 +7,22 @@ const SITE =
 
 module.exports = {
   siteUrl: SITE,
-  generateRobotsTxt: false,
+  generateRobotsTxt: false,           // 👈 usas el de /public
   generateIndexSitemap: false,
   exclude: ['/admin', '/login', '/checkout', '/api/*', '/api/admin/*', '/api/debug/*'],
-  robotsTxtOptions: {
-    policies: [
-      {
-        userAgent: '*',
-        allow: '/',
-        disallow: ['/admin', '/login', '/checkout', '/api/'],
-      },
-    ],
-  },
+  // robotsTxtOptions eliminado porque no aplica si generateRobotsTxt=false
   alternateRefs: [
     { href: SITE, hreflang: 'es-cl' },
     { href: SITE, hreflang: 'es' },
   ],
   transform: async (config, path) => {
-    let priority = 0.7;
-    let changefreq = 'weekly';
-    if (path === '/') { priority = 1.0; changefreq = 'daily'; }
-    if (path === '/menu' || path === '/local') { priority = 0.8; }
+    const isHome = path === '/';
+    const isMenu = path === '/menu';
+    const isLocal = path === '/local';
     return {
       loc: `${config.siteUrl}${path}`,
-      changefreq,
-      priority,
+      changefreq: isHome || isMenu ? 'daily' : 'weekly',
+      priority: isHome ? 1.0 : isMenu ? 0.9 : isLocal ? 0.8 : 0.7,
       lastmod: new Date().toISOString(),
     };
   },

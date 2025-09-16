@@ -46,40 +46,46 @@ export default function MenuPage() {
     <>
       {/* 🔒 Metadatos SEO */}
       <Seo
-        title="Carta Masushi — Puente Alto (Ciudad del Este) | Menú y Promos"
-        description="Pide sushi fresco: rolls, hot rolls, handrolls y promos. Delivery en Puente Alto (Ciudad del Este, El Alba, Dehesa de la Viña) o retiro en tienda."
-        canonicalPath="/menu"
-        image={ogImage}
-      />
+  title="Carta Masushi | Sushi en Puente Alto"
+  description="Carta Masushi: roll premium, hot rolls, handrolls, sin arroz, salmón, palta, queso y promos. Delivery en Puente Alto o retiro en tienda. También nos buscan como “Mazushi”."
+  canonicalPath="/menu"
+  image={ogImage}
+/>
 
-      {/* JSON-LD de migas (Home > Carta) */}
-      {ORIGIN && (
-        <Head>
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify({
-                "@context": "https://schema.org",
-                "@type": "BreadcrumbList",
-                "itemListElement": [
-                  {
-                    "@type": "ListItem",
-                    "position": 1,
-                    "name": "Inicio",
-                    "item": ORIGIN
-                  },
-                  {
-                    "@type": "ListItem",
-                    "position": 2,
-                    "name": "Carta",
-                    "item": `${ORIGIN}/menu`
-                  }
-                ]
-              }),
-            }}
-          />
-        </Head>
-      )}
+{/* JSON-LD: Migas + Menu (ayuda a Google a reconocer la carta) */}
+{ORIGIN && (
+  <Head>
+    {/* Migas */}
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Inicio", "item": ORIGIN },
+            { "@type": "ListItem", "position": 2, "name": "Carta",  "item": `${ORIGIN}/menu` }
+          ]
+        }),
+      }}
+    />
+    {/* Menu */}
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Menu",
+          "name": "Carta Masushi",
+          "url": `${ORIGIN}/menu`,
+          "hasMenuSection": categorias.map((name) => ({
+            "@type": "MenuSection", name
+          }))
+        }),
+      }}
+    />
+  </Head>
+)}
 
       <Navbar />
 

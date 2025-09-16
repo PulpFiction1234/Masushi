@@ -171,10 +171,10 @@ export default function MenuPage() {
         <main className="min-h-screen p-6 text-center bg-gray-950 md:ml-56">
           <div className="flex justify-center mt-2">
             <header className="w-11/12 max-w-[19rem] sm:max-w-xs md:max-w-2xl text-center px-2 mb-3">
-              <h1 className="text-base md:text-xl font-semibold text-[19px] text-neutral-100">
+              <h1 className="text-base md:text-xl font-semibold text-[22px] text-neutral-100">
                 Carta Masushi Ciudad del Este
               </h1>
-              <p className="text-xs md:text-sm text-neutral-100 mt-1">
+              <p className="text-[18px] md:text-sm text-neutral-100 mt-1">
                 Carta Masushi: calidad y frescura en cada roll. Delivery en Puente Alto y retiro en local.
               </p>
             </header>

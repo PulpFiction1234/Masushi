@@ -7,8 +7,8 @@ import Footer from "@/components/Footer";
 import ProductSection from "@/components/ProductSection";
 import ProductSectionPromo from "@/components/ProductSectionPromo";
 
-import Seo from "@/components/Seo"; // 
-import LocalBusinessJsonLd from "@/components/LocalBusinessJsonLd"; // 
+import Seo from "@/components/Seo";
+import LocalBusinessJsonLd from "@/components/LocalBusinessJsonLd";
 
 const HeroCarousel = dynamic(() => import("@/components/HeroCarousel"));
 const CarritoPanel = dynamic(() => import("@/components/CarritoPanel"), {
@@ -16,7 +16,7 @@ const CarritoPanel = dynamic(() => import("@/components/CarritoPanel"), {
   loading: () => <div className="p-4 text-white">Cargando carrito...</div>,
 });
 
-// Origen absoluto para OG/LD (configura SITE_URL en Vercel)
+// Origen absoluto para OG/LD (configura SITE_URL o NEXT_PUBLIC_SITE_URL en Vercel)
 const ORIGIN =
   process.env.NEXT_PUBLIC_SITE_URL ||
   process.env.SITE_URL ||
@@ -29,20 +29,20 @@ export default function Home() {
 
   return (
     <div className="bg-gray-950 text-white">
-      {/* 🔒 Metadatos SEO (título, description, OG/Twitter, canonical) */}
+      {/* Metadatos SEO */}
       <Seo
-  title="Sushi a domicilio en Puente Alto | Masushi"
-  description="Sushi fresco y de calidad. Delivery en Puente Alto (Ciudad del Este, El Alba, Dehesa de la Viña y Camilo Henríquez) y retiro en tienda. Promos, hot rolls y handrolls."
-  canonicalPath="/"
-  image={ogImage}
-/>
+        title="Sushi a domicilio en Puente Alto | Masushi"
+        description="Sushi fresco y de calidad. Delivery en Puente Alto (Ciudad del Este, El Alba, Dehesa de la Viña y Camilo Henríquez) y retiro en tienda. Promos, hot rolls y handrolls."
+        canonicalPath="/"
+        image={ogImage}
+      />
 
-{/* 🔒 Datos estructurados para SEO local (no visible para usuarios) */}
-{ORIGIN && (
-  <LocalBusinessJsonLd
-    name="Masushi"
+      {/* Datos estructurados (no visible) */}
+      {ORIGIN && (
+        <LocalBusinessJsonLd
+          name="Masushi"
           url={ORIGIN}
-          telephone="+56227557931" // mismo número en todo el sitio
+          telephone="+56227557931"
           image={`${ORIGIN}/images/logo-masushi.webp`}
           streetAddress="Av. Parque del Este 4400"
           addressLocality="Puente Alto"
@@ -72,34 +72,49 @@ export default function Home() {
             "Dehesa de la Viña",
             "Camilo Henríquez",
           ]}
-          menuUrl={`${ORIGIN}/menu`}      
-          priceRange="$$"              
+          menuUrl={`${ORIGIN}/menu`}
+          priceRange="$$"
           acceptsReservations={false}
-          />
-        )}
+        />
+      )}
 
       {/* Navbar */}
       <Navbar />
 
-      {/* Panel del carrito */}
-      <CarritoPanel open={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      {/* H1 SEO: claro para Google (puede ser visible si quieres) */}
+      <h1 className="sr-only">
+        Masushi — Sushi a domicilio en Puente Alto (Ciudad del Este, El Alba, Dehesa de la Viña y Camilo Henríquez)
+      </h1>
 
-      {/* Hero con carrusel */}
-      <HeroCarousel intervalMs={9000} />
+      <main role="main">
+        {/* Panel del carrito */}
+        <CarritoPanel open={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
-      {/* Top Rolls */}
-      <ProductSection
-        title="Top Rolls"
-        productIds={[1, 3, 50, 56]}
-        linkBase="/menu?producto="
-      />
+        {/* Hero con carrusel */}
+        <section aria-label="Promociones destacadas">
+          <HeroCarousel intervalMs={9000} />
+        </section>
 
-      {/* Promociones */}
-      <ProductSectionPromo
-        title="Promociones"
-        productIds={[200, 201, 202, 203, 204]}
-        linkBase="/menu?producto="
-      />
+        {/* Top Rolls */}
+        <section aria-labelledby="top-rolls" className="mt-4">
+          <h2 id="top-rolls" className="sr-only">Top Rolls</h2>
+          <ProductSection
+            title="Top Rolls"
+            productIds={[1, 3, 50, 56]}
+            linkBase="/menu?producto="
+          />
+        </section>
+
+        {/* Promociones */}
+        <section aria-labelledby="promociones" className="mt-4">
+          <h2 id="promociones" className="sr-only">Promociones</h2>
+          <ProductSectionPromo
+            title="Promociones"
+            productIds={[200, 201, 202, 203, 204]}
+            linkBase="/menu?producto="
+          />
+        </section>
+      </main>
 
       {/* Footer */}
       <Footer />

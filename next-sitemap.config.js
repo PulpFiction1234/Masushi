@@ -1,6 +1,12 @@
+// next-sitemap.config.js
 /** @type {import('next-sitemap').IConfig} */
+const SITE =
+  process.env.SITE_URL ||
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  'https://www.masushi.cl'; // fallback seguro en producción
+
 module.exports = {
-  siteUrl: process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+  siteUrl: SITE,
   generateRobotsTxt: true,
   generateIndexSitemap: false, // un solo sitemap
   exclude: ['/admin', '/login', '/checkout', '/api/*', '/api/admin/*', '/api/debug/*'],
@@ -10,12 +16,27 @@ module.exports = {
       { userAgent: '*', disallow: ['/admin', '/login', '/checkout', '/api/'] },
     ],
   },
+  // Opcional pero útil para SEO local (solo un idioma)
+  alternateRefs: [
+    { href: SITE, hreflang: 'es-cl' },
+    { href: SITE, hreflang: 'es' },
+  ],
   transform: async (config, path) => {
-    const isHome = path === '/';
+    let priority = 0.7;
+    let changefreq = 'weekly';
+
+    if (path === '/') {
+      priority = 1.0;
+      changefreq = 'daily';
+    }
+    if (path === '/menu' || path === '/local') {
+      priority = 0.8;
+    }
+
     return {
       loc: `${config.siteUrl}${path}`,
-      changefreq: isHome ? 'daily' : 'weekly',
-      priority: isHome ? 1.0 : 0.7,
+      changefreq,
+      priority,
       lastmod: new Date().toISOString(),
     };
   },

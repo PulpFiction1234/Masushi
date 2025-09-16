@@ -104,13 +104,13 @@ export default function MenuPage() {
       )}
 
       <Navbar />
-      <div className="bg-gray-950 flex justify-center ">
+      <div className="bg-gray-950 flex justify-center md:ml-56 ">
             <header className="w-11/12 max-w-[19rem] sm:max-w-xs md:max-w-2xl text-center px-2 mb-3">
               <h1 className="text-[22px] font-semibold text-neutral-100">
                 Carta Masushi Ciudad del Este
               </h1>
               <p className="text-[16px]  text-neutral-100 mt-1">
-                Carta Masushi: calidad y frescura en cada roll. Delivery en Puente Alto y retiro en local.
+                Calidad y frescura en cada roll. Delivery en Puente Alto y retiro en local.
               </p>
             </header>
           </div>

@@ -110,10 +110,10 @@ export default function Home() {
 
       {/* H1 visible (clave para que Google no coja un producto como título) */}
       <h1
-  className="mx-auto mt-4 max-w-3xl px-4 text-center text-[22px] leading-tight text-neutral-100 font-medium"
->
-  Masushi — Sushi a domicilio en Puente Alto (Ciudad del Este, El Alba y Dehesa de la Viña)
-</h1>
+         className="mx-auto mt-4 max-w-3xl px-4 text-center text-[22px] leading-tight text-neutral-100 font-medium"
+            >
+        Masushi — Sushi a domicilio en Puente Alto (Ciudad del Este, El Alba y Dehesa de la Viña)
+      </h1>
 
 
       {/* Top Rolls */}

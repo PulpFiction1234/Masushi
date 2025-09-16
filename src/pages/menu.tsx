@@ -46,8 +46,8 @@ export default function MenuPage() {
     <>
       {/* 🔒 Metadatos SEO */}
       <Seo
-        title="Carta de Sushi y Promos en Puente Alto | Masushi"
-        description="Explora nuestra carta: hot rolls, handrolls, rolls sin arroz, salmón, palta, queso y promociones. Pide online para delivery en Puente Alto o retiro en tienda."
+        title="Carta Masushi — Puente Alto (Ciudad del Este) | Menú y Promos"
+        description="Pide sushi fresco: rolls, hot rolls, handrolls y promos. Delivery en Puente Alto (Ciudad del Este, El Alba, Dehesa de la Viña) o retiro en tienda."
         canonicalPath="/menu"
         image={ogImage}
       />
@@ -163,6 +163,16 @@ export default function MenuPage() {
 
         {/* Contenido */}
         <main className="min-h-screen p-6 text-center bg-gray-950 md:ml-56">
+          <div className="flex justify-center mt-2">
+            <header className="w-11/12 max-w-[19rem] sm:max-w-xs md:max-w-2xl text-center px-2 mb-3">
+              <h1 className="text-base md:text-xl font-semibold text-neutral-300/80">
+                Carta Masushi Ciudad del Este
+              </h1>
+              <p className="text-xs md:text-sm text-neutral-400 mt-1">
+                Carta Masushi: calidad y frescura en cada roll. Delivery en Puente Alto y retiro en local.
+              </p>
+            </header>
+          </div>
           {/* 🔎 Mini buscador (más angosto en móvil) */}
           <div className="sticky top-21 z-30 mb-3 flex justify-center">
             <div className="w-11/12 max-w-[19rem] sm:max-w-xs md:max-w-2xl">

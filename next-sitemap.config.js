@@ -3,7 +3,7 @@
 const SITE =
   process.env.SITE_URL ||
   process.env.NEXT_PUBLIC_SITE_URL ||
-  'https://www.masushi.cl'; // fallback seguro en producción
+  'https://www.masushi.cl';
 
 module.exports = {
   siteUrl: SITE,
@@ -12,11 +12,14 @@ module.exports = {
   exclude: ['/admin', '/login', '/checkout', '/api/*', '/api/admin/*', '/api/debug/*'],
   robotsTxtOptions: {
     policies: [
-      { userAgent: '*', allow: '/' },
-      { userAgent: '*', disallow: ['/admin', '/login', '/checkout', '/api/'] },
+      {
+        userAgent: '*',
+        allow: '/',
+        disallow: ['/admin', '/login', '/checkout', '/api/'],
+      },
     ],
   },
-  // Opcional pero útil para SEO local (solo un idioma)
+  // Opcional: hreflang para Chile/español
   alternateRefs: [
     { href: SITE, hreflang: 'es-cl' },
     { href: SITE, hreflang: 'es' },
@@ -24,15 +27,8 @@ module.exports = {
   transform: async (config, path) => {
     let priority = 0.7;
     let changefreq = 'weekly';
-
-    if (path === '/') {
-      priority = 1.0;
-      changefreq = 'daily';
-    }
-    if (path === '/menu' || path === '/local') {
-      priority = 0.8;
-    }
-
+    if (path === '/') { priority = 1.0; changefreq = 'daily'; }
+    if (path === '/menu' || path === '/local') { priority = 0.8; }
     return {
       loc: `${config.siteUrl}${path}`,
       changefreq,

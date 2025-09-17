@@ -23,7 +23,7 @@ const ORIGIN =
   process.env.SITE_URL ||
   "";
 
-const ogImage = ORIGIN ? `${ORIGIN}/images/logo-masushi.webp` : "/images/logo-masushi.webp";
+const ogImage = ORIGIN ? `${ORIGIN}/images/hero-2.webp` : "/images/hero-2.webp";
 
 export default function Home() {
   const [isCartOpen, setIsCartOpen] = useState(false);

@@ -13,7 +13,7 @@ const ORIGIN =
   process.env.SITE_URL ||
   "";
 
-const ogImage = ORIGIN ? `${ORIGIN}/images/logo-masushi.webp` : "/images/logo-masushi.webp";
+const ogImage = ORIGIN ? `${ORIGIN}/images/hero-1.webp` : "/images/hero-1.webp";
 
 const categorias = [
   "Roll premium", "Roll sin arroz", "Rolls envueltos en queso crema",

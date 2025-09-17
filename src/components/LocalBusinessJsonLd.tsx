@@ -2,21 +2,38 @@
 import Head from "next/head";
 import React from "react";
 
+// Tipo para el esquema de horarios
+export type OpeningHoursSchema = {
+  "@type": "OpeningHoursSpecification";
+  dayOfWeek: string;
+  opens: string;
+  closes: string;
+};
+
+// Tipo para el esquema de calificaciones
+export type AggregateRatingSchema = {
+  "@type": "AggregateRating";
+  ratingValue: string;
+  reviewCount: string;
+};
+
 type LocalBusinessJsonLdProps = {
   name: string;
   url: string;
-  telephone: string;          // E.164 recomendado: +56227557931
-  image: string;              // URL absoluta o relativa
+  telephone: string;
+  image: string;
   streetAddress: string;
-  addressLocality: string;    // Puente Alto, etc.
-  addressRegion: string;      // Región Metropolitana, etc.
+  addressLocality: string;
+  addressRegion: string;
   postalCode?: string;
-  sameAs?: string[];          // redes, whatsapp…
-  alternateNames?: string[];  // “Mazushi”, etc.
-  serviceAreas?: string[];    // sectores de cobertura
-  menuUrl?: string;           // URL del menú
-  priceRange?: string;        // $, $$, $$$
+  sameAs?: string[];
+  alternateNames?: string[];
+  serviceAreas?: string[];
+  menuUrl?: string;
+  priceRange?: string;
   acceptsReservations?: boolean;
+  openingHoursSpecification?: OpeningHoursSchema[];
+  aggregateRating?: AggregateRatingSchema;
 };
 
 function dedupeNonEmpty(arr?: string[]): string[] | undefined {
@@ -45,6 +62,8 @@ export default function LocalBusinessJsonLd(props: LocalBusinessJsonLdProps) {
     menuUrl,
     priceRange,
     acceptsReservations,
+    openingHoursSpecification,
+    aggregateRating,
   } = props;
 
   const sameAsClean = dedupeNonEmpty(sameAs);
@@ -63,7 +82,7 @@ export default function LocalBusinessJsonLd(props: LocalBusinessJsonLdProps) {
 
   const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
-    "@type": "Restaurant", // más específico que LocalBusiness
+    "@type": "Restaurant",
     name,
     url,
     telephone,
@@ -83,13 +102,16 @@ export default function LocalBusinessJsonLd(props: LocalBusinessJsonLdProps) {
     ...(typeof acceptsReservations === "boolean"
       ? { acceptsReservations }
       : {}),
+    ...(openingHoursSpecification?.length
+      ? { openingHoursSpecification }
+      : {}),
+    ...(aggregateRating ? { aggregateRating } : {}),
   };
 
   return (
     <Head>
       <script
         type="application/ld+json"
-        // JSON.stringify omite las claves con undefined, así que no hace falta limpiar más.
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
     </Head>

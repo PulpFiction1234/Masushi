@@ -8,6 +8,8 @@ import ListaProductos from "@/components/ListaProductos";
 import Navbar from "@/components/Navbar";
 import Seo from "@/components/Seo";
 
+import { getMenuSchema } from "@/utils/menu-schema";
+
 const ORIGIN =
   process.env.NEXT_PUBLIC_SITE_URL ||
   process.env.SITE_URL ||
@@ -28,6 +30,9 @@ export default function MenuPage() {
   const [busqueda, setBusqueda] = useState("");
   const busquedaDeferida = useDeferredValue(busqueda);
 
+
+  const menuSchema = getMenuSchema(ORIGIN);
+  
   const router = useRouter();
   const hasProductParam =
     typeof router.query?.producto === "string" &&
@@ -55,7 +60,6 @@ export default function MenuPage() {
         image={ogImage}
       />
 
-      {/* Si hay ?producto= pedimos no indexar esa URL y canonical a /menu */}
       {hasProductParam && (
         <Head>
           <meta name="robots" content="noindex,follow" />
@@ -80,19 +84,11 @@ export default function MenuPage() {
               }),
             }}
           />
-          {/* Menu: usa el mismo texto del título/H1 */}
+          {/* JSON-LD de Menú (ahora completo y detallado) */}
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{
-              __html: JSON.stringify({
-                "@context": "https://schema.org",
-                "@type": "Menu",
-                "name": "CARTA | Masushi Ciudad del Este",
-                "url": `${ORIGIN}/menu`,
-                "hasMenuSection": categorias.map((name) => ({
-                  "@type": "MenuSection", name
-                }))
-              }),
+              __html: JSON.stringify(menuSchema),
             }}
           />
         </Head>

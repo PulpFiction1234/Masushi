@@ -8,7 +8,6 @@ import ListaProductos from "@/components/ListaProductos";
 import Navbar from "@/components/Navbar";
 import Seo from "@/components/Seo";
 
-// Origen absoluto para OG/LD (configura SITE_URL o NEXT_PUBLIC_SITE_URL en Vercel)
 const ORIGIN =
   process.env.NEXT_PUBLIC_SITE_URL ||
   process.env.SITE_URL ||
@@ -26,18 +25,14 @@ const categorias = [
 export default function MenuPage() {
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string | null>(null);
   const [menuAbierto, setMenuAbierto] = useState(false);
-
-  // 🔎 estado del buscador
   const [busqueda, setBusqueda] = useState("");
   const busquedaDeferida = useDeferredValue(busqueda);
 
-  // Router para detectar ?producto=
   const router = useRouter();
   const hasProductParam =
     typeof router.query?.producto === "string" &&
     router.query.producto.trim() !== "";
 
-  // Bloquear scroll y cerrar con ESC cuando el menú móvil está abierto
   useEffect(() => {
     if (!menuAbierto) return;
     const prev = document.body.style.overflow;
@@ -52,15 +47,15 @@ export default function MenuPage() {
 
   return (
     <>
-      {/* 🔒 Metadatos SEO base de la carta */}
+      {/* SEO base de la carta */}
       <Seo
-        title="Carta Masushi | Sushi en Puente Alto"
-        description="Carta Masushi: roll premium, hot rolls, handrolls, sin arroz, salmón, palta, queso y promos. Delivery en Puente Alto o retiro en tienda. También nos buscan como “Mazushi”."
+        title="CARTA | Masushi Ciudad del Este"
+        description="Carta de Masushi: rolls, hot rolls, handrolls y promociones. Delivery en Puente Alto (Ciudad del Este) o retiro en tienda."
         canonicalPath="/menu"
         image={ogImage}
       />
 
-      {/* 👇 Si está en /menu?producto=..., pedimos no indexar esa URL y canonical a /menu */}
+      {/* Si hay ?producto= pedimos no indexar esa URL y canonical a /menu */}
       {hasProductParam && (
         <Head>
           <meta name="robots" content="noindex,follow" />
@@ -68,7 +63,7 @@ export default function MenuPage() {
         </Head>
       )}
 
-      {/* JSON-LD: Migas + Menu (ayuda a Google a reconocer la carta) */}
+      {/* JSON-LD: Migas + Menu */}
       {ORIGIN && (
         <Head>
           {/* Migas */}
@@ -85,14 +80,14 @@ export default function MenuPage() {
               }),
             }}
           />
-          {/* Menu */}
+          {/* Menu: usa el mismo texto del título/H1 */}
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{
               __html: JSON.stringify({
                 "@context": "https://schema.org",
                 "@type": "Menu",
-                "name": "Carta Masushi",
+                "name": "CARTA | Masushi Ciudad del Este",
                 "url": `${ORIGIN}/menu`,
                 "hasMenuSection": categorias.map((name) => ({
                   "@type": "MenuSection", name
@@ -104,17 +99,20 @@ export default function MenuPage() {
       )}
 
       <Navbar />
-      <div className="bg-gray-950 flex justify-center md:ml-56 ">
-            <header className="w-11/12 max-w-[19rem] sm:max-w-xs md:max-w-2xl text-center px-2 mb-3">
-              <h1 className="text-[22px] font-semibold text-neutral-100">
-                Carta Masushi Ciudad del Este
-              </h1>
-              <p className="text-[16px]  text-neutral-100 mt-1">
-                Calidad y frescura en cada roll. Delivery en Puente Alto y retiro en local.
-              </p>
-            </header>
-          </div>
-      {/* BOTÓN FLOTANTE (solo móvil). Se oculta cuando el menú está abierto */}
+
+      {/* H1 + descripción (mismo texto que el <title>) */}
+      <div className="bg-gray-950 flex justify-center md:ml-56">
+        <header className="w-11/12 max-w-[19rem] sm:max-w-xs md:max-w-2xl text-center px-2 mb-3">
+          <h1 className="text-[22px] font-semibold text-neutral-100">
+            CARTA | Masushi Ciudad del Este
+          </h1>
+          <p className="text-[16px] text-neutral-100 mt-1">
+            Calidad y frescura en cada roll. Delivery en Puente Alto y retiro en local.
+          </p>
+        </header>
+      </div>
+
+      {/* Botón flotante categorías (móvil) */}
       {!menuAbierto && (
         <button
           type="button"
@@ -122,11 +120,7 @@ export default function MenuPage() {
           aria-expanded={menuAbierto}
           aria-controls="mobile-categorias"
           onClick={() => setMenuAbierto(true)}
-          className="
-            fixed left-2 top-21 z-50 md:hidden
-            bg-gray-800 text-white px-3 py-2 rounded-r-2xl rounded-l
-            shadow-lg active:scale-95 transition
-          "
+          className="fixed left-2 top-21 z-50 md:hidden bg-gray-800 text-white px-3 py-2 rounded-r-2xl rounded-l shadow-lg active:scale-95 transition"
         >
           ☰
         </button>
@@ -136,14 +130,9 @@ export default function MenuPage() {
         {/* Sidebar */}
         <aside
           id="mobile-categorias"
-          className={`
-            fixed left-0 top-19 h-[calc(100dvh-56px)] w-64
-            bg-gray-900 text-white rounded-r-2xl shadow-lg
-            transform transition-transform duration-300 z-40
-            flex flex-col
-            ${menuAbierto ? "translate-x-0" : "-translate-x-full"}
-            md:translate-x-0 md:top-19 md:left-0 md:fixed md:w-56 md:h-[calc(100vh-56px)]
-          `}
+          className={`fixed left-0 top-19 h-[calc(100dvh-56px)] w-64 bg-gray-900 text-white rounded-r-2xl shadow-lg transform transition-transform duration-300 z-40 flex flex-col ${
+            menuAbierto ? "translate-x-0" : "-translate-x-full"
+          } md:translate-x-0 md:top-19 md:left-0 md:fixed md:w-56 md:h-[calc(100vh-56px)]`}
           role="dialog"
           aria-modal="true"
         >
@@ -194,10 +183,7 @@ export default function MenuPage() {
 
         {/* Contenido */}
         <main className="min-h-screen p-6 text-center bg-gray-950 md:ml-56">
-          {/* H1 + descripción centrados como el buscador */}
-          
-
-          {/* 🔎 Mini buscador (más angosto en móvil) */}
+          {/* Buscador */}
           <div className="sticky top-21 z-30 mb-3 flex justify-center">
             <div className="w-11/12 max-w-[19rem] sm:max-w-xs md:max-w-2xl">
               <label htmlFor="buscador" className="sr-only">
@@ -211,15 +197,7 @@ export default function MenuPage() {
                   onChange={(e) => setBusqueda(e.target.value)}
                   placeholder="Buscar por nombre, ingrediente o código…"
                   autoComplete="off"
-                  className="
-                    w-full rounded-lg md:rounded-xl bg-gray-800 text-white placeholder-gray-400
-                    text-sm md:text-base
-                    h-9 md:h-11
-                    px-3 md:px-4
-                    pr-8 md:pr-10
-                    shadow-inner outline-none ring-1 ring-gray-700
-                    focus:ring-2 focus:ring-emerald-500 transition
-                  "
+                  className="w-full rounded-lg md:rounded-xl bg-gray-800 text-white placeholder-gray-400 text-sm md:text-base h-9 md:h-11 px-3 md:px-4 pr-8 md:pr-10 shadow-inner outline-none ring-1 ring-gray-700 focus:ring-2 focus:ring-emerald-500 transition"
                   aria-describedby="hint-busqueda"
                 />
                 {busqueda && (
@@ -236,7 +214,7 @@ export default function MenuPage() {
             </div>
           </div>
 
-          {/* Remount por categoría (la búsqueda NO remonta) */}
+          {/* Lista */}
           <ListaProductos
             key={`cat-${categoriaSeleccionada ?? "todas"}`}
             categoriaSeleccionada={categoriaSeleccionada}
@@ -244,15 +222,6 @@ export default function MenuPage() {
           />
         </main>
       </div>
-
-      {/* Overlay solo en móvil */}
-      {menuAbierto && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
-          onClick={() => setMenuAbierto(false)}
-          aria-hidden="true"
-        />
-      )}
     </>
   );
 }

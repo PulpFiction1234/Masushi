@@ -60,7 +60,9 @@ export default function LocalPage() {
           postalCode="8150000"
           sameAs={[
             "https://www.instagram.com/masushiciudaddeleste",
+            "https://www.instagram.com/mazushiciudaddeleste",
             "https://www.facebook.com/masushiltda",
+            "https://www.facebook.com/mazushiltda",
             "https://wa.me/56940873865",
           ]}
           alternateNames={["Mazushi", "Ma Sushi", "Masushi Puente Alto"]}

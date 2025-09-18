@@ -82,7 +82,7 @@ export default function Home() {
           telephone="+56227557931"
           image={`${ORIGIN}/images/logo-masushi.webp`}
           streetAddress="Av. Parque del Este 4400"
-          addressLocality="Puente Alto"
+          addressLocality="ciudad del este, Puente Alto"
           addressRegion="Región Metropolitana"
           postalCode="8150000"
           sameAs={[

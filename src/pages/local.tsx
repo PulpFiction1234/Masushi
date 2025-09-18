@@ -41,7 +41,7 @@ export default function LocalPage() {
     <>
       {/* 🔒 Metadatos SEO */}
       <Seo
-        title="Horarios, dirección y zona de reparto | Masushi Puente Alto"
+        title="Horarios, dirección y zona de reparto | Masushi Ciudad del Este"
         description="Revisa horarios de atención, dirección y cómo llegar. Delivery en Puente Alto con cobertura en Ciudad del Este, El Alba y Dehesa de la Viña."
         canonicalPath="/local"
         image={ogImage}
@@ -55,7 +55,7 @@ export default function LocalPage() {
           telephone="+56227557931" // mismo número en todo el sitio
           image={`${ORIGIN}/images/logo-masushi.webp`}
           streetAddress="Av. Parque del Este 4400"
-          addressLocality="Puente Alto"
+          addressLocality="Ciudad del Este, Puente Alto"
           addressRegion="Región Metropolitana"
           postalCode="8150000"
           sameAs={[

@@ -48,7 +48,7 @@ export default function Home() {
   return (
     <div className="bg-gray-950 text-white">
       <Seo
-        title="Sushi Delivery en Puente Alto, Ciudad del Este | Masushi"
+        title="Sushi Delivery | Masushi Ciudad del Este "
         description="Sushi fresco y de calidad. Delivery en Puente Alto (Ciudad del Este, El Alba, Dehesa de la Viña y Camilo Henríquez) y retiro en tienda. Promos, hot rolls y handrolls."
         canonicalPath="/"
         image={ogImage}

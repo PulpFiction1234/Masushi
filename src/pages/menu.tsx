@@ -54,7 +54,7 @@ export default function MenuPage() {
     <>
       {/* SEO base de la carta */}
       <Seo
-          title="Menú de Sushi | Masushi Ciudad del Este"
+          title="Carta | Masushi Ciudad del Este"
           description="Explora la carta de sushi de Masushi. Rolls, hot rolls, handrolls, y promociones. Pedidos a domicilio en Puente Alto y retiro en tienda."
         canonicalPath="/menu"
         image={ogImage}

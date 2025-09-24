@@ -28,7 +28,7 @@ const Navbar: React.FC = () => {
   const showCartIcon = router.pathname !== "/checkout";
 
   return (
-    <nav className="bg-gray-950 shadow-md px-6 py-3 flex justify-between items-center sticky top-0 z-50 text-white">
+    <nav className="bg-gray-950 shadow-md px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 flex justify-between items-center sticky top-0 z-50 text-white">
       {/* Logo */}
       <Link href="/" aria-label="Ir al inicio" className="flex items-center gap-2">
               <Image
@@ -37,18 +37,18 @@ const Navbar: React.FC = () => {
           width={240}
           height={30}
           priority
-          className="h-15 w-30"
+          className="h-8 w-20 sm:h-10 sm:w-24 md:h-15 md:w-30"
           placeholder="blur"
           quality={60}
         />
       </Link>
 
       {/* Links + Carrito */}
-      <div className="flex items-center gap-6">
-        <Link href="/" className="hover:text-blue-400">Inicio</Link>
-        <Link href="/menu" className="hover:text-blue-400">Carta</Link>
-        <Link href="/menu?categoria=Promociones" className="hover:text-blue-400">Promociones</Link>
-        <Link href="/local" className="hover:text-blue-400">Local</Link>
+      <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
+        <Link href="/" className="hover:text-blue-400 text-sm sm:text-base">Inicio</Link>
+        <Link href="/menu" className="hover:text-blue-400 text-sm sm:text-base">Carta</Link>
+        <Link href="/menu?categoria=Promociones" className="hover:text-blue-400 text-sm sm:text-base">Promociones</Link>
+        <Link href="/local" className="hover:text-blue-400 text-sm sm:text-base">Local</Link>
 
         {showCartIcon && (
           <button

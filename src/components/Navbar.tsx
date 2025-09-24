@@ -47,6 +47,7 @@ const Navbar: React.FC = () => {
       <div className="flex items-center gap-6">
         <Link href="/" className="hover:text-blue-400">Inicio</Link>
         <Link href="/menu" className="hover:text-blue-400">Carta</Link>
+        <Link href="/menu?categoria=Promociones" className="hover:text-blue-400">Promociones</Link>
         <Link href="/local" className="hover:text-blue-400">Local</Link>
 
         {showCartIcon && (

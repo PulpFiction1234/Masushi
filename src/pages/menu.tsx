@@ -30,10 +30,21 @@ export default function MenuPage() {
   const [busqueda, setBusqueda] = useState("");
   const busquedaDeferida = useDeferredValue(busqueda);
 
+  const router = useRouter();
+  
+  // Efecto para leer el parámetro categoria de la URL al cargar la página
+  useEffect(() => {
+    const { categoria } = router.query;
+    if (typeof categoria === 'string' && categorias.includes(categoria)) {
+      setCategoriaSeleccionada(categoria);
+    } else {
+      // Si no hay parámetro categoria o no es válido, resetear a null (mostrar todas)
+      setCategoriaSeleccionada(null);
+    }
+  }, [router.query]);
 
   const menuSchema = getMenuSchema(ORIGIN);
   
-  const router = useRouter();
   const hasProductParam =
     typeof router.query?.producto === "string" &&
     router.query.producto.trim() !== "";

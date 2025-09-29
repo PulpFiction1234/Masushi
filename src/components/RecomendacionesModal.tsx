@@ -35,11 +35,10 @@ const RecomendacionesModal: React.FC<Props> = ({ open, onClose }) => {
       {/* Overlay semi-transparente que no oculta completamente el carrito */}
       <div className="fixed inset-0 bg-black bg-opacity-30 z-[60]" onClick={onClose} />
       
-      {/* Modal responsive - centrado en desktop, bottom sheet en mobile */}
-      <div className="fixed inset-x-0 bottom-0 sm:left-1/2 sm:top-1/2 sm:transform sm:-translate-x-1/2 sm:-translate-y-1/2 z-[61] p-4 sm:inset-auto">
-        <div className="bg-gray-900 rounded-t-xl sm:rounded-lg shadow-xl w-full sm:max-w-xl max-h-[70vh] sm:max-h-[80vh] overflow-hidden border-2 border-gray-600 animate-slide-up sm:animate-none">
-          {/* Header with drag indicator for mobile */}
-          <div className="sm:hidden w-12 h-1 bg-gray-600 rounded-full mx-auto mt-3 mb-4"></div>
+      {/* Modal responsive - centrado en ambos dispositivos */}
+      <div className="fixed left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[61] p-4 w-full max-w-md sm:max-w-xl">
+        <div className="bg-gray-900 rounded-lg shadow-xl w-full max-h-[75vh] overflow-hidden border-2 border-gray-600">
+          {/* Header - removed drag indicator since it's centered now */}
           
           <div className="flex justify-between items-center px-4 sm:px-6 py-2 sm:py-6 border-b border-gray-700">
             <div>
@@ -56,7 +55,7 @@ const RecomendacionesModal: React.FC<Props> = ({ open, onClose }) => {
           </div>
 
           {/* Content */}
-          <div className="px-4 sm:px-4 py-2 overflow-y-auto max-h-[calc(70vh-120px)] sm:max-h-[calc(80vh-120px)]">
+          <div className="px-4 py-2 overflow-y-auto max-h-[calc(75vh-140px)]">
             <div className="grid grid-cols-1 gap-3 sm:gap-3">
               {salsasExtras.map((salsa) => (
                 <div key={salsa.id} className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors active:bg-gray-750">

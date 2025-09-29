@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation"; // App Router
 import { formatCLP } from "@/utils/format";
+import RecomendacionesModal from "./RecomendacionesModal";
 
 interface Props {
   open: boolean;
@@ -14,6 +15,8 @@ interface Props {
 const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
   const { cart, total, removeFromCart, updateQuantity, clearCart, ready } = useCart();
   const router = useRouter();
+  const [showRecomendaciones, setShowRecomendaciones] = useState(false);
+  const [modalYaMostrado, setModalYaMostrado] = useState(false);
 
   // Mientras no esté listo el provider, evita parpadeo
   const safeCart = ready ? cart : [];
@@ -21,14 +24,51 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
 
   const safeTotal = useMemo(() => (ready ? total : 0), [ready, total]);
 
+  // Detectar si hay salsas en el carrito
+  const tieneSalsas = useMemo(() => {
+    // Buscar productos con IDs de salsas (80, 81, 82 según tu código)
+    return safeCart.some(item => [80, 81, 82].includes(item.id));
+  }, [safeCart]);
+
+  // Mostrar modal de recomendaciones cuando se abre el carrito si hay productos pero no salsas
+  useEffect(() => {
+    if (open && ready && hasItems && !tieneSalsas && !showRecomendaciones && !modalYaMostrado) {
+      // Delay pequeño para que se vea la apertura del carrito primero
+      const timer = setTimeout(() => {
+        setShowRecomendaciones(true);
+        setModalYaMostrado(true); // Marcar que ya se mostró
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+    // No cerrar automáticamente el modal cuando se agreguen salsas
+  }, [open, ready, hasItems, tieneSalsas, showRecomendaciones, modalYaMostrado]);
+
   const handlePedido = () => {
+    setShowRecomendaciones(false);
     onClose();
     router.push("/checkout");
   };
 
+  const handleClose = () => {
+    setShowRecomendaciones(false);
+    onClose();
+  };
+
+  // Resetear el estado cuando se cierre el carrito
+  useEffect(() => {
+    if (!open) {
+      setShowRecomendaciones(false);
+      // Resetear el flag cuando el carrito se cierre completamente
+      const timer = setTimeout(() => {
+        setModalYaMostrado(false);
+      }, 500); // Delay para evitar que se muestre inmediatamente al reabrir
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
+
   return (
     <>
-      {open && <div className="fixed inset-0 bg-transparent z-40" onClick={onClose} />}
+      {open && <div className="fixed inset-0 bg-transparent z-40" onClick={handleClose} />}
 
       <div
         className={`fixed top-0 right-0 w-80 h-full bg-gray-900 shadow-lg transform transition-transform duration-300 z-50 text-white flex flex-col ${
@@ -38,7 +78,7 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
         {/* HEADER */}
         <div className="flex justify-between items-center p-4 border-b border-gray-700 flex-shrink-0">
           <h2 className="text-xl font-bold">Carrito</h2>
-          <button onClick={onClose} className="text-gray-300 hover:text-gray-100" aria-label="Cerrar">
+          <button onClick={handleClose} className="text-gray-300 hover:text-gray-100" aria-label="Cerrar">
             ✖
           </button>
         </div>
@@ -132,6 +172,12 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
           </div>
         )}
       </div>
+      
+      {/* Modal de recomendaciones */}
+      <RecomendacionesModal 
+        open={showRecomendaciones} 
+        onClose={() => setShowRecomendaciones(false)} 
+      />
     </>
   );
 };

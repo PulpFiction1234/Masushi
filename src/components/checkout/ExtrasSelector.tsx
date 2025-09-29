@@ -28,6 +28,8 @@ interface Props {
   maxGratisJWas?: number;
   /** tope de palitos gratis calculado desde el carrito */
   maxPalitosGratis?: number;
+  /** callback para validación de salsas */
+  onValidationChange?: (isValid: boolean) => void;
 }
 
 export default function ExtrasSelector({
@@ -36,7 +38,27 @@ export default function ExtrasSelector({
   maxGratisBasicas,
   maxGratisJWas = 2,
   maxPalitosGratis = 0,
+  onValidationChange,
 }: Props) {
+  // ===== Estados de "Sin salsas" =====
+  const [sinSalsasBasicas, setSinSalsasBasicas] = React.useState(false);
+  const [sinJengibreWasabi, setSinJengibreWasabi] = React.useState(false);
+
+  // ===== Validación de salsas obligatorias =====
+  React.useEffect(() => {
+    const tieneSalsasBasicas = Number(state.soya || 0) > 0 || Number(state.teriyaki || 0) > 0;
+    const tieneJengibreWasabi = Number(state.jengibre || 0) > 0 || Number(state.wasabi || 0) > 0;
+    
+    // Es válido si:
+    // 1. Marcó "sin salsas básicas" O tiene al menos una salsa básica
+    // 2. Marcó "sin jengibre/wasabi" O tiene al menos uno de estos
+    const esSalsasBasicasValido = sinSalsasBasicas || tieneSalsasBasicas;
+    const esJengibreWasabiValido = sinJengibreWasabi || tieneJengibreWasabi;
+    
+    const esValido = esSalsasBasicasValido && esJengibreWasabiValido;
+    onValidationChange?.(esValido);
+  }, [state.soya, state.teriyaki, state.jengibre, state.wasabi, sinSalsasBasicas, sinJengibreWasabi, onValidationChange]);
+
   // ===== Pool GRATIS: Soya/Teriyaki =====
   const soyaGratis = Number(state.soya || 0);
   const teriGratis = Number(state.teriyaki || 0);
@@ -86,11 +108,25 @@ export default function ExtrasSelector({
     dispatch({ type: "SET_FIELD", field: "palitos", value: raw === "" ? "" : next });
   };
 
+  // Estado de validación para mostrar
+  const tieneSalsasBasicas = Number(state.soya || 0) > 0 || Number(state.teriyaki || 0) > 0;
+  const tieneJengibreWasabi = Number(state.jengibre || 0) > 0 || Number(state.wasabi || 0) > 0;
+  const esSalsasBasicasValido = sinSalsasBasicas || tieneSalsasBasicas;
+  const esJengibreWasabiValido = sinJengibreWasabi || tieneJengibreWasabi;
+  const esValido = esSalsasBasicasValido && esJengibreWasabiValido;
+
   return (
     <div>
       {/* === Salsas gratis (todo en un MISMO recuadro) === */}
-      <div className="rounded-xl border border-white/10 p-3 bg-neutral-900/60">
-        <h4 className="font-semibold mb-3 text-neutral-50">Salsas gratis del pedido</h4>
+      <div className={`rounded-xl border p-3 bg-neutral-900/60 ${!esValido ? 'border-orange-400/50 bg-orange-900/10' : 'border-white/10'}`}>
+        <h4 className="font-semibold mb-3 text-neutral-50">
+          Salsas gratis del pedido
+          {!esValido && (
+            <span className="ml-2 text-sm text-orange-400 font-normal">
+              (Selecciona salsas o marca "Sin salsas")
+            </span>
+          )}
+        </h4>
 
         {/* 2 columnas: izquierda Soya/Teri, derecha Jengibre/Wasabi */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -98,89 +134,132 @@ export default function ExtrasSelector({
           <div>
             <p className="text-xs text-neutral-400 mb-2">
               Gratis Soya/Teriyaki:{" "}
-              <span className="font-semibold text-neutral-200">{maxGratisBasicas}</span> • Usadas:{" "}
-              <span className="font-semibold text-neutral-200">{usados}</span> • Quedan:{" "}
-              <span className="font-semibold text-neutral-200">{restantes}</span>.
+              <span className="font-semibold text-neutral-200">{maxGratisBasicas}</span>
             </p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="soya" className="block text-sm font-medium text-neutral-200 mb-1">
-                  Soya (gratis)
-                </label>
+            
+            {/* Checkbox Sin salsas básicas */}
+            <div className="mb-3">
+              <label className="flex items-center text-sm text-neutral-200">
                 <input
-                  id="soya"
-                  type="number"
-                  min={0}
-                  max={Math.max(0, maxGratisBasicas - teriGratis)}
-                  value={state.soya}
-                  onChange={(e) => onChangeSoyaGratis(e.target.value)}
-                  className={smallInput}
+                  type="checkbox"
+                  checked={sinSalsasBasicas}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setSinSalsasBasicas(checked);
+                    if (checked) {
+                      dispatch({ type: "SET_FIELD", field: "soya", value: 0 });
+                      dispatch({ type: "SET_FIELD", field: "teriyaki", value: 0 });
+                    }
+                  }}
+                  className="mr-2 rounded border-neutral-600 bg-neutral-700 text-emerald-500 focus:ring-emerald-500"
                 />
-              </div>
-              <div>
-                <label htmlFor="teriyaki" className="block text-sm font-medium text-neutral-200 mb-1">
-                  Teriyaki (gratis)
-                </label>
-                <input
-                  id="teriyaki"
-                  type="number"
-                  min={0}
-                  max={Math.max(0, maxGratisBasicas - soyaGratis)}
-                  value={state.teriyaki}
-                  onChange={(e) => onChangeTeriGratis(e.target.value)}
-                  className={smallInput}
-                />
-              </div>
+                Sin salsas Soya/Teriyaki
+              </label>
             </div>
+
+            {!sinSalsasBasicas && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col items-center">
+                  <label htmlFor="soya" className="block text-sm font-medium text-neutral-200 mb-1">
+                    Soya
+                  </label>
+                  <input
+                    id="soya"
+                    type="number"
+                    min={0}
+                    max={Math.max(0, maxGratisBasicas - teriGratis)}
+                    value={state.soya}
+                    onChange={(e) => onChangeSoyaGratis(e.target.value)}
+                    className={smallInput}
+                  />
+                </div>
+                <div className="flex flex-col items-center">
+                  <label htmlFor="teriyaki" className="block text-sm font-medium text-neutral-200 mb-1">
+                    Teriyaki
+                  </label>
+                  <input
+                    id="teriyaki"
+                    type="number"
+                    min={0}
+                    max={Math.max(0, maxGratisBasicas - soyaGratis)}
+                    value={state.teriyaki}
+                    onChange={(e) => onChangeTeriGratis(e.target.value)}
+                    className={smallInput}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Derecha: Jengibre/Wasabi */}
           <div>
             <p className="text-xs text-neutral-400 mb-2">
               Gratis Jengibre/Wasabi:{" "}
-              <span className="font-semibold text-neutral-200">{maxGratisJWas}</span> • Usadas:{" "}
-              <span className="font-semibold text-neutral-200">{usadosJW}</span> • Quedan:{" "}
-              <span className="font-semibold text-neutral-200">{restantesJW}</span>.
+              <span className="font-semibold text-neutral-200">{maxGratisJWas}</span>
+
             </p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="jengibreFree" className="block text-sm font-medium text-neutral-200 mb-1">
-                  Jengibre (gratis)
-                </label>
+            
+            {/* Checkbox Sin jengibre/wasabi */}
+            <div className="mb-3">
+              <label className="flex items-center text-sm text-neutral-200">
                 <input
-                  id="jengibreFree"
-                  type="number"
-                  min={0}
-                  max={Math.max(0, maxGratisJWas - wasabiFree)}
-                  value={state.jengibre}
-                  onChange={(e) => onChangeJengibreGratis(e.target.value)}
-                  className={smallInput}
+                  type="checkbox"
+                  checked={sinJengibreWasabi}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setSinJengibreWasabi(checked);
+                    if (checked) {
+                      dispatch({ type: "SET_FIELD", field: "jengibre", value: 0 });
+                      dispatch({ type: "SET_FIELD", field: "wasabi", value: 0 });
+                    }
+                  }}
+                  className="mr-2 rounded border-neutral-600 bg-neutral-700 text-emerald-500 focus:ring-emerald-500"
                 />
-              </div>
-              <div>
-                <label htmlFor="wasabiFree" className="block text-sm font-medium text-neutral-200 mb-1">
-                  Wasabi (gratis)
-                </label>
-                <input
-                  id="wasabiFree"
-                  type="number"
-                  min={0}
-                  max={Math.max(0, maxGratisJWas - jengibreFree)}
-                  value={state.wasabi}
-                  onChange={(e) => onChangeWasabiGratis(e.target.value)}
-                  className={smallInput}
-                />
-              </div>
+                Sin Jengibre/Wasabi
+              </label>
             </div>
+
+            {!sinJengibreWasabi && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col items-center">
+                  <label htmlFor="jengibreFree" className="block text-sm font-medium text-neutral-200 mb-1">
+                    Jengibre
+                  </label>
+                  <input
+                    id="jengibreFree"
+                    type="number"
+                    min={0}
+                    max={Math.max(0, maxGratisJWas - wasabiFree)}
+                    value={state.jengibre}
+                    onChange={(e) => onChangeJengibreGratis(e.target.value)}
+                    className={smallInput}
+                  />
+                </div>
+                <div className="flex flex-col items-center">
+                  <label htmlFor="wasabiFree" className="block text-sm font-medium text-neutral-200 mb-1">
+                    Wasabi
+                  </label>
+                  <input
+                    id="wasabiFree"
+                    type="number"
+                    min={0}
+                    max={Math.max(0, maxGratisJWas - jengibreFree)}
+                    value={state.wasabi}
+                    onChange={(e) => onChangeWasabiGratis(e.target.value)}
+                    className={smallInput}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Palitos (gratis) debajo de ambas columnas, MISMO recuadro */}
         <div className="mt-4 pt-3 border-t border-white/10">
           <div className="flex items-end gap-3">
-            <div>
+            <div className="flex flex-col items-center">
               <label htmlFor="palitos" className="block text-sm font-medium text-neutral-200 mb-1">
-                Palitos (gratis)
+                Palitos
               </label>
               <input
                 id="palitos"
@@ -196,7 +275,7 @@ export default function ExtrasSelector({
               Máx. palitos gratis: <span className="text-neutral-200 font-semibold">{maxPalitosGratis}</span>
             </p>
             
-          <div>
+          <div className="flex flex-col items-center">
             <label htmlFor="ayudaPalitos" className="block text-sm font-medium text-neutral-200 mb-1">
               Ayuda palitos ({fmt(PRECIO_AYUDA_PALITOS)} c/u)
             </label>
@@ -219,153 +298,7 @@ export default function ExtrasSelector({
         </div>
       </div>
 
-      {/* === Extras cobrados === */}
-      <div className="mt-4 rounded-xl border border-white/10 p-3 bg-neutral-900/60">
-        <h4 className="font-semibold mb-3 text-neutral-50">Extras (se cobran)</h4>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label htmlFor="soyaExtra" className="block text-sm font-medium text-neutral-200 mb-1">
-              Soya extra ({fmt(PRECIO_SOYA_EXTRA)} c/u)
-            </label>
-            <input
-              id="soyaExtra"
-              type="number"
-              min={0}
-              value={state.soyaExtra}
-              onChange={(e) =>
-                dispatch({
-                  type: "SET_FIELD",
-                  field: "soyaExtra",
-                  value: e.target.value === "" ? "" : Math.max(0, Number(e.target.value)),
-                })
-              }
-              className={smallInput}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="teriyakiExtra" className="block text-sm font-medium text-neutral-200 mb-1">
-              Teriyaki extra ({fmt(PRECIO_TERIYAKI_EXTRA)} c/u)
-            </label>
-            <input
-              id="teriyakiExtra"
-              type="number"
-              min={0}
-              value={state.teriyakiExtra}
-              onChange={(e) =>
-                dispatch({
-                  type: "SET_FIELD",
-                  field: "teriyakiExtra",
-                  value: e.target.value === "" ? "" : Math.max(0, Number(e.target.value)),
-                })
-              }
-              className={smallInput}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="acevichada" className="block text-sm font-medium text-neutral-200 mb-1">
-              Acevichada ({fmt(PRECIO_ACEVICHADA)} c/u)
-            </label>
-            <input
-              id="acevichada"
-              type="number"
-              min={0}
-              value={state.acevichada}
-              onChange={(e) =>
-                dispatch({
-                  type: "SET_FIELD",
-                  field: "acevichada",
-                  value: e.target.value === "" ? "" : Math.max(0, Number(e.target.value)),
-                })
-              }
-              className={smallInput}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="maracuya" className="block text-sm font-medium text-neutral-200 mb-1">
-              Maracuyá ({fmt(PRECIO_MARACUYA)} c/u)
-            </label>
-            <input
-              id="maracuya"
-              type="number"
-              min={0}
-              value={state.maracuya}
-              onChange={(e) =>
-                dispatch({
-                  type: "SET_FIELD",
-                  field: "maracuya",
-                  value: e.target.value === "" ? "" : Math.max(0, Number(e.target.value)),
-                })
-              }
-              className={smallInput}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="extra-jengibre" className="block text-sm font-medium text-neutral-200 mb-1">
-              Extra jengibre ({fmt(PRECIO_JENGIBRE_EXTRA)} c/u)
-            </label>
-            <input
-              id="extra-jengibre"
-              type="number"
-              min={0}
-              value={state.extraJengibre}
-              onChange={(e) =>
-                dispatch({
-                  type: "SET_FIELD",
-                  field: "extraJengibre",
-                  value: e.target.value === "" ? "" : Math.max(0, Number(e.target.value)),
-                })
-              }
-              className={smallInput}
-            />
-          </div>
-
-          <div>
-            <label htmlFor="extra-wasabi" className="block text-sm font-medium text-neutral-200 mb-1">
-              Extra wasabi ({fmt(PRECIO_WASABI_EXTRA)} c/u)
-            </label>
-            <input
-              id="extra-wasabi"
-              type="number"
-              min={0}
-              value={state.extraWasabi}
-              onChange={(e) =>
-                dispatch({
-                  type: "SET_FIELD",
-                  field: "extraWasabi",
-                  value: e.target.value === "" ? "" : Math.max(0, Number(e.target.value)),
-                })
-              }
-              className={smallInput}
-            />
-          </div>
-
-          {/* 👇 NUEVOS CAMPOS EN UI */}
-          <div>
-            <label htmlFor="palitosExtra" className="block text-sm font-medium text-neutral-200 mb-1">
-              Palito extra ({fmt(PRECIO_PALITO_EXTRA)} c/u)
-            </label>
-            <input
-              id="palitosExtra"
-              type="number"
-              min={0}
-              value={state.palitosExtra}
-              onChange={(e) =>
-                dispatch({
-                  type: "SET_FIELD",
-                  field: "palitosExtra",
-                  value: e.target.value === "" ? "" : Math.max(0, Number(e.target.value)),
-                })
-              }
-              className={smallInput}
-            />
-          </div>
-        </div>
-      </div>
 
       {/* Observaciones */}
       <div className="mt-3">

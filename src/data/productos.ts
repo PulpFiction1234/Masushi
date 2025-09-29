@@ -84,6 +84,11 @@ import polloFurayImg from "@/public/images/Pollo furay.webp";
 import gyozasChampinonImg from "@/public/images/Gyozas champiñon.webp";
 import gyozasImg from "@/public/images/Gyozas.webp";
 
+// salsas extras
+import salsaMaracuyaImg from "@/public/images/Salsa de maracuya.webp";
+import salsaAcevichadaImg from "@/public/images/Salsa acevichada.webp";
+import salsaTeriyakiImg from "@/public/images/Salsa teriyaki.webp";
+
 // promociones
 import promoUnoImg from "@/public/images/promo uno.webp";
 import promoHotImg from "@/public/images/promo hot.webp";
@@ -538,6 +543,11 @@ const _productos: Producto[] = [
     { id: 77, codigo: "077", nombre: "Gyozas pollo", descripcion: "5 unidades", valor: 4800, imagen: gyozasImg, categoria: "Para picar" },
     { id: 78, codigo: "078", nombre: "Gyozas cerdo", descripcion: "5 unidades", valor: 4800, imagen: gyozasImg, categoria: "Para picar" },
     { id: 79, codigo: "079", nombre: "Gyozas camaron", descripcion: "5 unidades", valor: 4900, imagen: gyozasImg, categoria: "Para picar" },
+
+// salsas extras
+    { id: 80, codigo: "080 | Salsa acevichada", nombre: "Salsa acevichada", descripcion: "Porcion extra de salsa acevichada", valor: 1200, imagen: salsaAcevichadaImg, categoria: "Salsas extras", salsasGratis: 0,topePalitosGratis: 0 },
+    { id: 81, codigo: "081 | Salsa de maracuya", nombre: "Salsa de maracuya", descripcion: "Porcion extra de salsa de maracuya", valor: 1100, imagen: salsaMaracuyaImg, categoria: "Salsas extras", salsasGratis: 0,topePalitosGratis: 0 },
+    { id: 82, codigo: "082 | Salsa teriyaki", nombre: "Salsa teriyaki", descripcion: "Porcion extra de salsa teriyaki", valor: 1000, imagen: salsaTeriyakiImg, categoria: "Salsas extras", salsasGratis: 0,topePalitosGratis: 0 },
 
 // Promociones
 

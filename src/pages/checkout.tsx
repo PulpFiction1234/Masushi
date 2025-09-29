@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useReducer, useEffect } from "react";
+import React, { useMemo, useReducer, useEffect } from "react";
 import dynamic from "next/dynamic";
 import useSWR from "swr";
 import { useCart } from "@/context/CartContext";
@@ -125,6 +125,7 @@ const salsasGratisPorUnidad = (it: CartItemLike): number => {
 export default function Checkout() {
   const { cart } = useCart();
   const [state, dispatch] = useReducer(checkoutReducer, initialCheckoutState);
+  const [salsasValidas, setSalsasValidas] = React.useState(false);
 
   const {
     name,
@@ -199,10 +200,6 @@ export default function Checkout() {
   // Cálculos monetarios/totales
   const {
     totalProductos,
-    totalAcevichada,
-    totalMaracuya,
-    costoJengibreExtras,
-    costoWasabiExtras,
     costoPalitosExtra,
     costoAyudaPalitos,
     deliveryFee,
@@ -231,40 +228,23 @@ export default function Checkout() {
     const costoSoya = pSoya * PRECIO_SOYA_EXTRA;
     const costoTeri = pTeri * PRECIO_TERIYAKI_EXTRA;
 
-    const ace = Number(acevichada || 0) * PRECIO_ACEVICHADA;
-    const mar = Number(maracuya || 0) * PRECIO_MARACUYA;
-
-    const eJen = Number(extraJengibre || 0) * PRECIO_JENGIBRE_EXTRA;
-    const eWas = Number(extraWasabi || 0) * PRECIO_WASABI_EXTRA;
-
-    const costoSoyaPlus = Number(soyaExtra || 0) * PRECIO_SOYA_EXTRA;
-    const costoTeriPlus = Number(teriyakiExtra || 0) * PRECIO_TERIYAKI_EXTRA;
-
+    // Solo mantener palitos extra y ayuda palitos
     const cPalitosExtra = Number(palitosExtra || 0) * PRECIO_PALITO_EXTRA;
     const cAyudaPalitos = Number(ayudaPalitos || 0) * PRECIO_AYUDA_PALITOS;
 
     const fee = deliveryType === "delivery" ? COSTO_DELIVERY : 0;
 
+    // Total simplificado: solo productos + salsas gratis cobradas + palitos + delivery
     const total =
       prod +
       costoSoya +
       costoTeri +
-      costoSoyaPlus +
-      costoTeriPlus +
-      ace +
-      mar +
-      eJen +
-      eWas +
       cPalitosExtra +
       cAyudaPalitos +
       fee;
 
     return {
       totalProductos: prod,
-      totalAcevichada: ace,
-      totalMaracuya: mar,
-      costoJengibreExtras: eJen,
-      costoWasabiExtras: eWas,
       costoPalitosExtra: cPalitosExtra,
       costoAyudaPalitos: cAyudaPalitos,
       deliveryFee: fee,
@@ -276,12 +256,6 @@ export default function Checkout() {
     cartTyped,
     soya,
     teriyaki,
-    soyaExtra,
-    teriyakiExtra,
-    acevichada,
-    maracuya,
-    extraJengibre,
-    extraWasabi,
     palitosExtra,
     ayudaPalitos,
     deliveryType,
@@ -289,12 +263,18 @@ export default function Checkout() {
 
   const requiresPayment = deliveryType === "delivery";
 
+  // Validación obligatoria de salsas: debe tener salsas básicas o jengibre/wasabi, o marcarlas como "sin salsas"
+  const tieneSalsasBasicas = Number(soya || 0) > 0 || Number(teriyaki || 0) > 0;
+  const tieneJengibreWasabi = Number(jengibre || 0) > 0 || Number(wasabi || 0) > 0;
+  // La validación se hará en el componente ExtrasSelector con los checkboxes
+
   const canSubmitBase =
     name.trim().length > 1 &&
     lastName.trim().length > 1 &&
     isValidChileanMobile(phone) &&
     (!requiresPayment || paymentMethod !== "") &&
-    (deliveryType === "retiro" || (coords && REGEX_NUMERO_CALLE.test(address)));
+    (deliveryType === "retiro" || (coords && REGEX_NUMERO_CALLE.test(address))) &&
+    salsasValidas; // ✅ Agregar validación de salsas
 
   // ⚠️ No permitir enviar si el estado aún está cargando
   const canSubmit = canSubmitBase && abierto === true && !loadingStatus;
@@ -304,6 +284,12 @@ export default function Checkout() {
 
     if (cartTyped.length === 0) {
       alert("Tu carrito está vacío");
+      return;
+    }
+
+    // Validar salsas obligatorias
+    if (!salsasValidas) {
+      alert("Debes seleccionar al menos una salsa de cada tipo o marcar las casillas correspondientes (Sin salsas Soya/Teriyaki o Sin Jengibre/Wasabi)");
       return;
     }
 
@@ -351,29 +337,23 @@ export default function Checkout() {
         const POOL_JW = 2;
         const nSoya = Number(soya || 0);
         const nTeri = Number(teriyaki || 0);
-        const nSoyaExtra = Number(soyaExtra || 0);
-        const nTeriExtra = Number(teriyakiExtra || 0);
-        const nAcevichada = Number(acevichada || 0);
-        const nMaracuya = Number(maracuya || 0);
         const nJenGratis = Number(jengibre || 0);
         const nWasGratis = Number(wasabi || 0);
-        const nJenExtra = Number(extraJengibre || 0);
-        const nWasExtra = Number(extraWasabi || 0);
         const nPalitosGratis = Number(palitos || 0);
         const nPalitosExtra = Number(palitosExtra || 0);
         const nAyudaPalitos = Number(ayudaPalitos || 0);
 
         const lineasSalsas: string[] = [];
+        
+        // Solo salsas gratis - las extras ahora son productos normales
         if (nSoya > 0) lineasSalsas.push(`Soya (gratis): ${nSoya}`);
         if (nTeri > 0) lineasSalsas.push(`Teriyaki (gratis): ${nTeri}`);
-        if (nSoyaExtra > 0) lineasSalsas.push(`Soya extra: ${nSoyaExtra} = ${fmt(nSoyaExtra * PRECIO_SOYA_EXTRA)}`);
-        if (nTeriExtra > 0) lineasSalsas.push(`Teriyaki extra: ${nTeriExtra} = ${fmt(nTeriExtra * PRECIO_TERIYAKI_EXTRA)}`);
         if (nJenGratis > 0) lineasSalsas.push(`Jengibre (gratis): ${nJenGratis}/${POOL_JW}`);
         if (nWasGratis > 0) lineasSalsas.push(`Wasabi (gratis): ${nWasGratis}/${POOL_JW}`);
-        if (nAcevichada > 0) lineasSalsas.push(`Acevichada: ${nAcevichada} = ${fmt(totalAcevichada)}`);
-        if (nMaracuya > 0) lineasSalsas.push(`Maracuyá: ${nMaracuya} = ${fmt(totalMaracuya)}`);
-        if (nJenExtra > 0) lineasSalsas.push(`Extra jengibre: ${nJenExtra} = ${fmt(costoJengibreExtras)}`);
-        if (nWasExtra > 0) lineasSalsas.push(`Extra wasabi: ${nWasExtra} = ${fmt(costoWasabiExtras)}`);
+        
+        // Agregar líneas para "sin salsas" si corresponde
+        if (nSoya === 0 && nTeri === 0) lineasSalsas.push("Sin salsas Soya/Teriyaki");
+        if (nJenGratis === 0 && nWasGratis === 0) lineasSalsas.push("Sin Jengibre/Wasabi");
 
         const lineasPalitos: string[] = [];
         if (nPalitosGratis > 0) lineasPalitos.push(`Palitos (gratis): ${nPalitosGratis}`);
@@ -417,6 +397,7 @@ export default function Checkout() {
         const msg = `${cuerpoAntesDeTotal.replace(/(\r?\n)+$/, "")}${NL}${NL}Total: ${fmt(totalFinal)}`;
 
         const mensaje = encodeURIComponent(msg);
+        // Probar con formato +56 al inicio
         window.open(`https://wa.me/56940873865?text=${mensaje}`, "_blank");
       })
       .catch(() => alert("No se pudo verificar el estado del local. Intenta de nuevo."));
@@ -431,13 +412,15 @@ export default function Checkout() {
     <Seo title="Panel de administración — Masushi" canonicalPath="/admin" noIndex />
       <Navbar />
       <div className="min-h-screen bg-neutral-950 text-neutral-100">
-        <div className="mx-auto max-w-5xl px-4 py-6">
+        <div className="mx-auto max-w-6xl px-4 py-6">
           <div className="mb-6">
             <div className={`mt-2 h-1 w-24 bg-gradient-to-r ${ACCENT_FROM} ${ACCENT_TO} rounded-full`} />
           </div>
 
-          <div className="flex justify-center">
-            <form onSubmit={handleSubmit} className={`${card} w-full max-w-2xl p-5 space-y-5`}>
+          {/* Layout de 2 columnas */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Columna izquierda: Carrito */}
+            <div className={`${card} p-5`}>
               {/* Estado de apertura */}
               <div className="rounded-xl bg-neutral-800/70 border border-white/10 p-3 text-sm flex items-center justify-between">
                 <span className={abierto ? "text-emerald-300" : "text-amber-300"}>{statusLabel}</span>
@@ -455,6 +438,7 @@ export default function Checkout() {
                   maxGratisBasicas={gratisBasicas}
                   maxGratisJWas={POOL_JW}
                   maxPalitosGratis={maxPalitosGratis}
+                  onValidationChange={setSalsasValidas} // 👈 callback de validación
                 />
               )}
 
@@ -462,7 +446,13 @@ export default function Checkout() {
                 <p className="text-base font-semibold">Total final</p>
                 <p className="text-xl font-bold">{fmt(totalFinal)}</p>
               </div>
+            </div>
 
+            {/* Columna derecha: Datos del pedido */}
+            <div className={`${card} p-5`}>
+              <h2 className="text-xl font-bold mb-5 text-neutral-50">Datos del pedido</h2>
+              <form onSubmit={handleSubmit} className="space-y-5">
+              
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="name" className="block font-medium mb-1 text-neutral-200">
@@ -562,7 +552,8 @@ export default function Checkout() {
                   ? "Comprobando horario…"
                   : "Hacer pedido"}
               </button>
-            </form>
+              </form>
+            </div>
           </div>
         </div>
       </div>

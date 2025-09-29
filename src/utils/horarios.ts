@@ -9,7 +9,7 @@ export const BUSINESS_TZ = "America/Santiago";
 // Lun-Jue 16:30–22:30 • Viernes 16:30–23:00 • Sábado 13:30–22:30 • Domingo cerrado
 export const HORARIO_SEMANAL: Record<DiaKey, Intervalo[]> = {
   sun: [],
-  mon: [["16:30", "22:30"]],
+  mon: [["15:30", "22:30"]],
   tue: [["16:30", "22:30"]],
   wed: [["16:30", "22:30"]],
   thu: [["16:30", "22:30"]],

@@ -19,7 +19,7 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
   const [modalYaMostrado, setModalYaMostrado] = useState(false);
 
   // Mientras no esté listo el provider, evita parpadeo
-  const safeCart = ready ? cart : [];
+  const safeCart = useMemo(() => (ready ? cart : []), [ready, cart]);
   const hasItems = safeCart.length > 0;
 
   const safeTotal = useMemo(() => (ready ? total : 0), [ready, total]);

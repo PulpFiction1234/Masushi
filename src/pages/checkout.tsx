@@ -92,10 +92,6 @@ import {
   initialCheckoutState,
   PRECIO_SOYA_EXTRA,
   PRECIO_TERIYAKI_EXTRA,
-  PRECIO_ACEVICHADA,
-  PRECIO_MARACUYA,
-  PRECIO_JENGIBRE_EXTRA,
-  PRECIO_WASABI_EXTRA,
   COSTO_DELIVERY,
   PRECIO_PALITO_EXTRA,
   PRECIO_AYUDA_PALITOS,
@@ -136,15 +132,9 @@ export default function Checkout() {
     coords,
     soya,
     teriyaki,
-    soyaExtra,
-    teriyakiExtra,
-    acevichada,
-    maracuya,
     palitos,
     jengibre,
     wasabi,
-    extraJengibre,
-    extraWasabi,
     palitosExtra,
     ayudaPalitos,
     observacion,
@@ -263,10 +253,7 @@ export default function Checkout() {
 
   const requiresPayment = deliveryType === "delivery";
 
-  // Validación obligatoria de salsas: debe tener salsas básicas o jengibre/wasabi, o marcarlas como "sin salsas"
-  const tieneSalsasBasicas = Number(soya || 0) > 0 || Number(teriyaki || 0) > 0;
-  const tieneJengibreWasabi = Number(jengibre || 0) > 0 || Number(wasabi || 0) > 0;
-  // La validación se hará en el componente ExtrasSelector con los checkboxes
+  // La validación de salsas se hará en el componente ExtrasSelector con los checkboxes
 
   const canSubmitBase =
     name.trim().length > 1 &&

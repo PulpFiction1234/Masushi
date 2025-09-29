@@ -1,15 +1,7 @@
 import {
   fmt,
-  PRECIO_ACEVICHADA,
-  PRECIO_MARACUYA,
-  PRECIO_JENGIBRE_EXTRA,
-  PRECIO_WASABI_EXTRA,
-  PRECIO_SOYA_EXTRA,
-  PRECIO_TERIYAKI_EXTRA,
   CheckoutState,
   CheckoutAction,
-  // 👇 nuevos precios
-  PRECIO_PALITO_EXTRA,
   PRECIO_AYUDA_PALITOS,
 } from "@/utils/checkout";
 import React from "react";
@@ -63,7 +55,7 @@ export default function ExtrasSelector({
   const soyaGratis = Number(state.soya || 0);
   const teriGratis = Number(state.teriyaki || 0);
   const usados = soyaGratis + teriGratis;
-  const restantes = Math.max(0, maxGratisBasicas - usados);
+  // const restantes = Math.max(0, maxGratisBasicas - usados);
 
   const clampInt = (val: number) => Math.max(0, Math.floor(val));
 
@@ -85,7 +77,7 @@ export default function ExtrasSelector({
   const jengibreFree = Number(state.jengibre || 0);
   const wasabiFree = Number(state.wasabi || 0);
   const usadosJW = jengibreFree + wasabiFree;
-  const restantesJW = Math.max(0, maxGratisJWas - usadosJW);
+  // const restantesJW = Math.max(0, maxGratisJWas - usadosJW);
 
   const onChangeJengibreGratis = (raw: string) => {
     let next = clampInt(Number(raw === "" ? 0 : raw));
@@ -123,7 +115,7 @@ export default function ExtrasSelector({
           Salsas gratis del pedido
           {!esValido && (
             <span className="ml-2 text-sm text-orange-400 font-normal">
-              (Selecciona salsas o marca "Sin salsas")
+              (Selecciona salsas o marca &ldquo;Sin salsas&rdquo;)
             </span>
           )}
         </h4>

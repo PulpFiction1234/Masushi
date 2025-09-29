@@ -551,11 +551,11 @@ const _productos: Producto[] = [
 
 // Promociones
 
-    { id: 200, codigo: "200 || P uno", nombre: "Promo uno (18 piezas)", descripcion: "Ebi cheese roll en palta - California teri cheese", valor: 10900, imagen: promoUnoImg, categoria: "Promociones",salsasGratis: 2,topePalitosGratis: 2 },
-    { id: 201, codigo: "201 || P HOT", nombre: "Promo HOT (36 piezas)", descripcion: "Teri tori - Ebi cheese panko - Funji cheese panko- Kani cheese panko", valor: 18900, imagen: promoHotImg, categoria: "Promociones",salsasGratis: 5,topePalitosGratis: 5 },
-    { id: 202, codigo: "202 || P mixta 36", nombre: "Promo mixta (36 piezas)", descripcion: "California kani cheese en sesamo - Ebi cheese roll en palta - Ebi cheese panko - Teri Tori", valor: 18900, imagen: promo36Img, categoria: "Promociones",salsasGratis: 5,topePalitosGratis: 5 },
-    { id: 203, codigo: "203 || P mixta 54", nombre: "Promo mixta (54 piezas)", descripcion: "California teri cheese en sesamo - California sake cheese en ciboullete - Ebi cheese roll en palta - Fuji cheese panko - Ebi cheese panko - Teri Tori", valor: 27900, imagen: promo54Img, categoria: "Promociones", salsasGratis: 8,topePalitosGratis: 6 },
-    { id: 204, codigo: "204 || P vip", nombre: "Promo vip (72 piezas)", descripcion: "Ebi cheese roll en palta - Teri roll en queso - Sake cheese roll en salmon - California ebi cheese en sesamo - Mechada panko - Sake cheese panko - Teri tori - Ebi cheese Panko", valor: 38900, imagen: promoVipImg, categoria: "Promociones", salsasGratis: 10, topePalitosGratis:10},
+    { id: 200, codigo: "200 | P uno", nombre: "Promo uno (18 piezas)", descripcion: "Ebi cheese roll en palta - California teri cheese", valor: 10900, imagen: promoUnoImg, categoria: "Promociones",salsasGratis: 2,topePalitosGratis: 2 },
+    { id: 201, codigo: "201 | P HOT", nombre: "Promo HOT (36 piezas)", descripcion: "Teri tori - Ebi cheese panko - Funji cheese panko- Kani cheese panko", valor: 18900, imagen: promoHotImg, categoria: "Promociones",salsasGratis: 5,topePalitosGratis: 5 },
+    { id: 202, codigo: "202 | P mixta 36", nombre: "Promo mixta (36 piezas)", descripcion: "California kani cheese en sesamo - Ebi cheese roll en palta - Ebi cheese panko - Teri Tori", valor: 18900, imagen: promo36Img, categoria: "Promociones",salsasGratis: 5,topePalitosGratis: 5 },
+    { id: 203, codigo: "203 | P mixta 54", nombre: "Promo mixta (54 piezas)", descripcion: "California teri cheese en sesamo - California sake cheese en ciboullete - Ebi cheese roll en palta - Fuji cheese panko - Ebi cheese panko - Teri Tori", valor: 27900, imagen: promo54Img, categoria: "Promociones", salsasGratis: 8,topePalitosGratis: 6 },
+    { id: 204, codigo: "204 | P vip", nombre: "Promo vip (72 piezas)", descripcion: "Ebi cheese roll en palta - Teri roll en queso - Sake cheese roll en salmon - California ebi cheese en sesamo - Mechada panko - Sake cheese panko - Teri tori - Ebi cheese Panko", valor: 38900, imagen: promoVipImg, categoria: "Promociones", salsasGratis: 10, topePalitosGratis:10},
 
 // Bebidas
 

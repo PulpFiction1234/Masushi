@@ -37,11 +37,11 @@ const RecomendacionesModal: React.FC<Props> = ({ open, onClose }) => {
       
       {/* Modal responsive - centrado en desktop, bottom sheet en mobile */}
       <div className="fixed inset-x-0 bottom-0 sm:left-1/2 sm:top-1/2 sm:transform sm:-translate-x-1/2 sm:-translate-y-1/2 z-[61] p-4 sm:inset-auto">
-        <div className="bg-gray-900 rounded-t-xl sm:rounded-lg shadow-xl w-full sm:max-w-xl max-h-[85vh] sm:max-h-[80vh] overflow-hidden border-2 border-gray-600 animate-slide-up sm:animate-none">
+        <div className="bg-gray-900 rounded-t-xl sm:rounded-lg shadow-xl w-full sm:max-w-xl max-h-[70vh] sm:max-h-[80vh] overflow-hidden border-2 border-gray-600 animate-slide-up sm:animate-none">
           {/* Header with drag indicator for mobile */}
           <div className="sm:hidden w-12 h-1 bg-gray-600 rounded-full mx-auto mt-3 mb-4"></div>
           
-          <div className="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-6 border-b border-gray-700">
+          <div className="flex justify-between items-center px-4 sm:px-6 py-2 sm:py-6 border-b border-gray-700">
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-white">También suelen llevar</h2>
               <p className="text-gray-300 text-xs sm:text-sm mt-1">Complementa tu pedido con nuestras salsas especiales</p>
@@ -56,12 +56,12 @@ const RecomendacionesModal: React.FC<Props> = ({ open, onClose }) => {
           </div>
 
           {/* Content */}
-          <div className="px-4 sm:px-4 py-3 overflow-y-auto max-h-[calc(85vh-140px)] sm:max-h-[calc(80vh-120px)]">
+          <div className="px-4 sm:px-4 py-2 overflow-y-auto max-h-[calc(70vh-120px)] sm:max-h-[calc(80vh-120px)]">
             <div className="grid grid-cols-1 gap-3 sm:gap-3">
               {salsasExtras.map((salsa) => (
                 <div key={salsa.id} className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors active:bg-gray-750">
-                  <div className="flex items-center p-4 sm:p-3">
-                    <div className="w-20 h-20 sm:w-16 sm:h-16 relative flex-shrink-0 mr-4">
+                  <div className="flex items-center p-3 sm:p-3">
+                    <div className="w-16 h-16 sm:w-16 sm:h-16 relative flex-shrink-0 mr-3">
                       <Image
                         src={salsa.imagen}
                         alt={salsa.nombre}
@@ -73,7 +73,7 @@ const RecomendacionesModal: React.FC<Props> = ({ open, onClose }) => {
                     
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-white text-base sm:text-base mb-1 truncate">{salsa.nombre}</h3>
-                      <p className="text-gray-300 text-sm sm:text-xs mb-3 sm:mb-2 line-clamp-2 sm:line-clamp-1">{salsa.descripcion}</p>
+                      <p className="text-gray-300 text-sm sm:text-xs mb-2 sm:mb-2 line-clamp-1 sm:line-clamp-1">{salsa.descripcion}</p>
                       
                       <div className="flex items-center justify-between">
                         <span className="text-green-400 font-bold text-base sm:text-sm">
@@ -81,7 +81,7 @@ const RecomendacionesModal: React.FC<Props> = ({ open, onClose }) => {
                         </span>
                         <button
                           onClick={(e) => handleAddSalsa(salsa, e)}
-                          className="bg-green-500 hover:bg-green-600 active:bg-green-700 text-white px-4 py-2 sm:px-3 sm:py-1 rounded text-sm sm:text-xs font-medium transition-colors active:scale-95 min-h-[44px] sm:min-h-0"
+                          className="bg-green-500 hover:bg-green-600 active:bg-green-700 text-white px-3 py-2 sm:px-3 sm:py-1 rounded text-sm sm:text-xs font-medium transition-colors active:scale-95 min-h-[40px] sm:min-h-0"
                         >
                           Agregar
                         </button>
@@ -94,10 +94,10 @@ const RecomendacionesModal: React.FC<Props> = ({ open, onClose }) => {
           </div>
 
           {/* Footer */}
-          <div className="flex justify-center p-4 sm:p-4 border-t border-gray-700 bg-gray-900">
+          <div className="flex justify-center p-3 sm:p-4 border-t border-gray-700 bg-gray-900">
             <button
               onClick={onClose}
-              className="bg-gray-700 hover:bg-gray-600 active:bg-gray-800 text-white px-8 py-3 sm:px-6 sm:py-2 rounded-lg text-base sm:text-sm font-medium transition-colors min-h-[48px] sm:min-h-0"
+              className="bg-gray-700 hover:bg-gray-600 active:bg-gray-800 text-white px-6 py-2 sm:px-6 sm:py-2 rounded-lg text-sm sm:text-sm font-medium transition-colors min-h-[40px] sm:min-h-0"
             >
               No, gracias
             </button>

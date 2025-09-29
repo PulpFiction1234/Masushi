@@ -33,10 +33,10 @@ const RecomendacionesModal: React.FC<Props> = ({ open, onClose }) => {
   return (
     <>
       {/* Overlay semi-transparente que no oculta completamente el carrito */}
-      <div className="fixed inset-0 bg-black bg-opacity-30 z-[45]" onClick={onClose} />
+      <div className="fixed inset-0 bg-black bg-opacity-30 z-[60]" onClick={onClose} />
       
       {/* Modal responsive - centrado en desktop, bottom sheet en mobile */}
-      <div className="fixed inset-x-0 bottom-0 sm:left-1/2 sm:top-1/2 sm:transform sm:-translate-x-1/2 sm:-translate-y-1/2 z-[46] p-4 sm:inset-auto">
+      <div className="fixed inset-x-0 bottom-0 sm:left-1/2 sm:top-1/2 sm:transform sm:-translate-x-1/2 sm:-translate-y-1/2 z-[61] p-4 sm:inset-auto">
         <div className="bg-gray-900 rounded-t-xl sm:rounded-lg shadow-xl w-full sm:max-w-xl max-h-[85vh] sm:max-h-[80vh] overflow-hidden border-2 border-gray-600 animate-slide-up sm:animate-none">
           {/* Header with drag indicator for mobile */}
           <div className="sm:hidden w-12 h-1 bg-gray-600 rounded-full mx-auto mt-3 mb-4"></div>

@@ -93,8 +93,26 @@ export default function Download() {
               </div>
             </div>
 
+            {/* Installation Steps */}
+            <div className="mt-6 bg-neutral-900 rounded-xl p-4 text-left">
+              <h4 className="font-semibold mb-3 text-sm">📲 Pasos para instalar:</h4>
+              <div className="space-y-2 text-xs text-neutral-300">
+                <p><span className="text-green-400 font-bold">1.</span> Descarga la APK tocando el botón</p>
+                <p><span className="text-green-400 font-bold">2.</span> Permite &quot;Instalar apps desconocidas&quot; si aparece</p>
+                <p><span className="text-green-400 font-bold">3.</span> Abre el archivo descargado</p>
+                <p><span className="text-green-400 font-bold">4.</span> Toca &quot;Instalar&quot; y ¡listo!</p>
+              </div>
+            </div>
+
+            {/* Security Note */}
+            <div className="mt-4 bg-blue-900/20 border border-blue-800/30 rounded-lg p-3">
+              <p className="text-xs text-blue-200">
+                🔒 <strong>¿Es seguro?</strong> Sí, es nuestra app oficial. Android puede mostrar una advertencia porque no viene de Google Play, pero es completamente segura.
+              </p>
+            </div>
+
             {/* Note */}
-            <p className="text-xs text-neutral-500 mt-6">
+            <p className="text-xs text-neutral-500 mt-4">
               Para Android 8.0 o superior. La app es segura y gratuita.
             </p>
           </div>

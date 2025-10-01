@@ -7,6 +7,7 @@ import { RiShoppingBag4Fill } from "react-icons/ri";
 
 import { CartProvider, useCart } from "@/context/CartContext";
 import CarritoPanel from "@/components/CarritoPanel";
+import { Analytics } from "@vercel/analytics/react";
 
 // 👇 OJO: Provider desde *react*, browser client desde *nextjs*
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
@@ -69,6 +70,7 @@ export default function App({ Component, pageProps }: AppProps) {
         )}
 
         <CarritoPanel open={isCartOpen} onClose={() => setIsCartOpen(false)} />
+        <Analytics />
       </CartProvider>
     </SessionContextProvider>
   );

@@ -68,8 +68,8 @@ export default function Download() {
                 <div className="mt-4 text-left text-sm text-neutral-300 space-y-2">
                   <p>1. Abre <strong>masushi.cl</strong> en Safari</p>
                   <p>2. Toca el botón <strong>Compartir</strong> 📤</p>
-                  <p>3. Selecciona <strong>"Agregar a inicio"</strong></p>
-                  <p>4. Toca <strong>"Agregar"</strong></p>
+                  <p>3. Selecciona <strong>&quot;Agregar a inicio&quot;</strong></p>
+                  <p>4. Toca <strong>&quot;Agregar&quot;</strong></p>
                 </div>
               )}
             </div>

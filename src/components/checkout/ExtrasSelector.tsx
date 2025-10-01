@@ -54,8 +54,7 @@ export default function ExtrasSelector({
   // ===== Pool GRATIS: Soya/Teriyaki =====
   const soyaGratis = Number(state.soya || 0);
   const teriGratis = Number(state.teriyaki || 0);
-  const usados = soyaGratis + teriGratis;
-  // const restantes = Math.max(0, maxGratisBasicas - usados);
+  // const restantes = Math.max(0, maxGratisBasicas - (soyaGratis + teriGratis));
 
   const clampInt = (val: number) => Math.max(0, Math.floor(val));
 
@@ -76,8 +75,7 @@ export default function ExtrasSelector({
   // ===== Pool GRATIS: Jengibre/Wasabi (máx 2 entre ambos) =====
   const jengibreFree = Number(state.jengibre || 0);
   const wasabiFree = Number(state.wasabi || 0);
-  const usadosJW = jengibreFree + wasabiFree;
-  // const restantesJW = Math.max(0, maxGratisJWas - usadosJW);
+  // const restantesJW = Math.max(0, maxGratisJWas - (jengibreFree + wasabiFree));
 
   const onChangeJengibreGratis = (raw: string) => {
     let next = clampInt(Number(raw === "" ? 0 : raw));

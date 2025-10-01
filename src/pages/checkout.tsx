@@ -129,6 +129,7 @@ export default function Checkout() {
     phone,
     deliveryType,
     address,
+    numeroCasa,
     coords,
     soya,
     teriyaki,
@@ -260,7 +261,9 @@ export default function Checkout() {
     lastName.trim().length > 1 &&
     isValidChileanMobile(phone) &&
     (!requiresPayment || paymentMethod !== "") &&
-    (deliveryType === "retiro" || (coords && REGEX_NUMERO_CALLE.test(address))) &&
+    // Para delivery: requerimos coords y además un número de domicilio.
+    // Aceptamos que el número esté en `address` (REGEX) o que el usuario haya completado `numeroCasa`.
+    (deliveryType === "retiro" || (coords && (REGEX_NUMERO_CALLE.test(address) || (numeroCasa && numeroCasa.trim().length > 0)))) &&
     salsasValidas; // ✅ Agregar validación de salsas
 
   // ⚠️ No permitir enviar si el estado aún está cargando
@@ -298,8 +301,9 @@ export default function Checkout() {
             alert("Ingrese una dirección válida.");
             return;
           }
-          if (!REGEX_NUMERO_CALLE.test(address)) {
-            alert("Debe ingresar un número de domicilio (ej.: N° 1234 o #1234).");
+          // Aceptamos número dentro de la dirección o el campo separado `numeroCasa`
+          if (!(REGEX_NUMERO_CALLE.test(address) || (numeroCasa && numeroCasa.trim().length > 0))) {
+            alert("Debe ingresar un número de domicilio (ej.: N° 1234 o #1234) o completar el campo N° / Dpto.");
             return;
           }
           const { default: booleanPointInPolygon } = await import("@turf/boolean-point-in-polygon");
@@ -366,7 +370,10 @@ export default function Checkout() {
             ? `${NL}--- Observaciones ---${NL}${observacion.replace(/\r?\n/g, NL)}${NL}`
             : "";
 
-        const shortAddress = toShortCLAddress(address);
+        // Construir dirección corta e incluir número/departamento si el usuario los puso
+        const pieces = [toShortCLAddress(address)];
+  if (numeroCasa && numeroCasa.trim()) pieces.push(`N° ${numeroCasa.trim()}`);
+        const shortAddress = pieces.filter(Boolean).join(", ");
         const lineaDelivery =
           deliveryType === "delivery" ? `Delivery: ${fmt(deliveryFee)}${NL}` : "";
 
@@ -385,7 +392,7 @@ export default function Checkout() {
 
         const mensaje = encodeURIComponent(msg);
         // Probar con formato +56 al inicio
-        window.open(`https://wa.me/56940873865?text=${mensaje}`, "_blank");
+        window.open(`https://api.whatsapp.com/send?phone=56940873865&text=${mensaje}`, "_blank");
       })
       .catch(() => alert("No se pudo verificar el estado del local. Intenta de nuevo."));
   };
@@ -523,6 +530,22 @@ export default function Checkout() {
                       }}
                     />
                   </div>
+                </div>
+              )}
+
+              {deliveryType === "delivery" && (
+                <div>
+                  <label htmlFor="numeroCasa" className="block font-medium mb-1 text-neutral-200">
+                    N° Casa / Depto (opcional)
+                  </label>
+                  <input
+                    id="numeroCasa"
+                    type="text"
+                    className={inputBase}
+                    value={numeroCasa || ""}
+                    onChange={(e) => dispatch({ type: "SET_FIELD", field: "numeroCasa", value: e.target.value })}
+                    placeholder="Ej: casa 34, depto 202B"
+                  />
                 </div>
               )}
 

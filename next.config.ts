@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   trailingSlash: false,
-  images: { formats: ["image/avif", "image/webp"] },
+  images: { formats: ["image/avif", "image/webp"], qualities: [60] },
 
   async redirects() {
     return [

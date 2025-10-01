@@ -108,6 +108,8 @@ export interface CheckoutState {
   phone: string;
   deliveryType: "retiro" | "delivery";
   address: string;
+  // Número de casa (cuando la dirección es condominio o necesita número separado)
+  numeroCasa?: string;
   coords: [number, number] | null;
 
   // Gratis (limitadas por el pool soya/teriyaki del pedido)
@@ -148,6 +150,7 @@ export const initialCheckoutState: CheckoutState = {
   phone: "",
   deliveryType: "retiro",
   address: "",
+  numeroCasa: "",
   coords: null,
 
   // Pools y extras

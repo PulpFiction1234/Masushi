@@ -73,6 +73,12 @@ const ProductCard: React.FC<Props> = ({
             if (newMode !== fitMode) onFitChange(newMode);
           }}
         />
+        {/* ID del producto en la esquina superior derecha */}
+        {product.codigo && (
+          <div className="absolute top-2 right-2 bg-green-600 text-white text-base font-bold px-2 py-1 rounded">
+            {product.codigo}
+          </div>
+        )}
       </div>
 
       <h3 className="text-lg text-gray-200 font-semibold mt-2">{product.nombre}</h3>

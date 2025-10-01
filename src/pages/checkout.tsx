@@ -392,7 +392,7 @@ export default function Checkout() {
 
         const mensaje = encodeURIComponent(msg);
         // Probar con formato +56 al inicio
-        window.open(`https://api.whatsapp.com/send?phone=56940873865&text=${mensaje}`, "_blank");
+        window.open(`https://wa.me/56940873865?text=${mensaje}`, "_blank");
       })
       .catch(() => alert("No se pudo verificar el estado del local. Intenta de nuevo."));
   };

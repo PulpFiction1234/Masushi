@@ -70,6 +70,9 @@ export default function Download() {
                   <p>2. Toca el botón <strong>Compartir</strong> 📤</p>
                   <p>3. Selecciona <strong>&quot;Agregar a inicio&quot;</strong></p>
                   <p>4. Toca <strong>&quot;Agregar&quot;</strong></p>
+                  <div className="mt-3 p-2 bg-blue-900/20 rounded text-xs text-blue-200">
+                    ℹ️ <strong>Nota:</strong> En iOS se abrirá en Safari pero sin barras de navegación, funcionando como una app nativa.
+                  </div>
                 </div>
               )}
             </div>

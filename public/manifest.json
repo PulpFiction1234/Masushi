@@ -1,0 +1,41 @@
+{
+  "name": "Masushi - Sushi & Delivery",
+  "short_name": "Masushi",
+  "description": "Ordena el mejor sushi de Chile directamente desde tu móvil",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#ef4444",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "es-CL",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/images/logo-masushi.webp",
+      "sizes": "192x192",
+      "type": "image/webp",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/logo-masushi.webp", 
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["food", "delivery"],
+  "shortcuts": [
+    {
+      "name": "Ver Menú",
+      "short_name": "Menú",
+      "description": "Ver todos los rolls y combos",
+      "url": "/?utm_source=pwa_shortcut",
+      "icons": [{ "src": "/favicon.ico", "sizes": "48x48" }]
+    }
+  ]
+}

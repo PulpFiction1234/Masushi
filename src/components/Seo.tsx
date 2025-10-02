@@ -48,7 +48,19 @@ export default function Seo({
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={image} />
 
-      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      {/* PWA & Mobile */}
+      <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+      <link rel="manifest" href="/manifest.json" />
+      
+      {/* iOS PWA */}
+      <meta name="apple-mobile-web-app-capable" content="yes" />
+      <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+      <meta name="apple-mobile-web-app-title" content="Masushi" />
+      <link rel="apple-touch-icon" href="/images/logo-masushi.webp" />
+      
+      {/* Theme Colors */}
+      <meta name="theme-color" content="#ef4444" />
+      <meta name="msapplication-TileColor" content="#0a0a0a" />
     </Head>
   );
 }

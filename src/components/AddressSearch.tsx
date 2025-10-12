@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import * as turf from "@turf/turf";
 import mapboxgl from "mapbox-gl";
+import addressOverrides from "@/data/addressOverrides";
 
 interface AddressSearchProps {
   polygonCoords: number[][];
@@ -55,23 +56,78 @@ const AddressSearch: React.FC<AddressSearchProps> = ({ polygonCoords, onValidAdd
     return () => map.remove();
   }, [MAPBOX_TOKEN, polygonCoords]);
 
-const fetchSuggestions = useCallback(
+  const fetchSuggestions = useCallback(
     async (value: string) => {
       if (value.trim().length < 3) {
         setSuggestions([]);
         return;
       }
+      // Check local overrides first (flexible normalize + substring match)
+      const normalize = (s: string) =>
+        s
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/\p{Diacritic}/gu, "")
+          .replace(/[\.,#\-]/g, "")
+          .replace(/\s+/g, " ")
+          .trim();
+
+      const normQuery = normalize(value);
+      let matchedKey: string | undefined;
+      for (const key of Object.keys(addressOverrides)) {
+        const normKey = normalize(key);
+        if (normQuery.includes(normKey) || normKey.includes(normQuery)) {
+          matchedKey = key;
+          break;
+        }
+      }
+      if (matchedKey) {
+        const ov = addressOverrides[matchedKey];
+        const synthetic = {
+          id: `override-${matchedKey}`,
+          place_name: ov.label || value,
+          geometry: { coordinates: ov.coords, type: "Point" },
+          properties: { source: "override" },
+        };
+        setSuggestions([synthetic]);
+        return;
+      }
       try {
-        const res = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(value)}.json?access_token=${MAPBOX_TOKEN}&autocomplete=true&limit=5&country=CL`
-        );
+        // If the user included a number in the query, prefer an exact (non-autocomplete) address lookup
+        const hasNumber = /\d/.test(value);
+        const centerProximity = polygonCoords && polygonCoords.length > 0
+          ? `${polygonCoords[0][0]},${polygonCoords[0][1]}` // Mapbox expects proximity=lng,lat
+          : undefined;
+
+        const params = new URLSearchParams({
+          access_token: MAPBOX_TOKEN,
+          country: "CL",
+          limit: "5",
+          types: "address",
+          language: "es",
+          autocomplete: hasNumber ? "false" : "true",
+        });
+        if (centerProximity) params.set("proximity", centerProximity);
+
+        const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(value)}.json?${params.toString()}`;
+        const res = await fetch(url);
         const data = await res.json();
+        // helpful debug when users report missing numbered addresses
+        if (!Array.isArray(data.features) || data.features.length === 0) {
+          // keep suggestions empty but surface debug info to console for development
+          // eslint-disable-next-line no-console
+          console.debug("Mapbox geocode empty result:", { query: value, url, data });
+          setSuggestions([]);
+          return;
+        }
         setSuggestions(data.features || []);
-      } catch {
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.debug("Mapbox geocode error:", err);
         setSuggestions([]);
       }
     },
-    [MAPBOX_TOKEN]
+    [MAPBOX_TOKEN, polygonCoords]
   );
 
   // Debounce + respeto del flag de supresión
@@ -127,7 +183,8 @@ const fetchSuggestions = useCallback(
     }
 
     if (mapRef.current) {
-      mapRef.current.flyTo({ center: coords, zoom: 15 });
+      // zoom a 16 para ver mejor el punto en el recorte del polígono
+      mapRef.current.flyTo({ center: coords, zoom: 16 });
       if (markerRef.current) markerRef.current.remove();
       markerRef.current = new mapboxgl.Marker().setLngLat(coords).addTo(mapRef.current);
     }

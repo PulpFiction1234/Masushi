@@ -5,6 +5,9 @@ import ProductOptionSelector from "./ProductOptionSelector";
 import BuildYourRollSelector from "./BuildYourRollSelector"; // ⬅️ NUEVO
 import { fmtMiles } from "@/utils/format";
 import { WIDE_THRESHOLD, type FitMode } from "@/utils/constants";
+import { useUserProfile } from "@/context/UserContext";
+import { useUser } from "@supabase/auth-helpers-react";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
 
 function parseArmalo(encoded?: string) {
   if (!encoded || !encoded.startsWith("armalo:")) return null;
@@ -28,6 +31,9 @@ const ProductCard: React.FC<Props> = ({
   fitMode = "cover",
   onFitChange,
 }) => {
+  const user = useUser();
+  const { isFavorite, addFavorite, removeFavorite } = useUserProfile();
+  
   const tieneOpciones = !!product.opciones?.length;
   const esArmalo = product.configuracion?.tipo === "armalo";
   const armalo = esArmalo ? parseArmalo(selectedOptionId) : null;
@@ -45,6 +51,23 @@ const ProductCard: React.FC<Props> = ({
 
   const disabled =
     esArmalo ? !armalo?.valid : (tieneOpciones && !selectedOptionId);
+
+  const productCode = product.codigo || String(product.id);
+  const isFav = user ? isFavorite(productCode) : false;
+
+  const toggleFavorite = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) {
+      alert("Inicia sesión para guardar favoritos");
+      return;
+    }
+    
+    if (isFav) {
+      await removeFavorite(productCode);
+    } else {
+      await addFavorite(productCode);
+    }
+  };
 
   return (
     <div className="bg-gray-900 rounded-lg shadow p-4 flex flex-col h-full">
@@ -78,6 +101,20 @@ const ProductCard: React.FC<Props> = ({
           <div className="absolute top-2 right-2 bg-green-600 text-white text-base font-bold px-2 py-1 rounded">
             {product.codigo}
           </div>
+        )}
+        {/* Botón de favorito en la esquina superior izquierda */}
+        {user && (
+          <button
+            onClick={toggleFavorite}
+            className="absolute top-2 left-2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 backdrop-blur-sm"
+            aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
+          >
+            {isFav ? (
+              <FaHeart className="text-red-500 text-xl" />
+            ) : (
+              <FaRegHeart className="text-white text-xl" />
+            )}
+          </button>
         )}
       </div>
 

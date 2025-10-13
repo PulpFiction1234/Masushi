@@ -6,6 +6,7 @@ import { useRouter } from "next/router";
 import { RiShoppingBag4Fill } from "react-icons/ri";
 
 import { CartProvider, useCart } from "@/context/CartContext";
+import { UserProvider } from "@/context/UserContext";
 import CarritoPanel from "@/components/CarritoPanel";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -62,16 +63,18 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <SessionContextProvider supabaseClient={supabaseClient} initialSession={pageProps.initialSession}>
-      <CartProvider>
-        <Component {...pageProps} />
+      <UserProvider>
+        <CartProvider>
+          <Component {...pageProps} />
 
-        {router.pathname !== "/checkout" && (
-          <FloatingCartButton onClick={() => setIsCartOpen(true)} />
-        )}
+          {router.pathname !== "/checkout" && (
+            <FloatingCartButton onClick={() => setIsCartOpen(true)} />
+          )}
 
-        <CarritoPanel open={isCartOpen} onClose={() => setIsCartOpen(false)} />
-        <Analytics />
-      </CartProvider>
+          <CarritoPanel open={isCartOpen} onClose={() => setIsCartOpen(false)} />
+          <Analytics />
+        </CartProvider>
+      </UserProvider>
     </SessionContextProvider>
   );
 }

@@ -3,12 +3,15 @@ import Link from "next/link";
 import Image from "next/image";
 import React, { useEffect, useState, useCallback } from "react";
 import { useCart } from "@/context/CartContext";
+import { useUser } from "@supabase/auth-helpers-react";
 import { RiShoppingBag4Fill } from "react-icons/ri";
+import { FaUser, FaHeart } from "react-icons/fa";
 import { useRouter } from "next/router";
 import logoMasushi from "@/public/images/logo-masushi.webp";
 
 const Navbar: React.FC = () => {
   const { cart } = useCart();
+  const user = useUser();
 
   // ← Flag de montaje: evita diferir del SSR en el primer render
   const [mounted, setMounted] = useState(false);
@@ -49,6 +52,36 @@ const Navbar: React.FC = () => {
         <Link href="/menu" className="hover:text-blue-400 text-sm sm:text-base">Carta</Link>
         <Link href="/menu?categoria=Promociones" className="hover:text-blue-400 text-sm sm:text-base">Promociones</Link>
         <Link href="/local" className="hover:text-blue-400 text-sm sm:text-base">Local</Link>
+
+        {/* Botones de usuario si está logueado */}
+        {mounted && user && (
+          <>
+            <Link
+              href="/menu?categoria=Mis%20favoritos"
+              className="relative inline-flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/40"
+              aria-label="Mis favoritos"
+            >
+              <FaHeart className="text-xl text-red-500" />
+            </Link>
+            <Link
+              href="/profile"
+              className="relative inline-flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/40"
+              aria-label="Mi perfil"
+            >
+              <FaUser className="text-xl" />
+            </Link>
+          </>
+        )}
+
+        {/* Botón de login si no está logueado */}
+        {mounted && !user && (
+          <Link
+            href="/login"
+            className="px-3 py-1.5 text-sm sm:text-base rounded bg-green-600 hover:bg-green-700 transition-colors"
+          >
+            Ingresar
+          </Link>
+        )}
 
         {showCartIcon && (
           <button

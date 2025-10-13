@@ -4,6 +4,7 @@ import React, { useMemo, useEffect, useState, useCallback, useRef } from "react"
 import { productos, type Producto, type ProductoOpcion } from "../data/productos";
 import { animateToCart } from "@/utils/animateToCart";
 import { useCart } from "@/context/CartContext";
+import { useUserProfile } from "@/context/UserContext";
 import ProductCard from "./ProductCard";
 import { normalize } from "@/utils/strings";
 import { type FitMode } from "@/utils/constants";
@@ -15,6 +16,7 @@ interface ListaProductosProps {
 
 const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada, busqueda = "" }) => {
   const { addToCart } = useCart();
+  const { favorites } = useUserProfile();
   const selected = categoriaSeleccionada ? normalize(categoriaSeleccionada) : "";
 
   const [seleccion, setSeleccion] = useState<Record<number, string>>({});
@@ -29,6 +31,14 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada, 
 
   // 1) Filtra por categoría + búsqueda (nombre/desc/código)
   const productosFiltrados = useMemo(() => {
+    // Si es categoría "Mis favoritos", filtrar por favoritos
+    if (selected === normalize("Mis favoritos")) {
+      return productos.filter((p) => {
+        const code = p.codigo || String(p.id);
+        return favorites.has(code);
+      });
+    }
+
     // base por categoría
     const base = selected
       ? productos.filter((p) => normalize(p.categoria) === selected)

@@ -7,6 +7,7 @@ import { useRouter } from "next/router";
 import ListaProductos from "@/components/ListaProductos";
 import Navbar from "@/components/Navbar";
 import Seo from "@/components/Seo";
+import { useUser } from "@supabase/auth-helpers-react";
 
 import { getMenuSchema } from "@/utils/menu-schema";
 
@@ -18,6 +19,7 @@ const ORIGIN =
 const ogImage = ORIGIN ? `${ORIGIN}/images/hero-1.webp` : "/images/hero-1.webp";
 
 const categorias = [
+  "Mis favoritos", // Nueva categoría especial
   "Roll premium", "Roll sin arroz", "Rolls envueltos en queso crema",
   "Rolls envueltos en palta", "Rolls envueltos en salmon", "California rolls",
   "Rolls vegetarianos", "Hot rolls", "Handrolls", "Hosomaki", "Sashimi",
@@ -25,6 +27,7 @@ const categorias = [
 ];
 
 export default function MenuPage() {
+  const user = useUser();
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string | null>(null);
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState("");
@@ -171,20 +174,25 @@ export default function MenuPage() {
               Todas
             </button>
 
-            {categorias.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => {
-                  setCategoriaSeleccionada(cat);
-                  setMenuAbierto(false);
-                }}
-                className={`block w-full text-left px-2.5 py-1.5 rounded text-sm transition-colors duration-200 ${
-                  categoriaSeleccionada === cat ? "bg-gray-700" : "hover:bg-gray-700"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+            {categorias.map((cat) => {
+              // Ocultar "Mis favoritos" si no hay usuario
+              if (cat === "Mis favoritos" && !user) return null;
+              
+              return (
+                <button
+                  key={cat}
+                  onClick={() => {
+                    setCategoriaSeleccionada(cat);
+                    setMenuAbierto(false);
+                  }}
+                  className={`block w-full text-left px-2.5 py-1.5 rounded text-sm transition-colors duration-200 ${
+                    categoriaSeleccionada === cat ? "bg-gray-700" : "hover:bg-gray-700"
+                  } ${cat === "Mis favoritos" ? "border-t border-gray-700 mt-2 pt-2" : ""}`}
+                >
+                  {cat}
+                </button>
+              );
+            })}
           </div>
         </aside>
 

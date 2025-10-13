@@ -3,6 +3,7 @@ import React, { useMemo, useReducer, useEffect } from "react";
 import dynamic from "next/dynamic";
 import useSWR from "swr";
 import { useCart } from "@/context/CartContext";
+import { useUser } from "@supabase/auth-helpers-react";
 import Navbar from "@/components/Navbar";
 import Seo from "@/components/Seo";
 
@@ -120,6 +121,7 @@ const salsasGratisPorUnidad = (it: CartItemLike): number => {
 
 export default function Checkout() {
   const { cart } = useCart();
+  const user = useUser();
   const [state, dispatch] = useReducer(checkoutReducer, initialCheckoutState);
   const [salsasValidas, setSalsasValidas] = React.useState(false);
 
@@ -391,6 +393,33 @@ export default function Checkout() {
         const msg = `${cuerpoAntesDeTotal.replace(/(\r?\n)+$/, "")}${NL}${NL}Total: ${fmt(totalFinal)}`;
 
         const mensaje = encodeURIComponent(msg);
+        
+        // Guardar pedido en BD si el usuario está logueado
+        if (user) {
+          try {
+            const orderItems = cartTyped.map((it) => ({
+              codigo: codePartOf(it),
+              nombre: it.nombre,
+              valor: priceOf(it),
+              cantidad: it.cantidad,
+              opcion: (it as any).opcion,
+            }));
+
+            await fetch("/api/orders", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                items: orderItems,
+                total: totalFinal,
+                delivery_type: deliveryType,
+                address: deliveryType === "delivery" ? shortAddress : null,
+              }),
+            });
+          } catch (error) {
+            console.error("Error saving order:", error);
+          }
+        }
+        
         // Probar con formato +56 al inicio
         window.open(`https://wa.me/56940873865?text=${mensaje}`, "_blank");
       })

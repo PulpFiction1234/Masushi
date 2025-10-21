@@ -12,6 +12,8 @@ import React, {
 } from "react";
 import type { StaticImageData } from "next/image";
 import type { Producto } from "@/data/productos";
+import { normalizeImageUrl, extractBlurDataUrl } from "@/utils/imageHelpers";
+import { getProductByCode } from "@/utils/productLookup";
 
 export type CartOpcion = { id: string; label: string };
 
@@ -142,23 +144,26 @@ export function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
   switch (action.type) {
     case ADD_ITEM: {
       const { prod, opcion, precioUnit } = action.payload;
+      // Siempre usar el producto del catálogo estático para imagen y blurDataUrl
+      const staticProd = getProductByCode(prod.codigo || "");
+      let imagen = '';
+      let blurDataUrl = undefined;
+      if (staticProd) {
+        if (typeof staticProd.imagen === 'object' && staticProd.imagen && 'src' in staticProd.imagen) {
+          imagen = staticProd.imagen.src;
+        } else if (typeof staticProd.imagen === 'string') {
+          imagen = staticProd.imagen;
+        }
+        blurDataUrl = staticProd.blurDataUrl;
+      }
+      imagen = imagen ? normalizeImageUrl(imagen) : '';
       const cartKey = `${prod.id}:${normId(opcion?.id)}`;
-
       const idx = state.findIndex((it) => it.cartKey === cartKey);
       if (idx >= 0) {
         const copy = [...state];
         copy[idx] = { ...copy[idx], cantidad: copy[idx].cantidad + 1 };
         return copy;
       }
-
-      const imagen =
-        typeof prod.imagen === "string" ? prod.imagen : (prod.imagen as StaticImageData).src;
-      const blurDataUrl =
-        prod.blurDataUrl ??
-        (typeof prod.imagen === "object"
-          ? (prod.imagen as StaticImageData).blurDataURL
-          : undefined);
-
       return [
         ...state,
         {
@@ -250,6 +255,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addToCart = useCallback<CartContextType["addToCart"]>(
     (prod, opts) => {
+      // Defensive: do not allow adding products that are globally disabled
+      if (prod.enabled === false) {
+        console.warn(`[CartContext] Intento de agregar producto deshabilitado: ${prod.nombre} (${prod.codigo})`);
+        // Mostrar feedback mínimo al usuario
+        try {
+          alert("Este producto no está disponible en este momento.");
+        } catch {}
+        return;
+      }
       const precioUnit = typeof opts?.precioUnit === "number" ? opts.precioUnit : prod.valor;
       const opcion = opts?.opcion;
       dispatch({ type: ADD_ITEM, payload: { prod, opcion, precioUnit } });

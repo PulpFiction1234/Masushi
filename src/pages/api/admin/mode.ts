@@ -10,7 +10,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   try {
     const supabase = createPagesServerClient({ req, res });
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return res.status(401).end();
+    
+    // Verificar autenticación
+    if (!session) {
+      return res.status(401).json({ mode: "normal" } as Res);
+    }
+
+    // Verificar rol de admin
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', session.user.id)
+      .single();
+
+    if (!profile || profile.role !== 'admin') {
+      return res.status(403).json({ mode: "normal" } as Res);
+    }
 
     if (req.method === "GET") {
       const mode = await getAdminModeWithReset();

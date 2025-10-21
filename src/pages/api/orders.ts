@@ -21,10 +21,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .limit(5);
 
     if (error) {
-      return res.status(500).json({ error: error.message });
+      console.error('Error fetching orders:', error);
+      // Si la tabla no existe, devolver array vacío en vez de error
+      if (error.code === '42P01') {
+        return res.status(200).json({ orders: [] });
+      }
+      return res.status(500).json({ error: error.message, code: error.code });
     }
 
-    return res.status(200).json({ orders: data });
+    return res.status(200).json({ orders: data || [] });
   }
 
   if (req.method === 'POST') {

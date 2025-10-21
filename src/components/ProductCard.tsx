@@ -8,6 +8,7 @@ import { WIDE_THRESHOLD, type FitMode } from "@/utils/constants";
 import { useUserProfile } from "@/context/UserContext";
 import { useUser } from "@supabase/auth-helpers-react";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
+import { animateToFavorites } from '@/utils/animateToFavorites';
 
 function parseArmalo(encoded?: string) {
   if (!encoded || !encoded.startsWith("armalo:")) return null;
@@ -21,6 +22,13 @@ interface Props {
   onAdd(e: React.MouseEvent<HTMLButtonElement>): void;
   fitMode?: FitMode;
   onFitChange(mode: FitMode): void;
+  // Optional override for enabled state supplied by parent (e.g. admin overrides map)
+  isAvailable?: boolean | undefined;
+  // Whether to show the add-to-cart button. Admin UI can set this false.
+  showAddButton?: boolean;
+  showPrice?: boolean;
+  // Optional extra area to render (used by admin to show enable/disable controls)
+  adminControls?: React.ReactNode;
 }
 
 const ProductCard: React.FC<Props> = ({
@@ -30,6 +38,10 @@ const ProductCard: React.FC<Props> = ({
   onAdd,
   fitMode = "cover",
   onFitChange,
+  isAvailable,
+  showAddButton = true,
+  showPrice = true,
+  adminControls,
 }) => {
   const user = useUser();
   const { isFavorite, addFavorite, removeFavorite } = useUserProfile();
@@ -52,6 +64,11 @@ const ProductCard: React.FC<Props> = ({
   const disabled =
     esArmalo ? !armalo?.valid : (tieneOpciones && !selectedOptionId);
 
+  // Determine effective availability: parent override takes precedence
+  const effectiveEnabled = typeof isAvailable === 'boolean' ? isAvailable : (product.enabled ?? true);
+  const globallyDisabled = effectiveEnabled === false;
+  const finalDisabled = disabled || globallyDisabled;
+
   const productCode = product.codigo || String(product.id);
   const isFav = user ? isFavorite(productCode) : false;
 
@@ -66,6 +83,10 @@ const ProductCard: React.FC<Props> = ({
       await removeFavorite(productCode);
     } else {
       await addFavorite(productCode);
+      try {
+        // trigger the favorite animation from the click position
+        animateToFavorites(e.nativeEvent as unknown as MouseEvent);
+      } catch {}
     }
   };
 
@@ -142,20 +163,41 @@ const ProductCard: React.FC<Props> = ({
       )}
 
       <div className="mt-auto">
-        <p className="font-bold text-gray-200 mt-3">
-          {"$"}
-          {fmtMiles.format(precioMostrar)}
-        </p>
+        {showPrice ? (
+          <>
+            <p className="font-bold text-gray-200 mt-3">
+              {"$"}
+              {fmtMiles.format(precioMostrar)}
+            </p>
 
-        <button
-          type="button"
-          onClick={onAdd}
-          className="bg-green-500 text-white px-4 py-2 mt-3 rounded hover:bg-green-600 w-full disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={disabled}
-          aria-disabled={disabled}
-        >
-          Agregar al carrito
-        </button>
+            {showAddButton ? (
+              globallyDisabled ? (
+                <button
+                  type="button"
+                  className="bg-gray-600 text-white px-4 py-2 mt-3 rounded w-full cursor-not-allowed"
+                  disabled
+                  aria-disabled
+                  title="Sin stock"
+                >
+                  Sin stock
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onAdd}
+                  className="bg-green-500 text-white px-4 py-2 mt-3 rounded hover:bg-green-600 w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={finalDisabled}
+                  aria-disabled={finalDisabled}
+                >
+                  Agregar al carrito
+                </button>
+              )
+            ) : null}
+          </>
+        ) : null}
+
+        {/* adminControls should render even when price/add button are hidden (admin view) */}
+        {adminControls ? <div className="mt-3">{adminControls}</div> : null}
       </div>
     </div>
   );

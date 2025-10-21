@@ -28,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'PUT') {
     // Actualizar perfil
-    const { full_name, phone } = req.body;
+    const { full_name, phone, address } = req.body;
 
     if (!full_name || !phone) {
       return res.status(400).json({ error: 'full_name and phone are required' });
@@ -36,7 +36,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { data, error } = await supabase
       .from('profiles')
-      .update({ full_name, phone })
+      .update({ 
+        full_name, 
+        phone,
+        address: address || null 
+      })
       .eq('id', userId)
       .select()
       .single();

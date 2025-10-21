@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { productos, type Producto } from "@/data/productos";
+import { getMergedProductsSync } from '@/utils/mergedProducts';
 import { formatCLP } from "@/utils/format";
 import { useCart } from "@/context/CartContext";
 import { animateToCart } from "@/utils/animateToCart";
@@ -15,8 +16,59 @@ interface Props {
 const RecomendacionesModal: React.FC<Props> = ({ open, onClose }) => {
   const { addToCart } = useCart();
 
-  // Filtrar solo las salsas extras
-  const salsasExtras = productos.filter(p => p.categoria === "Salsas extras");
+  // Keep all salsas extras visible but respect overrides for availability
+  const [overridesMap, setOverridesMap] = React.useState<Record<string, boolean>>({});
+
+  React.useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const r = await fetch('/api/product-overrides-public');
+        if (!r.ok) return;
+        const j = await r.json();
+        const map: Record<string, boolean> = {};
+        (j.overrides || []).forEach((o: any) => { if (o && o.codigo) map[o.codigo] = !!o.enabled; });
+        if (!mounted) return;
+        setOverridesMap(map);
+      } catch {}
+    })();
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'product-overrides-updated') {
+        (async () => {
+          try {
+            const r = await fetch('/api/product-overrides-public');
+            if (!r.ok) return;
+            const j = await r.json();
+            const map: Record<string, boolean> = {};
+            (j.overrides || []).forEach((o: any) => { if (o && o.codigo) map[o.codigo] = !!o.enabled; });
+            setOverridesMap(map);
+          } catch {}
+        })();
+      }
+    };
+
+    const onEvent = () => {
+      (async () => {
+        try {
+          const r = await fetch('/api/product-overrides-public');
+          if (!r.ok) return;
+          const j = await r.json();
+          const map: Record<string, boolean> = {};
+          (j.overrides || []).forEach((o: any) => { if (o && o.codigo) map[o.codigo] = !!o.enabled; });
+          setOverridesMap(map);
+        } catch {}
+      })();
+    };
+
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('product-overrides-changed', onEvent as EventListener);
+    return () => { mounted = false; window.removeEventListener('storage', onStorage); window.removeEventListener('product-overrides-changed', onEvent as EventListener); };
+  }, []);
+
+  const merged = getMergedProductsSync();
+  const source = merged && merged.length ? merged : productos;
+  const salsasExtras = source.filter(p => p.categoria === "Salsas extras");
 
   const handleAddSalsa = (producto: Producto, e: React.MouseEvent<HTMLButtonElement>) => {
     // Agregar al carrito con animación
@@ -78,12 +130,16 @@ const RecomendacionesModal: React.FC<Props> = ({ open, onClose }) => {
                         <span className="text-green-400 font-bold text-base sm:text-sm">
                           {formatCLP(salsa.valor)}
                         </span>
-                        <button
-                          onClick={(e) => handleAddSalsa(salsa, e)}
-                          className="bg-green-500 hover:bg-green-600 active:bg-green-700 text-white px-3 py-2 sm:px-3 sm:py-1 rounded text-sm sm:text-xs font-medium transition-colors active:scale-95 min-h-[40px] sm:min-h-0"
-                        >
-                          Agregar
-                        </button>
+                        { (overridesMap[salsa.codigo] ?? salsa.enabled) === false ? (
+                          <button className="bg-gray-600 text-white px-3 py-2 sm:px-3 sm:py-1 rounded text-sm sm:text-xs font-medium w-full cursor-not-allowed" disabled aria-disabled title="Sin stock">Sin stock</button>
+                        ) : (
+                          <button
+                            onClick={(e) => handleAddSalsa(salsa, e)}
+                            className="bg-green-500 hover:bg-green-600 active:bg-green-700 text-white px-3 py-2 sm:px-3 sm:py-1 rounded text-sm sm:text-xs font-medium transition-colors active:scale-95 min-h-[40px] sm:min-h-0"
+                          >
+                            Agregar
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

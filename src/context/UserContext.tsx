@@ -10,7 +10,7 @@ interface UserContextType {
   removeFavorite: (productCode: string) => Promise<void>;
   isFavorite: (productCode: string) => boolean;
   refreshProfile: () => Promise<void>;
-  updateProfile: (data: { full_name: string; phone: string }) => Promise<void>;
+  updateProfile: (data: { full_name: string; phone: string; address?: string }) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | null>(null);
@@ -136,7 +136,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await loadUserData();
   }, [loadUserData]);
 
-  const updateProfile = useCallback(async (data: { full_name: string; phone: string }) => {
+  const updateProfile = useCallback(async (data: { full_name: string; phone: string; address?: string }) => {
     if (!user) return;
 
     try {

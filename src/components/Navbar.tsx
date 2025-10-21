@@ -1,26 +1,48 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useCart } from "@/context/CartContext";
-import { useUser } from "@supabase/auth-helpers-react";
+import { useUser, useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useUserProfile } from "@/context/UserContext";
 import { RiShoppingBag4Fill } from "react-icons/ri";
-import { FaUser, FaHeart } from "react-icons/fa";
+import { FaUser } from "react-icons/fa";
 import { useRouter } from "next/router";
 import logoMasushi from "@/public/images/logo-masushi.webp";
 
 const Navbar: React.FC = () => {
   const { cart } = useCart();
   const user = useUser();
+  const supabase = useSupabaseClient();
+  const { profile } = useUserProfile();
+  const router = useRouter();
 
   // ← Flag de montaje: evita diferir del SSR en el primer render
   const [mounted, setMounted] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => setMounted(true), []);
+
+  // Cerrar menú al hacer click fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setShowProfileMenu(false);
+      }
+    };
+
+    if (showProfileMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showProfileMenu]);
 
   const totalItems = cart.reduce((sum, item) => sum + item.cantidad, 0);
   const safeCount = mounted ? totalItems : 0;
-
-  const router = useRouter();
 
    const openCart = useCallback(() => {
     if (typeof window !== "undefined") {
@@ -29,6 +51,15 @@ const Navbar: React.FC = () => {
     }, []);
 
   const showCartIcon = router.pathname !== "/checkout";
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setShowProfileMenu(false);
+    router.push("/");
+  };
+
+  // Obtener nombre del usuario
+  const userName = profile?.full_name || user?.email?.split("@")[0] || "Usuario";
 
   return (
     <nav className="bg-gray-950 shadow-md px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 flex justify-between items-center sticky top-0 z-50 text-white">
@@ -48,29 +79,65 @@ const Navbar: React.FC = () => {
 
       {/* Links + Carrito */}
       <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
-        <Link href="/" className="hover:text-blue-400 text-sm sm:text-base">Inicio</Link>
         <Link href="/menu" className="hover:text-blue-400 text-sm sm:text-base">Carta</Link>
         <Link href="/menu?categoria=Promociones" className="hover:text-blue-400 text-sm sm:text-base">Promociones</Link>
         <Link href="/local" className="hover:text-blue-400 text-sm sm:text-base">Local</Link>
 
-        {/* Botones de usuario si está logueado */}
+        {/* Botón de perfil si está logueado con menú desplegable */}
         {mounted && user && (
-          <>
-            <Link
-              href="/menu?categoria=Mis%20favoritos"
-              className="relative inline-flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/40"
-              aria-label="Mis favoritos"
-            >
-              <FaHeart className="text-xl text-red-500" />
-            </Link>
-            <Link
-              href="/profile"
+          <div className="relative" ref={profileMenuRef}>
+            <button
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
               className="relative inline-flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/40"
               aria-label="Mi perfil"
             >
               <FaUser className="text-xl" />
-            </Link>
-          </>
+            </button>
+
+            {/* Menú desplegable */}
+            {showProfileMenu && (
+              <div className="absolute right-0 mt-2 w-64 bg-gray-900 border border-gray-700 rounded-lg shadow-xl overflow-hidden z-50">
+                {/* Bienvenida */}
+                <div className="px-4 py-3 bg-gray-800 border-b border-gray-700">
+                  <p className="text-sm text-gray-400">Bienvenido,</p>
+                  <p className="text-base font-semibold text-red-500 truncate">
+                    {userName}
+                  </p>
+                </div>
+
+                {/* Opciones del menú */}
+                <div className="py-2">
+                  <Link
+                    href="/profile"
+                    onClick={() => setShowProfileMenu(false)}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition-colors"
+                  >
+                    <FaUser className="text-white" />
+                    <span className="text-white">Mi perfil</span>
+                  </Link>
+
+                  <a
+                    href="https://wa.me/56912345678"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setShowProfileMenu(false)}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition-colors"
+                  >
+                    <span className="text-white">📞</span>
+                    <span className="text-white">Contáctanos</span>
+                  </a>
+
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-3 bg-red-600 hover:bg-red-700 transition-colors text-white font-semibold"
+                  >
+                    <span>🚪</span>
+                    <span>Cerrar Sesión</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Botón de login si no está logueado */}

@@ -166,6 +166,7 @@ export interface Producto {
   valor: number;          // precio base
   imagen: string | StaticImageData;
   categoria: string;
+  enabled?: boolean;      // nuevo: producto habilitado (true por defecto)
   opciones?: ProductoOpcion[]; // ← SOLO si el producto tiene variantes
   blurDataUrl?: string;
   salsasGratis?: number;
@@ -203,8 +204,8 @@ const _productos: Producto[] = [
 
 // rolls especiales
 
-    { id: 1, codigo: "001", nombre: "Maguro acevichado", descripcion: "Camaron apanado - Palta - en Atun con salsa acevichada.", valor: 7500, imagen: MaguroRollImg, categoria: "Roll premium" },
-    { id: 2, codigo: "002", nombre: "Acevichado roll", descripcion: "Camarón - Queso crema -Palta - En salmon con salsa acevichada.", valor: 7100, imagen: AcevichadoRollImg, categoria: "Roll premium" },
+  { id: 1, codigo: "001", nombre: "Maguro acevichado", descripcion: "Camaron apanado - Palta - en Atun con salsa acevichada.", valor: 7500, imagen: MaguroRollImg, categoria: "Roll premium", enabled: true },
+  { id: 2, codigo: "002", nombre: "Acevichado roll", descripcion: "Camarón - Queso crema -Palta - En salmon con salsa acevichada.", valor: 7100, imagen: AcevichadoRollImg, categoria: "Roll premium", enabled: true },
     { id: 3, codigo: "003", nombre: "Ceviche roll", descripcion: "Camarón - Queso crema - Cebollin - En panko con ceviche.", valor: 9900, imagen: CevicheRollImg, categoria: "Roll premium" },
     { id: 4, codigo: "004", nombre: "Ebi ahumado", descripcion: "Camaron - Queso crema - Palta - En salmon ahumado.", valor: 7100, imagen: ebiAhumadoImg, categoria: "Roll premium" },
 

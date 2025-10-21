@@ -4,11 +4,13 @@
 -- Ejecutar en el SQL Editor de Supabase
 
 -- 1. Tabla de perfiles de clientes
--- Almacena info adicional del usuario (nombre, teléfono)
+-- Almacena info adicional del usuario (nombre, teléfono, dirección)
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name TEXT NOT NULL,
   phone TEXT NOT NULL,
+  address TEXT, -- Dirección de delivery (opcional)
+  role TEXT DEFAULT 'user' CHECK (role IN ('user', 'admin')), -- Rol del usuario
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -67,7 +69,9 @@ CREATE POLICY "Users can delete own favorites"
 CREATE TABLE IF NOT EXISTS public.orders (
   id BIGSERIAL PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  items JSONB NOT NULL, -- Array de items: [{ codigo, nombre, valor, cantidad, opcion }]
+  items JSONB NOT NULL, -- Array de items OPTIMIZADO: [{ codigo, cantidad, opcion }]
+                        -- Ya NO incluye nombre, valor para ahorrar espacio
+                        -- La app busca estos datos desde el catálogo de productos
   total INTEGER NOT NULL, -- Total en pesos
   delivery_type TEXT NOT NULL CHECK (delivery_type IN ('retiro', 'delivery')),
   address TEXT, -- Solo si es delivery
@@ -143,7 +147,11 @@ GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO authenticated;
 -- ============================================
 -- 1. Usamos product_code (TEXT) en vez de product_id para evitar joins
 --    y porque los productos están en código (no en DB)
--- 2. JSONB para items de pedidos: compacto y flexible
+-- 2. JSONB para items de pedidos: ULTRA OPTIMIZADO
+--    - Solo guardamos: { codigo, cantidad, opcion }
+--    - NO guardamos: nombre, valor, imagen (se buscan en el catálogo)
+--    - Reduce el tamaño de cada pedido en ~70%
+--    - Ejemplo: [{"codigo":"001","cantidad":2,"opcion":{"id":"p6","label":"6 piezas"}}]
 -- 3. Índices estratégicos para queries frecuentes
 -- 4. RLS habilitado para seguridad automática
 -- 5. Triggers para mantener datos consistentes

@@ -7,20 +7,26 @@ import { useCart } from "@/context/CartContext";
 import { useUserProfile } from "@/context/UserContext";
 import ProductCard from "./ProductCard";
 import { normalize } from "@/utils/strings";
+import { matchesTokens } from "@/utils/search";
 import { type FitMode } from "@/utils/constants";
 
 interface ListaProductosProps {
   categoriaSeleccionada: string | null;
   busqueda?: string; // ← NUEVO
+  showDisabled?: boolean; // si true, también muestra productos deshabilitados (para admin)
+  renderExtra?: (prod: Producto, isAvailable: boolean) => React.ReactNode;
+  hideAddButton?: boolean;
 }
 
-const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada, busqueda = "" }) => {
+const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada, busqueda = "", showDisabled = false, renderExtra, hideAddButton = false }) => {
   const { addToCart } = useCart();
   const { favorites } = useUserProfile();
   const selected = categoriaSeleccionada ? normalize(categoriaSeleccionada) : "";
 
   const [seleccion, setSeleccion] = useState<Record<number, string>>({});
   const [fitMap, setFitMap] = useState<Record<number, FitMode>>({});
+  const [overridesMap, setOverridesMap] = useState<Record<string, boolean>>({});
+  const [productsState, setProductsState] = useState<ReadonlyArray<Readonly<Producto>>>(() => productos);
 
   // 🔎 NUEVO: utilidades búsqueda
   const query = normalize(busqueda).trim();
@@ -29,11 +35,120 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada, 
     [query]
   );
 
+  // Fetch product overrides (public) and build a quick map
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const r = await fetch('/api/product-overrides-public');
+        if (!r.ok) return;
+        const json = await r.json();
+        const map: Record<string, boolean> = {};
+        (json.overrides || []).forEach((o: any) => {
+          if (o && o.codigo) map[o.codigo] = !!o.enabled;
+        });
+        if (mounted) setOverridesMap(map);
+      } catch (e) {
+        // noop
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  // Also read a localStorage-backed map so the admin can optimistically broadcast
+  // changes and the UI updates instantly even if the public API is slow/fails.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('product-overrides-map');
+      if (raw) {
+        const parsed = JSON.parse(raw) as Record<string, boolean>;
+        setOverridesMap((prev) => ({ ...prev, ...parsed }));
+      }
+    } catch {}
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'product-overrides-map' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue) as Record<string, boolean>;
+          setOverridesMap((prev) => ({ ...prev, ...parsed }));
+        } catch {}
+      }
+
+      if (e.key === 'product-overrides-updated') {
+        // fallback: re-fetch public overrides
+        (async () => {
+          try {
+            const r = await fetch('/api/product-overrides-public');
+            if (!r.ok) return;
+            const j = await r.json();
+            const map: Record<string, boolean> = {};
+            (j.overrides || []).forEach((o: any) => {
+              if (o && o.codigo) map[o.codigo] = !!o.enabled;
+            });
+            setOverridesMap(map);
+          } catch {}
+        })();
+      }
+    };
+
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
+  // Fetch merged products (static + overrides) for efficient rendering and caching
+  // We keep the static `productos` (with StaticImageData) as the source of truth
+  // and only fetch `product_overrides_public` to update enabled flags. Using
+  // `/api/products-merged` replaces StaticImageData with serialized strings
+  // and can cause image loading issues in dev. So we avoid replacing productsState.
+
+  // Re-fetch the public overrides map when admin updates overrides so we can
+  // merge locally while keeping StaticImageData intact.
+  useEffect(() => {
+    const doRefreshOverrides = async () => {
+      try {
+        const r = await fetch('/api/product-overrides-public');
+        if (!r.ok) return;
+        const j = await r.json();
+        const map: Record<string, boolean> = {};
+        (j.overrides || []).forEach((o: any) => {
+          if (o && o.codigo) map[o.codigo] = !!o.enabled;
+        });
+        setOverridesMap(map);
+      } catch (e) {
+        // ignore
+      }
+    };
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'product-overrides-updated') doRefreshOverrides();
+    };
+
+    const onEvent = (ev?: Event) => {
+      // If admin dispatched detail, update map directly
+      try {
+        const ce = ev as CustomEvent | undefined;
+        if (ce && (ce as any).detail && (ce as any).detail.codigo) {
+          const d = (ce as any).detail as { codigo: string; enabled: boolean };
+          setOverridesMap((prev) => ({ ...prev, [d.codigo]: !!d.enabled }));
+          return;
+        }
+      } catch {}
+      doRefreshOverrides();
+    };
+
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('product-overrides-changed', onEvent as EventListener);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('product-overrides-changed', onEvent as EventListener);
+    };
+  }, []);
+
   // 1) Filtra por categoría + búsqueda (nombre/desc/código)
   const productosFiltrados = useMemo(() => {
     // Si es categoría "Mis favoritos", filtrar por favoritos
     if (selected === normalize("Mis favoritos")) {
-      return productos.filter((p) => {
+      return productsState.filter((p) => {
         const code = p.codigo || String(p.id);
         return favorites.has(code);
       });
@@ -41,30 +156,23 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada, 
 
     // base por categoría
     const base = selected
-      ? productos.filter((p) => normalize(p.categoria) === selected)
-      : productos;
+      ? productsState.filter((p) => normalize(p.categoria) === selected)
+      : productsState;
 
-    if (tokens.length === 0) return base;
+      // Do NOT remove disabled products from the listing — show the card but
+      // let ProductCard render a disabled "Sin stock" button when appropriate.
+      const baseFiltered = base;
 
-    return base.filter((p) => {
-      const nombre = normalize(p.nombre);
-      const desc = normalize(p.descripcion ?? "");
-      const cod = normalize(p.codigo ?? "");
-      const codSinCeros = cod.replace(/^0+/, "");
+      if (tokens.length === 0) return baseFiltered;
 
-      // AND: todos los tokens deben aparecer en algún campo
-      return tokens.every((t) => {
-        const tSinCeros = t.replace(/^0+/, "");
-        return (
-          nombre.includes(t) ||
-          desc.includes(t) ||
-          cod.includes(t) ||
-          codSinCeros.includes(t) ||
-          cod.includes(tSinCeros)
-        );
-      });
-    });
-  }, [selected, tokens]);
+      const matched = baseFiltered.filter((p) => matchesTokens(p, tokens));
+
+      try {
+        console.debug('public-search', { tokens, matchedCount: matched.length, first: matched.slice(0, 10).map((m) => ({ codigo: m.codigo, nombre: m.nombre })) });
+      } catch {}
+
+      return matched;
+  }, [selected, tokens, favorites, showDisabled]);
 
   // 2) Ordena estable
   const productosOrdenados = useMemo(() => {
@@ -253,16 +361,22 @@ if (prod.configuracion?.tipo === "armalo") {
           }}
           className="p-2 box-border"
         >
-          <ProductCard
-            product={prod}
-            selectedOptionId={seleccionActual}
-            onSelectOption={(id) => setSeleccion((prev) => ({ ...prev, [prod.id]: id }))}
-            fitMode={fitMap[prod.id]}
-            onFitChange={(mode) =>
-              setFitMap((m) => (m[prod.id] === mode ? m : { ...m, [prod.id]: mode }))
-            }
-            onAdd={(e) => onAdd(prod, seleccionActual, e)}
-          />
+            <div className="flex flex-col h-full">
+            <ProductCard
+              product={prod}
+              selectedOptionId={seleccionActual}
+              onSelectOption={(id) => setSeleccion((prev) => ({ ...prev, [prod.id]: id }))}
+              fitMode={fitMap[prod.id]}
+              onFitChange={(mode) =>
+                setFitMap((m) => (m[prod.id] === mode ? m : { ...m, [prod.id]: mode }))
+              }
+              onAdd={(e) => onAdd(prod, seleccionActual, e)}
+              isAvailable={typeof overridesMap[prod.codigo] === 'boolean' ? overridesMap[prod.codigo] : (prod.enabled ?? true)}
+              showAddButton={!hideAddButton}
+              showPrice={!hideAddButton}
+              adminControls={renderExtra ? renderExtra(prod, typeof overridesMap[prod.codigo] === 'boolean' ? overridesMap[prod.codigo] : (prod.enabled ?? true)) : undefined}
+            />
+          </div>
         </div>
       );
     }

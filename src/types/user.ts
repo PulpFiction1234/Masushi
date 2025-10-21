@@ -4,6 +4,8 @@ export interface UserProfile {
   id: string;
   full_name: string;
   phone: string;
+  address?: string; // Dirección de delivery opcional
+  role: 'user' | 'admin'; // Rol del usuario
   created_at: string;
   updated_at: string;
 }
@@ -17,13 +19,18 @@ export interface Favorite {
 
 export interface OrderItem {
   codigo: string;
-  nombre: string;
-  valor: number;
   cantidad: number;
   opcion?: {
     id: string;
     label: string;
   };
+}
+
+// Interfaz extendida para cuando se muestra con datos del producto
+export interface OrderItemWithDetails extends OrderItem {
+  nombre: string;
+  valor: number;
+  imagen?: string;
 }
 
 export interface Order {

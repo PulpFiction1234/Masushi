@@ -8,18 +8,35 @@ import addressOverrides from "@/data/addressOverrides";
 interface AddressSearchProps {
   polygonCoords: number[][];
   onValidAddress: (address: string, coords: [number, number]) => void;
+  initialValue?: string; // Dirección inicial para autocompletar
 }
 
-const AddressSearch: React.FC<AddressSearchProps> = ({ polygonCoords, onValidAddress }) => {
-  const [query, setQuery] = useState("");
+const AddressSearch: React.FC<AddressSearchProps> = ({ 
+  polygonCoords, 
+  onValidAddress,
+  initialValue 
+}) => {
+  const [query, setQuery] = useState(initialValue || "");
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [status, setStatus] = useState("");
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
+  const hasInitializedRef = useRef(false);
 
   // 🔒 Evita fetch inmediatamente después de seleccionar una sugerencia
   const suppressNextFetchRef = useRef(false);
+
+  // Actualizar query cuando cambia initialValue (solo una vez)
+  useEffect(() => {
+    if (initialValue && !hasInitializedRef.current) {
+      setQuery(initialValue);
+      if (initialValue.trim().length > 0) {
+        setStatus("✅ Dirección guardada - Puedes editarla o dejarla así");
+      }
+      hasInitializedRef.current = true;
+    }
+  }, [initialValue]);
 
   const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
 

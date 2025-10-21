@@ -4,6 +4,10 @@
 
 ### 📊 Estado: ✅ COMPLETADO
 
+### ⚠️ IMPORTANTE: Antes de probar
+**Debes ejecutar `supabase-schema.sql` en tu Supabase SQL Editor.**  
+Ver instrucciones detalladas en [`USUARIOS-README.md`](./USUARIOS-README.md#-configuración-de-supabase)
+
 ---
 
 ## 🎨 Funcionalidades Implementadas
@@ -49,10 +53,15 @@
   - Nombre completo
   - Teléfono
   - Email (de Supabase Auth)
+  - Dirección de delivery (opcional)
 - **Editar datos**
   - Formulario inline de edición
   - Validaciones
+  - Campo de dirección para autocompletado
   - Guardado con actualización inmediata
+- **Autocompletado inteligente**
+  - Dirección se autocompleta en checkout cuando el usuario elige delivery
+  - Nombre y teléfono también se autocompletar si están guardados
 - **Historial de pedidos**
   - Visualización de últimos 5
   - Botón "Repetir pedido" por cada uno
@@ -80,6 +89,7 @@
 - id (UUID, PK, FK a auth.users)
 - full_name (TEXT)
 - phone (TEXT)
+- address (TEXT, nullable) -- Dirección de delivery
 - created_at (TIMESTAMPTZ)
 - updated_at (TIMESTAMPTZ)
 ```
@@ -123,6 +133,7 @@
 ```
 ✨ Nuevos archivos:
 ├── supabase-schema.sql              # Schema completo de BD
+├── migration-add-address.sql        # Migración para agregar campo address
 ├── USUARIOS-README.md               # Documentación completa
 ├── RESUMEN-IMPLEMENTACION.md        # Este archivo
 ├── src/
@@ -186,24 +197,28 @@ npm run dev
 ### 5. Probar flujo completo
 1. ✅ Ir a http://localhost:3000/register
 2. ✅ Registrar un nuevo usuario
-3. ✅ Ir al menú y agregar productos a favoritos (❤️)
-4. ✅ Seleccionar categoría "Mis favoritos"
-5. ✅ Hacer un pedido completo (checkout → WhatsApp)
-6. ✅ Ir a /profile
-7. ✅ Ver el pedido en el historial
-8. ✅ Hacer click en "Repetir pedido"
-9. ✅ Editar perfil
-10. ✅ Cerrar sesión
+3. ✅ Ir a /profile y agregar una dirección de delivery
+4. ✅ Ir al menú y agregar productos a favoritos (❤️)
+5. ✅ Seleccionar categoría "Mis favoritos"
+6. ✅ Iniciar un pedido, elegir "Delivery"
+7. ✅ Verificar que la dirección se autocompletó
+8. ✅ Completar y enviar pedido (checkout → WhatsApp)
+9. ✅ Volver a /profile
+10. ✅ Ver el pedido en el historial
+11. ✅ Hacer click en "Repetir pedido"
+12. ✅ Editar perfil (cambiar dirección)
+13. ✅ Cerrar sesión
 
 ---
 
 ## 📊 Métricas de Implementación
 
-- **Archivos creados**: 9
-- **Archivos modificados**: 8
-- **Líneas de código**: ~2,500+
+- **Archivos creados**: 10 (incluye migration-add-address.sql)
+- **Archivos modificados**: 9
+- **Líneas de código**: ~2,700+
 - **API Endpoints**: 3 nuevos (`/api/favorites`, `/api/orders`, `/api/profile`)
 - **Tablas de BD**: 3 nuevas
+- **Campos en profiles**: 5 (id, full_name, phone, address, created_at, updated_at)
 - **Tiempo estimado de implementación**: Completo ✅
 
 ---

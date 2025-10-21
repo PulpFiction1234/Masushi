@@ -24,7 +24,9 @@ Se ha implementado un sistema completo de usuarios clientes con las siguientes f
 
 4. **Página de perfil (`/profile`)**
    - Ver y editar nombre y teléfono
+   - Ver y editar dirección de delivery (opcional)
    - Ver email (no editable)
+   - Autocompletado de dirección en checkout
    - Lista de últimos pedidos con detalles
    - Botón de cerrar sesión
 
@@ -35,11 +37,54 @@ Se ha implementado un sistema completo de usuarios clientes con las siguientes f
 
 ## 📋 Configuración de Supabase
 
-### 1. Ejecutar el schema SQL
+### ⚠️ PASO 1 - CRÍTICO: Ejecutar el schema SQL PRIMERO
 
-Ejecuta el archivo `supabase-schema.sql` en el SQL Editor de tu proyecto Supabase. Este script crea:
+**🚨 Sin este paso, nada funcionará. Verás errores 404 y 500.**
 
-- Tabla `profiles` (nombre, teléfono)
+#### Para instalación nueva:
+
+1. **Ve a [Supabase Dashboard](https://supabase.com/dashboard)** → Tu proyecto
+2. **Click en "SQL Editor"** en el menú lateral
+3. **Click en "+ New Query"**
+4. **Abre el archivo** `supabase-schema.sql` (está en la raíz del proyecto)
+5. **Copia TODO su contenido** (Ctrl+A, Ctrl+C)
+6. **Pégalo en el editor SQL** de Supabase
+7. **Click en "Run"** (botón verde) o presiona `Ctrl + Enter`
+
+Verás mensajes como:
+```
+✓ CREATE TABLE
+✓ CREATE INDEX  
+✓ CREATE POLICY
+✓ CREATE FUNCTION
+✓ CREATE TRIGGER
+```
+
+#### ✅ Verificar que funcionó:
+
+En el SQL Editor, ejecuta esto:
+```sql
+SELECT table_name 
+FROM information_schema.tables 
+WHERE table_schema = 'public' 
+AND table_name IN ('profiles', 'favorites', 'orders');
+```
+
+**Debes ver 3 filas:** `profiles`, `favorites`, `orders`
+
+Si no aparecen las 3 tablas, **repite el proceso desde el paso 1**.
+
+#### Si ya tenías el sistema anterior (sin dirección):
+
+Solo ejecuta `migration-add-address.sql` en lugar del schema completo.
+
+---
+
+### 2. Contenido del Schema
+
+El script `supabase-schema.sql` crea:
+
+- Tabla `profiles` (nombre, teléfono, dirección)
 - Tabla `favorites` (productos favoritos)
 - Tabla `orders` (historial de pedidos)
 - Políticas RLS para seguridad
@@ -107,10 +152,11 @@ src/pages/checkout.tsx           # Guardado de pedidos
 ### Para usuarios (clientes):
 
 1. **Registrarse**: Ir a `/register` o hacer clic en "Ingresar" → "Regístrate aquí"
-2. **Agregar favoritos**: Click en el corazón de cualquier producto
-3. **Ver favoritos**: Seleccionar "Mis favoritos" en el menú
-4. **Ver perfil**: Click en el icono de usuario en el navbar
-5. **Repetir pedido**: En el perfil, click en "Repetir pedido"
+2. **Configurar perfil**: Ir a `/profile` y agregar dirección de delivery
+3. **Agregar favoritos**: Click en el corazón de cualquier producto
+4. **Ver favoritos**: Seleccionar "Mis favoritos" en el menú
+5. **Hacer pedido**: La dirección se autocompletará si está guardada en el perfil
+6. **Repetir pedido**: En el perfil, click en "Repetir pedido"
 
 ### Para admins:
 
@@ -129,6 +175,7 @@ src/pages/checkout.tsx           # Guardado de pedidos
 1. **Almacenamiento eficiente**:
    - Favoritos: Solo código de producto (TEXT) en vez de joins complejos
    - Pedidos: Items en JSONB (compacto y flexible)
+   - Dirección: Campo opcional en perfil (no crea tabla separada)
    - Sin redundancia de datos de productos
 
 2. **Índices estratégicos**:
@@ -156,8 +203,9 @@ src/pages/checkout.tsx           # Guardado de pedidos
    ```
 
 3. Probar flujos:
-   - Registro → Login → Agregar favorito → Ver perfil
-   - Hacer pedido → Verificar en perfil → Repetir pedido
+   - Registro → Login → Configurar dirección en perfil
+   - Hacer checkout tipo delivery → Verificar autocompletado
+   - Agregar favorito → Ver perfil → Repetir pedido
 
 ### Endpoints API:
 

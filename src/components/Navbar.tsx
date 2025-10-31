@@ -48,7 +48,6 @@ const Navbar: React.FC = () => {
 
       {/* Links + Carrito */}
       <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
-        <Link href="/" className="hover:text-blue-400 text-sm sm:text-base">Inicio</Link>
         <Link href="/menu" className="hover:text-blue-400 text-sm sm:text-base">Carta</Link>
         <Link href="/menu?categoria=Promociones" className="hover:text-blue-400 text-sm sm:text-base">Promociones</Link>
         <Link href="/local" className="hover:text-blue-400 text-sm sm:text-base">Local</Link>

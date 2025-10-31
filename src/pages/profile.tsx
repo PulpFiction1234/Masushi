@@ -7,13 +7,15 @@ import { useUserProfile } from "@/context/UserContext";
 import Seo from "@/components/Seo";
 import type { Order } from "@/types/user";
 import { fmtMiles } from "@/utils/format";
+import { productos } from "@/data/productos";
+import { getProductName, getProductPrice } from "@/utils/productLookup";
 import { useCart } from "@/context/CartContext";
 
 export default function ProfilePage() {
   const router = useRouter();
   const user = useUser();
   const supabase = useSupabaseClient();
-  const { profile, updateProfile, refreshProfile } = useUserProfile();
+  const { profile, updateProfile, refreshProfile, loading: profileLoading } = useUserProfile();
   const { addToCart } = useCart();
 
   const [editing, setEditing] = useState(false);
@@ -25,6 +27,10 @@ export default function ProfilePage() {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
+    // Wait until profile/auth initialization finishes before redirecting.
+    // `useUser` may be briefly null on reload while the client restores session.
+    if (profileLoading) return;
+
     if (!user) {
       router.push("/login");
       return;
@@ -34,7 +40,7 @@ export default function ProfilePage() {
       setFullName(profile.full_name);
       setPhone(profile.phone);
     }
-  }, [user, profile, router]);
+  }, [user, profile, router, profileLoading]);
 
   useEffect(() => {
     const loadOrders = async () => {
@@ -90,14 +96,29 @@ export default function ProfilePage() {
     // Agregar todos los items del pedido al carrito
     order.items.forEach((item) => {
       // Buscar el producto correspondiente (simplificado)
+      // Intentar resolver la imagen real por código; si no existe, usar un placeholder pequeño (SVG data URL)
+      // Intento rápido de resolver la imagen usando el listado estático de productos
+      const prodMatch = productos.find((p) => (p.codigo || "").trim() === (item.codigo || "").trim());
+      const resolved = prodMatch
+        ? (typeof prodMatch.imagen === "string"
+            ? prodMatch.imagen
+            : ((prodMatch.imagen as unknown) as { src?: string }).src)
+        : undefined;
+      const placeholderSvg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="100%" height="100%" fill="%23222"/><text x="50%" y="50%" font-size="14" fill="%23fff" text-anchor="middle" alignment-baseline="central">Sin imagen</text></svg>';
+
+      // Ensure we have a sensible nombre/valor when older orders lack them
+      const nombreResolved = item.nombre || (prodMatch ? prodMatch.nombre : getProductName(item.codigo || "")) || `Producto ${item.codigo}`;
+      const valorResolved = typeof item.valor === 'number' && !Number.isNaN(item.valor) ? item.valor : (prodMatch ? prodMatch.valor : getProductPrice(item.codigo || "")) || 0;
+
       const producto = {
         id: parseInt(item.codigo) || 0,
         codigo: item.codigo,
-        nombre: item.nombre,
-        valor: item.valor,
+        nombre: nombreResolved,
+        valor: valorResolved,
         descripcion: "",
-        imagen: "",
+        imagen: resolved || placeholderSvg,
         categoria: "",
+        // nota: no incluimos blurDataUrl aquí; los componentes gestionan fallback
       };
 
       addToCart(producto, {
@@ -245,12 +266,15 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="space-y-1 mb-3">
-                    {order.items.map((item, idx) => (
-                      <div key={idx} className="text-sm text-gray-300">
-                        {item.cantidad}x {item.nombre}
-                        {item.opcion && ` (${item.opcion.label})`}
-                      </div>
-                    ))}
+                    {order.items.map((item, idx) => {
+                      const displayName = item.nombre || getProductName(item.codigo || "") || `Producto ${item.codigo}`;
+                      return (
+                        <div key={idx} className="text-sm text-gray-300">
+                          {item.cantidad}x {displayName}
+                          {item.opcion && ` (${item.opcion.label})`}
+                        </div>
+                      );
+                    })}
                   </div>
 
                   <button

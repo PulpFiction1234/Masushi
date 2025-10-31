@@ -7,9 +7,9 @@ import {
 import React from "react";
 
 const smallInput =
-  "border border-white/10 bg-neutral-800/80 rounded-xl w-20 px-2 py-1 text-center text-sm text-neutral-100 focus:outline-none focus:ring-2 focus:ring-green-500";
+  "border border-white/10 bg-neutral-800/80 rounded-lg w-16 px-1.5 py-1 text-center text-xs text-neutral-100 focus:outline-none focus:ring-2 focus:ring-green-500";
 const inputBase =
-  "w-full rounded-xl border border-white/10 bg-neutral-800/80 px-3 py-2 text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent";
+  "w-full rounded-lg border border-white/10 bg-neutral-800/80 px-2 py-1 text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm";
 
 interface Props {
   state: CheckoutState;
@@ -32,6 +32,20 @@ export default function ExtrasSelector({
   maxPalitosGratis = 0,
   onValidationChange,
 }: Props) {
+  // Small Toggle component to mimic pill switches used in the mock
+  const Toggle: React.FC<{ checked: boolean; onChange: (v: boolean) => void; ariaLabel?: string }> = ({ checked, onChange, ariaLabel }) => {
+    return (
+      <button
+        type="button"
+        aria-label={ariaLabel}
+        aria-pressed={checked}
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex items-center h-6 w-11 rounded-full transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 ${checked ? 'bg-red-500' : 'bg-neutral-700/60'}`}
+      >
+        <span className={`inline-block w-4 h-4 bg-white rounded-full transform transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
+      </button>
+    );
+  };
   // ===== Estados de "Sin salsas" =====
   const [sinSalsasBasicas, setSinSalsasBasicas] = React.useState(false);
   const [sinJengibreWasabi, setSinJengibreWasabi] = React.useState(false);
@@ -108,47 +122,38 @@ export default function ExtrasSelector({
   return (
     <div>
       {/* === Salsas gratis (todo en un MISMO recuadro) === */}
-      <div className={`rounded-xl border p-3 bg-neutral-900/60 ${!esValido ? 'border-orange-400/50 bg-orange-900/10' : 'border-white/10'}`}>
-        <h4 className="font-semibold mb-3 text-neutral-50">
-          Salsas gratis del pedido
-          {!esValido && (
-            <span className="ml-2 text-sm text-orange-400 font-normal">
-              (Selecciona salsas o marca &ldquo;Sin salsas&rdquo;)
-            </span>
-          )}
-        </h4>
+  <div className={`rounded-lg border p-3 bg-neutral-900/60 ${!esValido ? 'border-orange-400/50 bg-orange-900/10' : 'border-white/10'}`}>
+        <h4 className="font-semibold mb-2 text-neutral-50 text-sm">Incluimos en tu pedido</h4>
 
         {/* 2 columnas: izquierda Soya/Teri, derecha Jengibre/Wasabi */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {/* Izquierda: Soya/Teriyaki */}
           <div>
-            <p className="text-xs text-neutral-400 mb-2">
-              Gratis Soya/Teriyaki:{" "}
+            <p className="text-xs text-neutral-400 mb-1">
+              Soya/Teriyaki:{" "}
               <span className="font-semibold text-neutral-200">{maxGratisBasicas}</span>
             </p>
             
             {/* Checkbox Sin salsas básicas */}
-            <div className="mb-3">
-              <label className="flex items-center text-sm text-neutral-200">
-                <input
-                  type="checkbox"
+            <div className="mb-2 flex items-center justify-between">
+              <div className="text-sm text-neutral-200">Sin salsas Soya/Teriyaki</div>
+              <div>
+                <Toggle
+                  ariaLabel="Sin salsas Soya/Teriyaki"
                   checked={sinSalsasBasicas}
-                  onChange={(e) => {
-                    const checked = e.target.checked;
+                  onChange={(checked) => {
                     setSinSalsasBasicas(checked);
                     if (checked) {
                       dispatch({ type: "SET_FIELD", field: "soya", value: 0 });
                       dispatch({ type: "SET_FIELD", field: "teriyaki", value: 0 });
                     }
                   }}
-                  className="mr-2 rounded border-neutral-600 bg-neutral-700 text-emerald-500 focus:ring-emerald-500"
                 />
-                Sin salsas Soya/Teriyaki
-              </label>
+              </div>
             </div>
 
             {!sinSalsasBasicas && (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col items-center">
                   <label htmlFor="soya" className="block text-sm font-medium text-neutral-200 mb-1">
                     Soya
@@ -183,34 +188,32 @@ export default function ExtrasSelector({
 
           {/* Derecha: Jengibre/Wasabi */}
           <div>
-            <p className="text-xs text-neutral-400 mb-2">
-              Gratis Jengibre/Wasabi:{" "}
+            <p className="text-xs text-neutral-400 mb-1">
+              Jengibre/Wasabi:{" "}
               <span className="font-semibold text-neutral-200">{maxGratisJWas}</span>
 
             </p>
             
             {/* Checkbox Sin jengibre/wasabi */}
-            <div className="mb-3">
-              <label className="flex items-center text-sm text-neutral-200">
-                <input
-                  type="checkbox"
+            <div className="mb-2 flex items-center justify-between">
+              <div className="text-sm text-neutral-200">Sin Jengibre/Wasabi</div>
+              <div>
+                <Toggle
+                  ariaLabel="Sin Jengibre/Wasabi"
                   checked={sinJengibreWasabi}
-                  onChange={(e) => {
-                    const checked = e.target.checked;
+                  onChange={(checked) => {
                     setSinJengibreWasabi(checked);
                     if (checked) {
                       dispatch({ type: "SET_FIELD", field: "jengibre", value: 0 });
                       dispatch({ type: "SET_FIELD", field: "wasabi", value: 0 });
                     }
                   }}
-                  className="mr-2 rounded border-neutral-600 bg-neutral-700 text-emerald-500 focus:ring-emerald-500"
                 />
-                Sin Jengibre/Wasabi
-              </label>
+              </div>
             </div>
 
             {!sinJengibreWasabi && (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col items-center">
                   <label htmlFor="jengibreFree" className="block text-sm font-medium text-neutral-200 mb-1">
                     Jengibre
@@ -245,8 +248,8 @@ export default function ExtrasSelector({
         </div>
 
         {/* Palitos (gratis) debajo de ambas columnas, MISMO recuadro */}
-        <div className="mt-4 pt-3 border-t border-white/10">
-          <div className="flex items-end gap-3">
+        <div className="mt-3 pt-2 border-t border-white/10">
+          <div className="flex items-end gap-2">
             <div className="flex flex-col items-center">
               <label htmlFor="palitos" className="block text-sm font-medium text-neutral-200 mb-1">
                 Palitos

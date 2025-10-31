@@ -6,6 +6,8 @@ import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation"; // App Router
 import { formatCLP } from "@/utils/format";
 import RecomendacionesModal from "./RecomendacionesModal";
+import AuthRequiredModal from "./AuthRequiredModal";
+import { useUser } from "@supabase/auth-helpers-react";
 
 interface Props {
   open: boolean;
@@ -15,6 +17,8 @@ interface Props {
 const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
   const { cart, total, removeFromCart, updateQuantity, clearCart, ready } = useCart();
   const router = useRouter();
+  const user = useUser();
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [showRecomendaciones, setShowRecomendaciones] = useState(false);
   const [modalYaMostrado, setModalYaMostrado] = useState(false);
 
@@ -45,6 +49,11 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
 
   const handlePedido = () => {
     setShowRecomendaciones(false);
+    // If user not logged in, show auth modal instead of navigating
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
     onClose();
     router.push("/checkout");
   };
@@ -154,7 +163,7 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
               Total: <span suppressHydrationWarning>{formatCLP(safeTotal)}</span>
             </p>
             <button
-              onClick={handlePedido}
+                onClick={handlePedido}
               className="bg-green-500 text-white w-full py-2 rounded hover:bg-green-600"
             >
               Realizar pedido
@@ -174,6 +183,7 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
       </div>
       
       {/* Modal de recomendaciones */}
+          <AuthRequiredModal open={!!showAuthModal} onClose={() => setShowAuthModal(false)} />
       <RecomendacionesModal 
         open={showRecomendaciones} 
         onClose={() => setShowRecomendaciones(false)} 

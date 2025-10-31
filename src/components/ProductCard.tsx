@@ -8,6 +8,7 @@ import { WIDE_THRESHOLD, type FitMode } from "@/utils/constants";
 import { useUserProfile } from "@/context/UserContext";
 import { useUser } from "@supabase/auth-helpers-react";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
+import useProductOverrides from '@/hooks/useProductOverrides';
 
 function parseArmalo(encoded?: string) {
   if (!encoded || !encoded.startsWith("armalo:")) return null;
@@ -51,6 +52,10 @@ const ProductCard: React.FC<Props> = ({
 
   const disabled =
     esArmalo ? !armalo?.valid : (tieneOpciones && !selectedOptionId);
+
+  // global override: if admin disabled this product, treat as out of stock
+  const { map: overrides } = useProductOverrides();
+  const globallyDisabled = overrides[product.codigo ?? String(product.id)] === false;
 
   const productCode = product.codigo || String(product.id);
   const isFav = user ? isFavorite(productCode) : false;
@@ -150,11 +155,11 @@ const ProductCard: React.FC<Props> = ({
         <button
           type="button"
           onClick={onAdd}
-          className="bg-green-500 text-white px-4 py-2 mt-3 rounded hover:bg-green-600 w-full disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={disabled}
-          aria-disabled={disabled}
+          className={`${globallyDisabled ? 'bg-gray-600 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'} text-white px-4 py-2 mt-3 rounded w-full disabled:opacity-50 disabled:cursor-not-allowed`}
+          disabled={disabled || globallyDisabled}
+          aria-disabled={disabled || globallyDisabled}
         >
-          Agregar al carrito
+          {globallyDisabled ? 'Sin stock' : 'Agregar al carrito'}
         </button>
       </div>
     </div>

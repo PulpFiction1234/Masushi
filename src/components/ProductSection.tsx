@@ -66,8 +66,8 @@ export default function ProductSection({ title, productIds, linkBase }: ProductS
                 src={p.imagen}
                 alt={p.nombre}
                 width={500}
-                height={200}
-                className="w-full h-80 sm:h-80 object-cover"
+                height={300}
+                className="w-full h-72 sm:h-80 object-cover"
                 quality={60}
                 placeholder={
                   typeof p.imagen === "string"

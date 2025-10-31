@@ -103,6 +103,16 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-clave-anonima
 # Supabase (privadas - servidor)
 SUPABASE_URL=https://tu-proyecto.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=tu-clave-service-role
+
+# WhatsApp / proveedor de mensajería (opcional - si quieres notificaciones automáticas)
+# Ejemplo para Meta WhatsApp Cloud API:
+# WHATSAPP_API_URL=https://graph.facebook.com/v16.0/<PHONE_NUMBER_ID>/messages
+# WHATSAPP_TOKEN=<ACCESS_TOKEN>
+# WHATSAPP_TEMPLATE_NAME=<NOMBRE_DE_PLANTILLA_APROBADA>
+# WHATSAPP_TEMPLATE_LANG=es_CL
+# INTERNAL_WHATSAPP_NUMBER=<telefono_interno_para_notificaciones>
+
+# Nota: WHATSAPP_SENDER puede usarse para algunos proveedores que requieren un sender id.
 ```
 
 ### 3. Configurar autenticación en Supabase

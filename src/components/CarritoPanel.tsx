@@ -5,9 +5,9 @@ import Image from "next/image";
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/navigation"; // App Router
 import { formatCLP } from "@/utils/format";
-import { getProductByCode } from "@/utils/productLookup";
 import RecomendacionesModal from "./RecomendacionesModal";
-import { normalizeImageUrl } from "@/utils/imageHelpers";
+import AuthRequiredModal from "./AuthRequiredModal";
+import { useUser } from "@supabase/auth-helpers-react";
 
 interface Props {
   open: boolean;
@@ -17,6 +17,8 @@ interface Props {
 const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
   const { cart, total, removeFromCart, updateQuantity, clearCart, ready } = useCart();
   const router = useRouter();
+  const user = useUser();
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [showRecomendaciones, setShowRecomendaciones] = useState(false);
   const [modalYaMostrado, setModalYaMostrado] = useState(false);
 
@@ -47,6 +49,11 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
 
   const handlePedido = () => {
     setShowRecomendaciones(false);
+    // If user not logged in, show auth modal instead of navigating
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
     onClose();
     router.push("/checkout");
   };
@@ -95,57 +102,55 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
               <div className="h-12 bg-gray-800 rounded" />
             </div>
           ) : hasItems ? (
-            safeCart.map((item, idx) => {
-              // Siempre obtener imagen del catálogo estático correctamente
-              const prod = getProductByCode(item.codigo || "");
-              let productImage: string = '';
-              if (prod?.imagen) {
-                if (typeof prod.imagen === 'object' && prod.imagen && 'src' in prod.imagen) {
-                  productImage = prod.imagen.src;
-                } else if (typeof prod.imagen === 'string') {
-                  productImage = prod.imagen;
-                }
-              }
-              // Solo normalizar si es string y no es StaticImageData
-              const safeImage = productImage ? normalizeImageUrl(productImage) : '';
-              const placeholderDataUrl = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Crect width='100%25' height='100%25' fill='%23333'/%3E%3Ctext x='50%25' y='50%25' font-size='10' fill='%23fff' dy='.35em' text-anchor='middle'%3ESin img%3C/text%3E%3C/svg%3E";
-              return (
-                <div key={(item.codigo || "") + idx} className="flex items-center gap-2 py-2 border-b border-gray-800 last:border-b-0">
-                  <div className="relative w-12 h-12 flex-shrink-0 rounded overflow-hidden bg-gray-700">
-                    {safeImage ? (
-                      <Image
-                        src={safeImage}
-                        alt={item.nombre}
-                        fill
-                        className="object-cover"
-                        sizes="48px"
-                      />
-                    ) : (
-                      <span className="text-xs text-gray-400 flex items-center justify-center w-full h-full">Sin img</span>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-gray-200">
-                      {item.nombre}
-                    </p>
-                    {item.opcion && (
-                      <p className="text-xs text-gray-400">
-                        {item.opcion.label}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-2 mt-1">
-                      <button onClick={() => updateQuantity(item.cartKey, item.cantidad - 1)} className="px-2 py-1 bg-gray-800 rounded text-gray-300 hover:bg-gray-700">-</button>
-                      <span>{item.cantidad}</span>
-                      <button onClick={() => updateQuantity(item.cartKey, item.cantidad + 1)} className="px-2 py-1 bg-gray-800 rounded text-gray-300 hover:bg-gray-700">+</button>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <p className="text-gray-200">{formatCLP(item.precioUnit * item.cantidad)}</p>
-                    <button onClick={() => removeFromCart(item.cartKey)} className="text-xs text-red-400 hover:underline">Eliminar</button>
-                  </div>
+            safeCart.map((item) => (
+              <div key={item.cartKey} className="flex items-center justify-between mb-3">
+                <Image
+                  src={item.imagen}
+                  alt={item.nombre}
+                  width={48}
+                  height={48}
+                  className="w-12 h-12 object-cover rounded"
+                  quality={60}
+                  placeholder={item.blurDataUrl ? "blur" : undefined}
+                  blurDataURL={item.blurDataUrl}
+                />
+                <div className="flex-1 ml-3">
+                  <p className="font-semibold">{item.nombre}</p>
+                  {item.opcion?.label && (
+                    <p className="text-xs text-gray-400">Tipo: {item.opcion.label}</p>
+                  )}
+                  <p className="text-sm">
+                    {formatCLP(item.precioUnit)} x {item.cantidad}
+                  </p>
                 </div>
-              );
-            })
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => updateQuantity(item.cartKey, item.cantidad - 1)}
+                    className="px-2 py-1 border border-gray-500 rounded"
+                    disabled={!ready}
+                    aria-label="Disminuir"
+                  >
+                    -
+                  </button>
+                  <span>{item.cantidad}</span>
+                  <button
+                    onClick={() => updateQuantity(item.cartKey, item.cantidad + 1)}
+                    className="px-2 py-1 border border-gray-500 rounded"
+                    disabled={!ready}
+                    aria-label="Aumentar"
+                  >
+                    +
+                  </button>
+                  <button
+                    onClick={() => removeFromCart(item.cartKey)}
+                    className="text-red-400 text-sm ml-2"
+                    disabled={!ready}
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            ))
           ) : (
             <p className="text-gray-100">Tu carrito está vacío</p>
           )}
@@ -158,7 +163,7 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
               Total: <span suppressHydrationWarning>{formatCLP(safeTotal)}</span>
             </p>
             <button
-              onClick={handlePedido}
+                onClick={handlePedido}
               className="bg-green-500 text-white w-full py-2 rounded hover:bg-green-600"
             >
               Realizar pedido
@@ -178,6 +183,7 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
       </div>
       
       {/* Modal de recomendaciones */}
+          <AuthRequiredModal open={!!showAuthModal} onClose={() => setShowAuthModal(false)} />
       <RecomendacionesModal 
         open={showRecomendaciones} 
         onClose={() => setShowRecomendaciones(false)} 

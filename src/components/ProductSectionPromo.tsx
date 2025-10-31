@@ -86,6 +86,7 @@ export default function ProductSectionPromo({ title, productIds, linkBase }: Pro
                 width={500}
                 height={200}
                 className="w-full h-50 object-cover"
+                style={{ width: 'auto', height: 'auto' }}
                 quality={60}
                 placeholder={
                   typeof p.imagen === "string"

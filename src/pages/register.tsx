@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import Link from 'next/link';
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import Seo from "@/components/Seo";
 
@@ -16,10 +17,10 @@ export default function RegisterPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // Estados para verificación por código
-  const [step, setStep] = useState<"register" | "verify">("register");
-  const [verificationCode, setVerificationCode] = useState("");
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [verifying, setVerifying] = useState(false);
+  const [createdUserId, setCreatedUserId] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,100 +40,64 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      // Registrar usuario con verificación por email habilitada
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name: name, phone },
-          emailRedirectTo: `${window.location.origin}/menu`,
-        },
-      });
+      // Utilizamos metadata para guardar nombre y teléfono en el usuario
+      // Implementar reintentos para manejar 429 (Too Many Requests) en entornos de dev
+      const maxAttempts = 3;
+      let attempt = 0;
+      let data: any = null;
+      let error: any = null;
+      const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+      while (attempt < maxAttempts) {
+        attempt++;
+        const resp = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { full_name: name, phone } },
+        });
+        data = resp.data;
+        error = resp.error;
+        if (!error) break;
+        const msg = String(error?.message || '');
+        // si es 429 o indica rate limit, reintentar con backoff
+        if (msg.toLowerCase().includes('too many') || (error?.status === 429)) {
+          const backoff = 500 * Math.pow(2, attempt - 1);
+          console.warn(`signUp attempt ${attempt} failed with rate limit, retrying in ${backoff}ms`);
+          await sleep(backoff);
+          continue;
+        }
+        // otro error -> no reintentar
+        break;
+      }
 
       if (error) {
-        setErrorMessage(error.message);
+        setErrorMessage(error.message || String(error));
         setLoading(false);
         return;
       }
 
-      // Verificar si Supabase requiere confirmación de email
-      if (data.user && !data.session) {
-        // Email de confirmación enviado, mostrar paso de verificación
-        setSuccessMessage(
-          `Se ha enviado un código de verificación a ${email}. Por favor revisa tu bandeja de entrada.`
-        );
-        setStep("verify");
-      } else {
-        // Confirmación no requerida, redirigir directamente
-        setSuccessMessage("Cuenta creada exitosamente.");
-        setTimeout(() => router.push("/menu"), 2000);
+      // Si se requiere confirmación por email, abrir modal para código
+      setSuccessMessage("Cuenta creada. Revisa tu email para el código de verificación.");
+      setLoading(false);
+
+      // capture user id if available and request server to send verification code
+      try {
+        const createdId = (data as any)?.user?.id || (data as any)?.user_id || null;
+        if (createdId) setCreatedUserId(createdId);
+
+        await fetch('/api/auth/send-verification-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, userId: createdId }),
+        });
+      } catch (e) {
+        console.error('Error requesting verification code', e);
       }
 
-      setLoading(false);
-    } catch (err: any) {
-      setErrorMessage(err?.message ?? String(err));
-      setLoading(false);
-    }
-  };
-
-  const handleVerification = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMessage("");
-    setSuccessMessage("");
-
-    if (!verificationCode.trim()) {
-      setErrorMessage("Por favor ingresa el código de verificación.");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      // Verificar el código OTP
-      const { data, error } = await supabase.auth.verifyOtp({
-        email,
-        token: verificationCode,
-        type: "signup",
-      });
-
-      if (error) {
-        setErrorMessage("Código inválido o expirado. Por favor intenta nuevamente.");
-        setLoading(false);
-        return;
-      }
-
-      if (data.session) {
-        setSuccessMessage("¡Email verificado! Redirigiendo...");
-        setTimeout(() => router.push("/menu"), 2000);
-      }
-
-      setLoading(false);
-    } catch (err: any) {
-      setErrorMessage(err?.message ?? String(err));
-      setLoading(false);
-    }
-  };
-
-  const handleResendCode = async () => {
-    setErrorMessage("");
-    setSuccessMessage("");
-    setLoading(true);
-
-    try {
-      const { error } = await supabase.auth.resend({
-        type: "signup",
-        email,
-      });
-
-      if (error) {
-        setErrorMessage("Error al reenviar el código. Por favor intenta más tarde.");
-      } else {
-        setSuccessMessage("Código reenviado. Revisa tu email.");
-      }
-
-      setLoading(false);
-    } catch (err: any) {
-      setErrorMessage(err?.message ?? String(err));
+      setShowVerificationModal(true);
+    } catch (err: unknown) {
+      const msg = typeof err === 'object' && err !== null && 'message' in err ? String((err as { message?: unknown }).message ?? '') : String(err);
+      setErrorMessage(msg);
       setLoading(false);
     }
   };
@@ -142,135 +107,123 @@ export default function RegisterPage() {
       <Seo title="Registrarse — Masushi" canonicalPath="/register" noIndex />
       <Navbar />
       <main className="flex flex-1 items-center justify-center p-4">
-        {step === "register" ? (
-          // Formulario de registro
-          <form
-            onSubmit={handleSubmit}
-            className="w-full max-w-sm bg-gray-900 p-6 rounded-xl shadow space-y-4"
+        <form
+          onSubmit={handleSubmit}
+          className="w-full max-w-sm bg-gray-900 p-6 rounded-xl shadow space-y-4"
+        >
+          <h1 className="text-2xl font-bold text-center">Crear cuenta</h1>
+
+          <input
+            type="text"
+            placeholder="Nombre completo"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
+          />
+
+          <input
+            type="email"
+            placeholder="Correo electrónico"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
+          />
+
+          <input
+            type="tel"
+            placeholder="Teléfono (ej. +521XXXXXXXXXX)"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
+          />
+
+          <input
+            type="password"
+            placeholder="Contraseña (mín. 6 caracteres)"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
+          />
+
+          {errorMessage && (
+            <p className="text-red-400 text-sm text-center">{errorMessage}</p>
+          )}
+
+          {successMessage && (
+            <p className="text-green-400 text-sm text-center">{successMessage}</p>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-2 rounded bg-red-500 hover:bg-red-600 transition-colors font-semibold disabled:opacity-60"
           >
-            <h1 className="text-2xl font-bold text-center">Crear cuenta</h1>
-
+            {loading ? "Registrando..." : "Crear cuenta"}
+          </button>
+          
+          <div className="text-center text-sm text-gray-400">
+            ¿Ya tienes cuenta?{' '}
+            <Link href="/login" className="text-green-500 hover:text-green-400">
+              Inicia sesión aquí
+            </Link>
+          </div>
+        </form>
+      </main>
+      {showVerificationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full text-neutral-900">
+            <h3 className="text-lg font-bold mb-2">Código de verificación</h3>
+            <p className="text-sm text-neutral-600 mb-4">Revisa tu correo y escribe el código que te enviamos.</p>
             <input
-              type="text"
-              placeholder="Nombre completo"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
-            />
-
-            <input
-              type="email"
-              placeholder="Correo electrónico"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
-            />
-
-            <input
-              type="tel"
-              placeholder="Teléfono (ej. +521XXXXXXXXXX)"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
-            />
-
-            <input
-              type="password"
-              placeholder="Contraseña (mín. 6 caracteres)"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
-            />
-
-            {errorMessage && (
-              <p className="text-red-400 text-sm text-center">{errorMessage}</p>
-            )}
-
-            {successMessage && (
-              <p className="text-green-400 text-sm text-center">{successMessage}</p>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2 rounded bg-red-500 hover:bg-red-600 transition-colors font-semibold disabled:opacity-60"
-            >
-              {loading ? "Registrando..." : "Crear cuenta"}
-            </button>
-            
-            <div className="text-center text-sm text-gray-400">
-              ¿Ya tienes cuenta?{" "}
-              <a href="/login" className="text-green-500 hover:text-green-400">
-                Inicia sesión aquí
-              </a>
-            </div>
-          </form>
-        ) : (
-          // Formulario de verificación
-          <form
-            onSubmit={handleVerification}
-            className="w-full max-w-sm bg-gray-900 p-6 rounded-xl shadow space-y-4"
-          >
-            <h1 className="text-2xl font-bold text-center">Verifica tu email</h1>
-            
-            <p className="text-sm text-gray-400 text-center">
-              Hemos enviado un código de 6 dígitos a <span className="text-white font-semibold">{email}</span>
-            </p>
-
-            <input
-              type="text"
-              placeholder="Código de verificación (6 dígitos)"
               value={verificationCode}
               onChange={(e) => setVerificationCode(e.target.value)}
-              maxLength={6}
-              className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400 text-center text-2xl tracking-widest"
+              placeholder="Código (ej.: 123456)"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 mb-4"
             />
-
-            {errorMessage && (
-              <p className="text-red-400 text-sm text-center">{errorMessage}</p>
-            )}
-
-            {successMessage && (
-              <p className="text-green-400 text-sm text-center">{successMessage}</p>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2 rounded bg-red-500 hover:bg-red-600 transition-colors font-semibold disabled:opacity-60"
-            >
-              {loading ? "Verificando..." : "Verificar código"}
-            </button>
-
-            <div className="text-center space-y-2">
+            <div className="flex justify-end gap-2">
+              <button onClick={() => { setShowVerificationModal(false); }} className="px-4 py-2 rounded bg-gray-200">Cerrar</button>
               <button
-                type="button"
-                onClick={handleResendCode}
-                disabled={loading}
-                className="text-sm text-green-500 hover:text-green-400 disabled:opacity-60"
-              >
-                Reenviar código
-              </button>
-              
-              <div className="text-sm text-gray-400">
-                ¿Email incorrecto?{" "}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStep("register");
-                    setVerificationCode("");
-                    setErrorMessage("");
-                    setSuccessMessage("");
-                  }}
-                  className="text-green-500 hover:text-green-400"
-                >
-                  Volver atrás
-                </button>
-              </div>
+                onClick={async () => {
+                  if (!verificationCode.trim()) return alert('Ingresa el código');
+                  setVerifying(true);
+                    try {
+                    const resp = await fetch('/api/auth/verify-code', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email, userId: createdUserId, code: verificationCode.trim() }),
+                    });
+                    const json = await resp.json().catch(() => null);
+                    if (resp.ok) {
+                      setShowVerificationModal(false);
+                      setSuccessMessage('Correo verificado. Serás redirigido.');
+                      setTimeout(() => {
+                        try {
+                          const next = sessionStorage.getItem('post_auth_next');
+                          if (next) {
+                            sessionStorage.removeItem('post_auth_next');
+                            router.push(next);
+                            return;
+                          }
+                        } catch {}
+                        router.push('/menu');
+                      }, 1200);
+                    } else {
+                      alert(json?.error || 'Código inválido');
+                    }
+                  } catch (e) {
+                    console.error('verify error', e);
+                    alert('Error verificando el código');
+                  } finally {
+                    setVerifying(false);
+                  }
+                }}
+                className="px-4 py-2 rounded bg-green-600 text-white"
+                disabled={verifying}
+              >{verifying ? 'Verificando...' : 'Verificar'}</button>
             </div>
-          </form>
-        )}
-      </main>
+          </div>
+        </div>
+      )}
       <Footer />
     </div>
   );

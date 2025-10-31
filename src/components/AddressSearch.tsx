@@ -8,35 +8,20 @@ import addressOverrides from "@/data/addressOverrides";
 interface AddressSearchProps {
   polygonCoords: number[][];
   onValidAddress: (address: string, coords: [number, number]) => void;
-  initialValue?: string; // Dirección inicial para autocompletar
+  /** If true, show the full Mapbox place_name in the input instead of a shortened version */
+  displayFullAddress?: boolean;
 }
 
-const AddressSearch: React.FC<AddressSearchProps> = ({ 
-  polygonCoords, 
-  onValidAddress,
-  initialValue 
-}) => {
-  const [query, setQuery] = useState(initialValue || "");
+const AddressSearch: React.FC<AddressSearchProps> = ({ polygonCoords, onValidAddress, displayFullAddress = false }) => {
+  const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [status, setStatus] = useState("");
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
-  const hasInitializedRef = useRef(false);
 
   // 🔒 Evita fetch inmediatamente después de seleccionar una sugerencia
   const suppressNextFetchRef = useRef(false);
-
-  // Actualizar query cuando cambia initialValue (solo una vez)
-  useEffect(() => {
-    if (initialValue && !hasInitializedRef.current) {
-      setQuery(initialValue);
-      if (initialValue.trim().length > 0) {
-        setStatus("✅ Dirección guardada - Puedes editarla o dejarla así");
-      }
-      hasInitializedRef.current = true;
-    }
-  }, [initialValue]);
 
   const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
 
@@ -116,15 +101,14 @@ const AddressSearch: React.FC<AddressSearchProps> = ({
           ? `${polygonCoords[0][0]},${polygonCoords[0][1]}` // Mapbox expects proximity=lng,lat
           : undefined;
 
-        const params = new URLSearchParams({
-          access_token: MAPBOX_TOKEN,
-          country: "CL",
-          limit: "5",
-          types: "address",
-          language: "es",
-          autocomplete: hasNumber ? "false" : "true",
-        });
-        if (centerProximity) params.set("proximity", centerProximity);
+        const params = new URLSearchParams();
+        params.set('access_token', MAPBOX_TOKEN);
+        params.set('country', 'CL');
+        params.set('limit', '5');
+        params.set('types', 'address');
+        params.set('language', 'es');
+        params.set('autocomplete', hasNumber ? 'false' : 'true');
+        if (centerProximity) params.set('proximity', centerProximity);
 
         const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(value)}.json?${params.toString()}`;
         const res = await fetch(url);
@@ -166,24 +150,27 @@ const AddressSearch: React.FC<AddressSearchProps> = ({
     return parts.length >= 2 ? `${parts[0]}, ${parts[1]}` : full.trim();
   };
 
-  const handleSelect = (place: any) => {
+  const handleSelect = (place: unknown) => {
     // ⚠️ Importante: marca que la próxima vez NO se busque automáticamente
     suppressNextFetchRef.current = true;
-
     // Si quieres guardar corto en el input:
-    const short = toShortCLAddress(place.place_name);
-    setQuery(short);
+    const p = place as { place_name?: unknown; geometry?: { coordinates?: unknown } } | null;
+    const placeName = p?.place_name;
+    if (!placeName || typeof placeName !== 'string') return;
+
+  const short = toShortCLAddress(placeName);
+  setQuery(displayFullAddress ? placeName : short);
     setSuggestions([]);
 
     // Validaciones
-    const rawCoords = place.geometry?.coordinates;
-    if (!Array.isArray(rawCoords) || rawCoords.length < 2 || typeof rawCoords[0] !== "number" || typeof rawCoords[1] !== "number") {
-      setStatus("⚠️ Dirección inválida");
+    const rawCoords = (p as any)?.geometry?.coordinates;
+    if (!Array.isArray(rawCoords) || rawCoords.length < 2 || typeof rawCoords[0] !== 'number' || typeof rawCoords[1] !== 'number') {
+      setStatus('⚠️ Dirección inválida');
       return;
     }
     const regexNumeroCalle = /\s\d{1,5}(?:\s|,|$)/;
-    if (!regexNumeroCalle.test(place.place_name)) {
-      setStatus("⚠️ Debe ingresar número de domicilio junto a la calle");
+    if (!regexNumeroCalle.test(placeName)) {
+      setStatus('⚠️ Debe ingresar número de domicilio junto a la calle');
       return;
     }
 
@@ -193,10 +180,10 @@ const AddressSearch: React.FC<AddressSearchProps> = ({
     const isInside = turf.booleanPointInPolygon(point, polygon);
 
     if (isInside) {
-      setStatus("✅ Dentro de la zona de reparto");
-      onValidAddress(short, coords); // también pasamos la versión corta
+      setStatus('✅ Dentro de la zona de reparto');
+      onValidAddress(displayFullAddress ? placeName : short, coords); // pasar full o corto según prop
     } else {
-      setStatus("❌ Fuera de la zona de reparto (solo retiro en tienda)");
+      setStatus('❌ Fuera de la zona de reparto (solo retiro en tienda)');
     }
 
     if (mapRef.current) {

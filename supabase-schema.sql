@@ -93,6 +93,43 @@ CREATE POLICY "Users can insert own orders"
   WITH CHECK (auth.uid() = user_id);
 
 
+-- 4. Tabla de códigos de descuento (generados para usuarios)
+-- Cada código está ligado a un usuario y es de un solo uso por defecto.
+CREATE TABLE IF NOT EXISTS public.discount_codes (
+  id BIGSERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  code TEXT NOT NULL UNIQUE,
+  percent INTEGER, -- porcentaje de descuento (por ejemplo 10 para 10%)
+  amount INTEGER, -- descuento fijo en pesos (opcional; se usa si percent es NULL)
+  single_use BOOLEAN DEFAULT TRUE,
+  used BOOLEAN DEFAULT FALSE,
+  used_at TIMESTAMPTZ,
+  used_by_order_id BIGINT, -- referencia al pedido que consumió el código
+  expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_discount_codes_user ON public.discount_codes(user_id);
+CREATE INDEX IF NOT EXISTS idx_discount_codes_code ON public.discount_codes(code);
+
+-- RLS: Los usuarios pueden ver sus propios códigos, pero no crear/actualizar (se hace vía service role)
+ALTER TABLE public.discount_codes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own discount codes"
+  ON public.discount_codes FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own discount codes"
+  ON public.discount_codes FOR UPDATE
+  USING (auth.uid() = user_id);
+
+-- No permitimos inserts por parte de usuarios autenticados (se gestiona desde server/service role)
+CREATE POLICY "Block user inserts on discount_codes"
+  ON public.discount_codes FOR INSERT
+  WITH CHECK (false);
+
+
+
 -- 4. Función para actualizar updated_at automáticamente
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
 RETURNS TRIGGER AS $$
@@ -131,6 +168,32 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();
+
+
+-- 6. Tabla para verificación de email vía código (si queremos flow de códigos)
+CREATE TABLE IF NOT EXISTS public.email_verifications (
+  id BIGSERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  code TEXT NOT NULL,
+  used BOOLEAN DEFAULT FALSE,
+  expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_email_verifications_user ON public.email_verifications(user_id);
+
+-- RLS: lectura por el propio usuario
+ALTER TABLE public.email_verifications ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own email verifications"
+  ON public.email_verifications FOR SELECT
+  USING (auth.uid() = user_id);
+
+-- Inserts/updates should be done by server (service role) not by end-users
+CREATE POLICY "Block user inserts on email_verifications"
+  ON public.email_verifications FOR INSERT
+  WITH CHECK (false);
+
 
 
 -- ============================================

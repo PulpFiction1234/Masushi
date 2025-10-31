@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useReducer, useEffect } from "react";
+import React, { useMemo, useReducer, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import useSWR from "swr";
 import { useCart } from "@/context/CartContext";
@@ -7,7 +7,6 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { useUserProfile } from "@/context/UserContext";
 import Navbar from "@/components/Navbar";
 import Seo from "@/components/Seo";
-import { normalizeImageUrl } from "@/utils/imageHelpers";
 
 // THEME
 const ACCENT_FROM = "from-emerald-500";
@@ -91,6 +90,7 @@ import {
   priceOf,
   codePartOf,
   infoWithTipo,
+  nameWithTipo,
   checkoutReducer,
   initialCheckoutState,
   PRECIO_SOYA_EXTRA,
@@ -124,7 +124,6 @@ const salsasGratisPorUnidad = (it: CartItemLike): number => {
 export default function Checkout() {
   const { cart } = useCart();
   const user = useUser();
-  const { profile } = useUserProfile();
   const [state, dispatch] = useReducer(checkoutReducer, initialCheckoutState);
   const [salsasValidas, setSalsasValidas] = React.useState(false);
 
@@ -164,31 +163,6 @@ export default function Checkout() {
     }
   }, [deliveryType, paymentMethod, dispatch]);
 
-  // Autocompletar datos del perfil del usuario si está logueado
-  useEffect(() => {
-    if (user && profile) {
-      // Autocompletar nombre y teléfono si están vacíos
-      if (!name && profile.full_name) {
-        const nameParts = profile.full_name.split(' ');
-        if (nameParts.length >= 2) {
-          dispatch({ type: "SET_FIELD", field: "name", value: nameParts[0] });
-          dispatch({ type: "SET_FIELD", field: "lastName", value: nameParts.slice(1).join(' ') });
-        } else {
-          dispatch({ type: "SET_FIELD", field: "name", value: profile.full_name });
-        }
-      }
-      
-      if (!phone && profile.phone) {
-        dispatch({ type: "SET_FIELD", field: "phone", value: profile.phone });
-      }
-
-      // Autocompletar dirección si es delivery y el usuario tiene dirección guardada
-      if (deliveryType === "delivery" && !address && profile.address) {
-        dispatch({ type: "SET_FIELD", field: "address", value: profile.address });
-      }
-    }
-  }, [user, profile, deliveryType, name, phone, address, dispatch]);
-
   const abierto = statusData?.abierto === true;
   const statusLabel =
     loadingStatus
@@ -218,6 +192,76 @@ export default function Checkout() {
     [cartTyped]
   );
 
+  const [estimateText, setEstimateText] = React.useState<string | null>(null);
+  const userProfileCtx = useUserProfile();
+  const profile = userProfileCtx?.profile ?? null;
+  type SavedAddress = { id: number; label?: string | null; address_text: string; coords?: { lat: number; lng: number } | null };
+  const [savedAddresses, setSavedAddresses] = React.useState<SavedAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = React.useState<number | null>(null);
+  const [deletingAddressIds, setDeletingAddressIds] = React.useState<number[]>([]);
+  const [addingNewAddress, setAddingNewAddress] = React.useState(false);
+  const [newAddressCandidate, setNewAddressCandidate] = React.useState<{ address: string; coords: [number, number] } | null>(null);
+  // Map of cartKey -> included (true means included in order)
+  const [includedMap, setIncludedMap] = React.useState<Record<string, boolean>>(() => {
+    const m: Record<string, boolean> = {};
+    for (const it of cartTyped) m[`${it.id}:${it.opcion?.id ?? 'base'}`] = true;
+    return m;
+  });
+
+  // Keep includedMap in sync when cart changes: add new keys defaulting to true, remove absent keys
+  useEffect(() => {
+    setIncludedMap((prev) => {
+      const next: Record<string, boolean> = {};
+      for (const it of cartTyped) {
+        const k = `${it.id}:${it.opcion?.id ?? 'base'}`;
+        next[k] = k in prev ? prev[k] : true;
+      }
+      return next;
+    });
+  }, [cartTyped]);
+
+  // Items that are included in the order according to includedMap
+  const includedCart = useMemo(() => {
+    return cartTyped.filter((it) => includedMap[`${it.id}:${it.opcion?.id ?? 'base'}`] !== false);
+  }, [cartTyped, includedMap]);
+
+  // Fetch estimate when deliveryType or on mount
+  useEffect(() => {
+    let mounted = true;
+    const t = deliveryType === 'delivery' ? 'delivery' : 'retiro';
+    fetch(`/api/estimate?type=${t}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!mounted) return;
+        if (d?.ok) setEstimateText(d.estimatedMax ?? null);
+      })
+      .catch(() => {
+        if (mounted) setEstimateText(null);
+      });
+    return () => { mounted = false; };
+  }, [deliveryType]);
+
+  // Fetch saved addresses for logged-in user
+  useEffect(() => {
+    let mounted = true;
+    if (!user) {
+      setSavedAddresses([]);
+      setSelectedAddressId(null);
+      return;
+    }
+    fetch('/api/user/addresses')
+      .then((r) => r.json())
+      .then((d) => {
+        if (!mounted) return;
+        setSavedAddresses(d?.addresses ?? []);
+        if ((d?.addresses ?? []).length > 0) setSelectedAddressId(d.addresses[0].id);
+      })
+      .catch(() => {
+        if (mounted) setSavedAddresses([]);
+      });
+    return () => { mounted = false; };
+  }, [user]);
+
   // Cálculos monetarios/totales
   const {
     totalProductos,
@@ -227,10 +271,10 @@ export default function Checkout() {
     totalFinal,
     gratisBasicas,
   } = useMemo(() => {
-    const prod = subtotalProductos;
+    const prod = includedCart.reduce((acc, it) => acc + priceOf(it) * it.cantidad, 0);
 
-    // Pool de salsas gratis según catálogo
-    const gratis = cartTyped.reduce(
+    // Pool de salsas gratis según catálogo (based on included items)
+    const gratis = includedCart.reduce(
       (sum, item) => sum + salsasGratisPorUnidad(item) * item.cantidad,
       0
     );
@@ -256,13 +300,7 @@ export default function Checkout() {
     const fee = deliveryType === "delivery" ? COSTO_DELIVERY : 0;
 
     // Total simplificado: solo productos + salsas gratis cobradas + palitos + delivery
-    const total =
-      prod +
-      costoSoya +
-      costoTeri +
-      cPalitosExtra +
-      cAyudaPalitos +
-      fee;
+    const total = prod + costoSoya + costoTeri + cPalitosExtra + cAyudaPalitos + fee;
 
     return {
       totalProductos: prod,
@@ -273,8 +311,7 @@ export default function Checkout() {
       gratisBasicas: gratis,
     };
   }, [
-    subtotalProductos,
-    cartTyped,
+    includedCart,
     soya,
     teriyaki,
     palitosExtra,
@@ -287,20 +324,26 @@ export default function Checkout() {
   // La validación de salsas se hará en el componente ExtrasSelector con los checkboxes
 
   const canSubmitBase =
-    name.trim().length > 1 &&
-    lastName.trim().length > 1 &&
-    isValidChileanMobile(phone) &&
+    // require authenticated user; name/phone are taken from profile
+    !!user && !!profile &&
     (!requiresPayment || paymentMethod !== "") &&
-    // Para delivery: requerimos coords y además un número de domicilio.
-    // Aceptamos que el número esté en `address` (REGEX) o que el usuario haya completado `numeroCasa`.
-    (deliveryType === "retiro" || (coords && (REGEX_NUMERO_CALLE.test(address) || (numeroCasa && numeroCasa.trim().length > 0)))) &&
+    // Para delivery: requerimos una dirección guardada o coords y número de domicilio
+    (deliveryType === "retiro" || (selectedAddressId !== null || (coords && (REGEX_NUMERO_CALLE.test(address) || (numeroCasa && numeroCasa.trim().length > 0))))) &&
     salsasValidas; // ✅ Agregar validación de salsas
 
-  // ⚠️ No permitir enviar si el estado aún está cargando
-  const canSubmit = canSubmitBase && abierto === true && !loadingStatus;
+  const [submitting, setSubmitting] = useState(false);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [lastOrderId, setLastOrderId] = useState<number | null>(null);
+  const [lastOrderWhatsApp, setLastOrderWhatsApp] = useState<any>(null);
+  const [couponModalOpen, setCouponModalOpen] = useState(false);
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // ⚠️ No permitir enviar si el estado aún está cargando o si ya estamos enviando
+  const canSubmit = canSubmitBase && abierto === true && !loadingStatus && !submitting;
+
+  const handleSubmit = async (e?: React.FormEvent | React.MouseEvent) => {
+    if (e && typeof (e as any).preventDefault === 'function') (e as any).preventDefault();
 
     if (cartTyped.length === 0) {
       alert("Tu carrito está vacío");
@@ -346,13 +389,15 @@ export default function Checkout() {
           }
         }
 
-        const productosTexto = cartTyped
-          .map((item) => {
-            const lineaNombre = `${codePartOf(item)}x ${item.cantidad}  - ${infoWithTipo(item)}`;
-            const totalLinea = fmt(priceOf(item) * item.cantidad);
-            return ` ${lineaNombre} — ${totalLinea}`;
-          })
-          .join("\n");
+            const includedItems = cartTyped.filter(it => includedMap[`${it.id}:${it.opcion?.id ?? 'base'}`] !== false);
+
+            const productosTexto = includedItems
+              .map((item) => {
+                const lineaNombre = `${nameWithTipo(item)} x${item.cantidad}`;
+                const totalLinea = fmt(priceOf(item) * item.cantidad);
+                return ` ${lineaNombre} — ${totalLinea}`;
+              })
+              .join("\n");
 
         // ========= Salsas/Palitos =========
         const POOL_JW = 2;
@@ -423,19 +468,22 @@ export default function Checkout() {
         const mensaje = encodeURIComponent(msg);
         
         // Guardar pedido en BD si el usuario está logueado
-        let numeroOrden = "";
         if (user) {
+          setSubmitting(true);
           try {
-            const orderItems = cartTyped.map((it) => {
-              const imagen = normalizeImageUrl(it.imagen);
-              return {
-                codigo: it.codigo || String(it.id),
-                cantidad: it.cantidad,
-                opcion: (it as any).opcion || undefined,
-                imagen: imagen || undefined,
-                blurDataUrl: it.blurDataUrl || undefined,
-              };
-            });
+            const orderItems = cartTyped
+            .filter(it => includedMap[`${it.id}:${((it as unknown) as { opcion?: { id?: string } }).opcion?.id ?? 'base'}`] !== false)
+              .map((it) => {
+                const opcion = (it as unknown as { opcion?: unknown }).opcion as unknown;
+                return {
+                  codigo: codePartOf(it),
+                  nombre: it.nombre,
+                  valor: priceOf(it),
+                  cantidad: it.cantidad,
+                  opcion: opcion,
+                };
+              });
+
             const resp = await fetch("/api/orders", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -444,36 +492,34 @@ export default function Checkout() {
                 total: totalFinal,
                 delivery_type: deliveryType,
                 address: deliveryType === "delivery" ? shortAddress : null,
+                customer: {
+                  name: `${name} ${lastName}`,
+                  phone,
+                },
+                // include coupon if user applied one in the UI
+                ...(appliedCoupon ? { coupon_code: appliedCoupon } : {}),
               }),
             });
-            const data = await resp.json();
-            numeroOrden = data?.orderId ? String(data.orderId) : "";
+
+            const json = await resp.json().catch(() => null);
+            if (resp.ok) {
+              // show confirmation modal with order id when available
+              const oid = json?.order?.id ?? null;
+              if (oid) setLastOrderId(oid as number);
+              setLastOrderWhatsApp(json?.whatsapp ?? null);
+              setShowOrderModal(true);
+              // Optionally clear cart here if you want: (not doing automatically)
+            } else {
+              console.error('Error saving order:', json);
+              alert('No se pudo guardar el pedido. Intenta de nuevo.');
+            }
           } catch (error) {
             console.error("Error saving order:", error);
+            alert('No se pudo guardar el pedido. Intenta de nuevo.');
+          } finally {
+            setSubmitting(false);
           }
         }
-
-        // Enviar WhatsApp automatizado con plantilla
-        const detallePedido = cartTyped
-          .map(item => `${item.cantidad} ${infoWithTipo(item)} $${priceOf(item) * item.cantidad}`)
-          .join('\n');
-        const { getEstimatedDeliveryTime } = await import("@/utils/deliveryTime");
-  const horaEntregaObj = getEstimatedDeliveryTime(new Date(), deliveryType);
-  const horaEntrega = horaEntregaObj.maxArrivalTime;
-        const direccionFinal = deliveryType === 'retiro' ? 'Retiro en tienda' : shortAddress;
-        await fetch("/api/send-whatsapp", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            telefono: phone.replace(/\D/g, ""),
-            nombre: `${name} ${lastName}`,
-            numeroOrden: numeroOrden || "-", // usa el real si está disponible
-            horaEntrega,
-            direccion: direccionFinal,
-            detalle: detallePedido,
-            total: totalFinal
-          })
-        });
       })
       .catch(() => alert("No se pudo verificar el estado del local. Intenta de nuevo."));
   };
@@ -482,110 +528,298 @@ export default function Checkout() {
     "w-full rounded-xl border border-white/10 bg-neutral-800/80 px-3 py-2 text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent";
   const card = "border border-white/10 rounded-2xl bg-neutral-900/70 shadow-xl";
 
-  // Definir shortAddress y horaEntregaObj para el render
-  const shortAddress = state.address || profile?.address || '';
-  const { getEstimatedDeliveryTime } = require("@/utils/deliveryTime");
-  const horaEntregaObj = getEstimatedDeliveryTime(new Date(), deliveryType);
-
   return (
     <>
     <Seo title="Panel de administración — Masushi" canonicalPath="/admin" noIndex />
       <Navbar />
       <div className="min-h-screen bg-neutral-950 text-neutral-100">
-        <div className="mx-auto max-w-6xl px-4 py-6">
-          {/* Selector de despacho/retiro grande y centrado */}
-          <div className="flex justify-center mb-8">
-            <div className="flex rounded-full bg-neutral-800/80 border border-white/10 overflow-hidden shadow-lg">
-              <button
-                type="button"
-                className={`px-8 py-3 text-lg font-semibold transition-colors ${deliveryType === 'delivery' ? 'bg-white/90 text-neutral-900' : 'text-neutral-300'} focus:outline-none`}
-                onClick={() => dispatch({ type: 'SET_FIELD', field: 'deliveryType', value: 'delivery' })}
-              >
-                Despacho
-              </button>
-              <button
-                type="button"
-                className={`px-8 py-3 text-lg font-semibold transition-colors ${deliveryType === 'retiro' ? 'bg-white/90 text-neutral-900' : 'text-neutral-300'} focus:outline-none`}
-                onClick={() => dispatch({ type: 'SET_FIELD', field: 'deliveryType', value: 'retiro' })}
-              >
-                Retiro
-              </button>
-            </div>
+  <div className="w-full px-3 lg:px-30 py-6">
+          <div className="mb-6">
+            <div className={`mt-2 h-1 w-24 bg-gradient-to-r ${ACCENT_FROM} ${ACCENT_TO} rounded-full`} />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Columna principal: Detalles de despacho y formulario */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Detalles de despacho */}
-              <div className="rounded-2xl bg-neutral-900/80 border border-white/10 p-5 shadow flex flex-col gap-4">
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-red-600/20 text-red-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" />
-                    </svg>
-                  </span>
-                  <div>
-                    <div className="font-semibold text-base text-neutral-200">
-                      {deliveryType === 'delivery' ? `Despacho en: ${shortAddress}` : 'Retiro en tienda'}
+          {/* Layout de 2 columnas: left flexible, right fixed width */}
+          <div className="grid grid-cols-1 gap-6 lg:[grid-template-columns:1fr_780px]">
+            {/* Columna izquierda: Delivery / Tipo / Dirección (sin recuadro exterior) */}
+            <div className="p-4 lg:pr-2 lg:pl-0"> 
+              {/* Estado de apertura */}
+              <div className="rounded-xl bg-neutral-800/70 border border-white/10 p-3 text-sm flex items-center justify-between">
+                <span className={abierto ? "text-emerald-300" : "text-amber-300"}>{statusLabel}</span>
+                {statusData?.timeZone && <span className="text-neutral-400" />}
+              </div>
+
+              {/* Delivery form controls (moved here) */}
+              <div className="mt-4">
+                <label className="block font-medium mb-2 text-neutral-200">Tipo de entrega</label>
+                <div role="tablist" aria-label="Tipo de entrega" className="w-full inline-flex items-center rounded-full bg-neutral-800/70 p-1 shadow-inner">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={deliveryType === 'delivery'}
+                    onClick={() => dispatch({ type: "SET_FIELD", field: "deliveryType", value: 'delivery' })}
+                    className={`flex-1 text-sm font-medium h-10 flex items-center justify-center rounded-full transition-all duration-150 ${deliveryType === 'delivery' ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-300 hover:bg-neutral-700/60'}`}
+                  >
+                    Despacho
+                  </button>
+                  <div className="w-2" />
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={deliveryType === 'retiro'}
+                    onClick={() => dispatch({ type: "SET_FIELD", field: "deliveryType", value: 'retiro' })}
+                    className={`flex-1 text-sm font-medium h-10 flex items-center justify-center rounded-full transition-all duration-150 ${deliveryType === 'retiro' ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-300 hover:bg-neutral-700/60'}`}
+                  >
+                    Retiro
+                  </button>
+                </div>
+              </div>
+
+              {deliveryType === "delivery" && (
+                <>
+                  <div className="mt-4">
+                    <PaymentSelector paymentMethod={paymentMethod} dispatch={dispatch} />
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="block font-medium mb-2 text-neutral-200">Direcciones</label>
+                    {savedAddresses.length > 0 && (
+                      <div className="mb-3">
+                        {savedAddresses.map((a) => (
+                          <div key={a.id} className={`block p-3 rounded-md border ${selectedAddressId===a.id? 'border-green-400 bg-neutral-800/60': 'border-white/5' } mb-2`}>
+                            <div className="flex items-start justify-between">
+                              <label className="flex-1 cursor-pointer" onClick={() => {
+                                  // select this address and populate checkout fields
+                                  setSelectedAddressId(a.id);
+                                  setAddingNewAddress(false);
+                                  dispatch({ type: "SET_FIELD", field: "address", value: a.address_text });
+                                  const crds = a.coords ? [a.coords.lng, a.coords.lat] : null;
+                                  dispatch({ type: "SET_FIELD", field: "coords", value: crds });
+                                  // restore house number stored in label (if any)
+                                  dispatch({ type: "SET_FIELD", field: "numeroCasa", value: a.label ?? "" });
+                                }}>
+                                <div className="flex items-center">
+                                  <input type="radio" name="savedAddress" checked={selectedAddressId===a.id} readOnly className="mr-2" />
+                                  <span className="font-medium">{a.label ? `Dirección ${a.label}` : 'Dirección'}</span>
+                                </div>
+                                <div className="text-sm text-neutral-400">{a.address_text}</div>
+                              </label>
+                              <div className="ml-3 flex-shrink-0">
+                                <button
+                                  type="button"
+                                  aria-label={`Eliminar dirección ${a.address_text}`}
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    // visually mark deleting
+                                    setDeletingAddressIds(prev => [...prev, a.id]);
+                                    try {
+                                      const ok = await userProfileCtx?.deleteAddress(a.id);
+                                      if (ok) {
+                                        setSavedAddresses(prev => prev.filter(x => x.id !== a.id));
+                                        if (selectedAddressId === a.id) setSelectedAddressId(null);
+                                      }
+                                    } finally {
+                                      setDeletingAddressIds(prev => prev.filter(id => id !== a.id));
+                                    }
+                                  }}
+                                  className="p-1 rounded-md text-neutral-400 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-500"
+                                  disabled={deletingAddressIds.includes(a.id)}
+                                >
+                                  {deletingAddressIds.includes(a.id) ? (
+                                    <svg className="w-4 h-4 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/></svg>
+                                  ) : (
+                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m5 0V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2"/></svg>
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="mb-3">
+                      <button type="button" onClick={() => { setAddingNewAddress(v => !v); setSelectedAddressId(null); }} className="text-sm underline">{addingNewAddress ? 'Cancelar' : 'Agregar nueva dirección'}</button>
                     </div>
-                    {deliveryType === 'delivery' && (
-                      <div className="text-neutral-400 text-sm">{shortAddress}</div>
+
+                    {addingNewAddress && (
+                      <div className="mb-3">
+                        <AddressSearch polygonCoords={polygonCoords} displayFullAddress={true} onValidAddress={(addr, crds) => {
+                          // Populate the form but don't auto-save. User must confirm save.
+                          dispatch({ type: "SET_FIELD", field: "address", value: addr });
+                          dispatch({ type: "SET_FIELD", field: "coords", value: crds });
+                          setNewAddressCandidate({ address: addr, coords: crds });
+                        }} />
+
+                        <div className="mt-3 flex items-center gap-2">
+                          <input
+                            id="numeroCasa_in_block"
+                            type="text"
+                            className={`${inputBase} w-44`}
+                            placeholder="N° casa / Depto (opcional)"
+                            value={numeroCasa || ""}
+                            onChange={(e) => dispatch({ type: "SET_FIELD", field: "numeroCasa", value: e.target.value })}
+                          />
+                          <button
+                            type="button"
+                            disabled={!newAddressCandidate}
+                            onClick={async () => {
+                              if (!newAddressCandidate) return;
+                                try {
+                                const lat = newAddressCandidate.coords[1];
+                                const lng = newAddressCandidate.coords[0];
+                                const saved = await userProfileCtx?.addAddress(newAddressCandidate.address, { lat, lng }, numeroCasa ?? null);
+                                if (saved) {
+                                  setSavedAddresses(prev => [saved, ...prev]);
+                                  setSelectedAddressId(saved.id);
+                                  setAddingNewAddress(false);
+                                  setNewAddressCandidate(null);
+                                }
+                              } catch (e) {
+                                // keep UX simple: user can retry
+                                console.error('Error saving address', e);
+                              }
+                            }}
+                            className="ml-2 rounded-md bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-500 disabled:opacity-50"
+                          >Guardar dirección</button>
+                          <button type="button" onClick={() => { setNewAddressCandidate(null); dispatch({ type: "SET_FIELD", field: "address", value: "" }); dispatch({ type: "SET_FIELD", field: "coords", value: null }); }} className="text-sm underline">Limpiar</button>
+                        </div>
+                      </div>
                     )}
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-yellow-600/20 text-yellow-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3" />
-                    </svg>
-                  </span>
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-base text-neutral-200">Cuanto antes</span>
-                    <span className="text-red-400 text-lg font-bold">{horaEntregaObj?.range?.split('a')[1]?.trim() || ''} min</span>
-                  </div>
-                </div>
-                {/* Mapa o dirección visual */}
-                <div className="rounded-xl overflow-hidden border border-white/10">
-                  {/* Aquí iría el componente de mapa si existe */}
-                  {/* <MapComponent ... /> */}
-                </div>
+                </>
+              )}
+
+              <div className="mt-6">
+                <a
+                  href="#"
+                  className="text-sm underline"
+                  onClick={(e) => { e.preventDefault(); setCouponModalOpen(true); }}
+                >¿Tienes un cupón?</a>
               </div>
 
-              {/* Formulario de datos */}
-              <div className="rounded-2xl bg-neutral-900/80 border border-white/10 p-5 shadow">
-                <h2 className="text-xl font-bold mb-5 text-neutral-50">Datos del pedido</h2>
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="name" className="block font-medium mb-1 text-neutral-200">Nombre</label>
-                      <input id="name" type="text" className={inputBase} value={name} onChange={(e) => dispatch({ type: "SET_FIELD", field: "name", value: e.target.value })} required />
-                    </div>
-                    <div>
-                      <label htmlFor="lastname" className="block font-medium mb-1 text-neutral-200">Apellido</label>
-                      <input id="lastname" type="text" className={inputBase} value={lastName} onChange={(e) => dispatch({ type: "SET_FIELD", field: "lastName", value: e.target.value })} required />
+              {couponModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                  <div className="bg-white rounded-lg p-6 max-w-md w-full text-neutral-900">
+                    <h3 className="text-lg font-bold mb-2">Ingresa tu cupón</h3>
+                    <p className="text-sm text-neutral-600 mb-4">Introduce el código de descuento vinculado a tu cuenta.</p>
+                    <input
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value)}
+                      placeholder="Código del cupón"
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 mb-4"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => { setCouponModalOpen(false); setCouponInput(''); }} className="px-4 py-2 rounded bg-gray-200">Cancelar</button>
+                      <button
+                        onClick={() => {
+                          const code = (couponInput || '').trim();
+                          if (!code) return alert('Ingresa un código válido');
+                          setAppliedCoupon(code.toUpperCase());
+                          setCouponModalOpen(false);
+                        }}
+                        className="px-4 py-2 rounded bg-green-600 text-white"
+                      >Aplicar</button>
                     </div>
                   </div>
-                  <div>
-                    <label htmlFor="phone" className="block font-medium mb-1 text-neutral-200">Teléfono (Chile)</label>
-                    <input id="phone" type="tel" inputMode="numeric" className={inputBase} value={phone} onChange={(e) => dispatch({ type: "SET_FIELD", field: "phone", value: e.target.value })} placeholder="+56 9 1234 5678" required />
-                    {!isValidChileanMobile(phone) && phone.trim() !== "" && (<p className="text-xs text-red-300 mt-1">Ingresa un celular chileno válido (+56 9 ########).</p>)}
-                  </div>
-                  {/* ...resto del formulario igual... */}
-                  {/* ...existing code... */}
-                </form>
-              </div>
+                </div>
+              )}
+
+              {appliedCoupon && (
+                <div className="mt-2 text-sm text-green-300">
+                  Cupón aplicado: <span className="font-medium text-white">{appliedCoupon}</span>
+                  <button onClick={() => setAppliedCoupon(null)} className="ml-3 text-xs underline">Quitar</button>
+                </div>
+              )}
             </div>
 
-            {/* Panel lateral: Resumen de compra */}
-            <div className="rounded-2xl bg-neutral-900/90 border border-white/10 p-6 shadow-xl flex flex-col gap-6">
-              <h3 className="text-lg font-bold text-neutral-50 mb-2">Detalles de tu compra</h3>
-              {/* ...aquí va el resumen del carrito y totales... */}
-              {/* ...existing code... */}
-              <button className="w-full rounded-xl px-4 py-3 font-bold text-lg text-white bg-gradient-to-b from-red-600 to-red-800 shadow hover:brightness-110 mt-4">Pagar {fmt(totalFinal)}</button>
+            {/* Columna derecha: Detalles del pedido (productos, salsas, carrito) */}
+             <div className="relative lg:ml-auto min-w-0 lg:w-[780px]">
+              {/* Use min-h so inner elements can size, add overflow-hidden and bottom padding to avoid footer overlap on small screens */}
+              <div className={`${card} p-4 sticky top-20 min-h-[calc(100vh-9rem)] flex flex-col w-full overflow-hidden pb-28 sm:pb-0`}> 
+                <h2 className="text-xl font-bold mb-5 text-neutral-50">Detalles de tu compra</h2>
+                <div className="flex-1 pr-2 h-full">
+                  {cartTyped.length > 0 && (
+                    <SummaryPanel
+                      cart={cartTyped}
+                      state={state}
+                      dispatch={dispatch}
+                      subtotalProductos={totalProductos}
+                      deliveryType={deliveryType}
+                      deliveryFee={deliveryFee}
+                      maxGratisBasicas={gratisBasicas}
+                      maxGratisJWas={POOL_JW}
+                      maxPalitosGratis={maxPalitosGratis}
+                      onValidationChange={setSalsasValidas} // 👈 callback de validación
+                      includedMap={includedMap}
+                      onToggleInclude={(cartKey, included) => setIncludedMap((prev) => ({ ...prev, [cartKey]: included }))}
+                    />
+                  )}
+                </div>
+                {/* Footer dentro del contenedor derecho (parte inferior del card) */}
+                <div className="mt-4 p-4 border-t border-white/5 bg-neutral-900 rounded-b-2xl md:relative md:shadow-none md:mx-0 md:max-w-none sm:fixed sm:bottom-4 sm:left-1/2 sm:-translate-x-1/2 sm:w-[calc(100%-2rem)] lg:left-1/2 lg:-translate-x-1/2 lg:w-[750px] sm:z-50 sm:rounded-2xl sm:shadow-lg md:rounded-b-2xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm text-neutral-400">Subtotal</div>
+                    <div className="text-sm font-semibold">{fmt(totalProductos)}</div>
+                  </div>
+                  {appliedCoupon && (
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm text-neutral-400">Cupón</div>
+                      <div className="text-sm font-semibold text-green-300">{appliedCoupon}</div>
+                    </div>
+                  )}
+                  {deliveryFee > 0 && (
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm text-neutral-400">Delivery</div>
+                      <div className="text-sm">{fmt(deliveryFee)}</div>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-lg text-white font-bold">Total</div>
+                    <div className="text-lg text-white font-bold">{fmt(totalFinal)}</div>
+                  </div>
+                  <div className="mb-3 text-sm text-red-400">{estimateText ? `Hora estimada: ${estimateText}` : null}</div>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={handleSubmit}
+                      disabled={!canSubmit}
+                      className={`w-full rounded-full px-6 py-3 font-medium text-white bg-red-700 hover:bg-red-600 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed`}
+                    >
+                      {abierto === false
+                        ? statusData?.nextOpen
+                          ? `Cerrado • abrimos ${statusData.nextOpen.human}`
+                          : "Cerrado"
+                        : loadingStatus
+                        ? "Comprobando horario…"
+                        : `Hacer pedido`}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
+      {showOrderModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full text-neutral-900">
+            <h3 className="text-lg font-bold mb-2">Pedido recibido</h3>
+            <p className="mb-4">Gracias — hemos recibido tu pedido{lastOrderId ? ` (ID: ${lastOrderId})` : ''}.</p>
+            {/* Optionally show whatsapp status if present in lastOrderResult */}
+            {/* lastOrderWhatsApp is set when the API returns whatsapp result */}
+            {/**/}
+            {lastOrderWhatsApp && (
+              <div className="mb-4 text-sm">
+                <div className="font-medium mb-1">Notificación WhatsApp:</div>
+                <pre className="whitespace-pre-wrap text-xs bg-neutral-100 p-2 rounded text-neutral-800 max-h-40 overflow-auto">{JSON.stringify(lastOrderWhatsApp, null, 2)}</pre>
+              </div>
+            )}
+            <div className="flex justify-end">
+              <button onClick={() => setShowOrderModal(false)} className="px-4 py-2 rounded bg-green-600 text-white">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

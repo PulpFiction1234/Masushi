@@ -8,6 +8,9 @@ export interface UserProfile {
   role: 'user' | 'admin'; // Rol del usuario
   created_at: string;
   updated_at: string;
+  // Optional admin marker / role. Can be either a boolean flag or a string role name.
+  is_admin?: boolean | null;
+  role?: string | null;
 }
 
 export interface Favorite {

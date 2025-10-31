@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import Link from 'next/link';
 // 👇 useSupabaseClient viene de *react*
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import Seo from "@/components/Seo"; 
@@ -25,8 +26,18 @@ export default function LoginPage() {
       return;
     }
 
-    // La cookie ya quedó; el middleware permitirá /admin
-    router.replace("/admin");
+    // After sign-in redirect: if an intent was saved, go there; otherwise previous behavior
+    try {
+      const next = sessionStorage.getItem('post_auth_next');
+      if (next) {
+        sessionStorage.removeItem('post_auth_next');
+        router.replace(next);
+        return;
+      }
+    } catch {}
+
+    // Fallback: go to main menu instead of admin
+    router.replace("/menu");
   };
 
   return (
@@ -64,10 +75,10 @@ export default function LoginPage() {
           </button>
           
           <div className="text-center text-sm text-gray-400">
-            ¿No tienes cuenta?{" "}
-            <a href="/register" className="text-green-500 hover:text-green-400">
+            ¿No tienes cuenta?{' '}
+            <Link href="/register" className="text-green-500 hover:text-green-400">
               Regístrate aquí
-            </a>
+            </Link>
           </div>
         </form>
       </main>

@@ -107,8 +107,8 @@ export default function ProfilePage() {
       const placeholderSvg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="100%" height="100%" fill="%23222"/><text x="50%" y="50%" font-size="14" fill="%23fff" text-anchor="middle" alignment-baseline="central">Sin imagen</text></svg>';
 
       // Ensure we have a sensible nombre/valor when older orders lack them
-      const nombreResolved = item.nombre || (prodMatch ? prodMatch.nombre : getProductName(item.codigo || "")) || `Producto ${item.codigo}`;
-      const valorResolved = typeof item.valor === 'number' && !Number.isNaN(item.valor) ? item.valor : (prodMatch ? prodMatch.valor : getProductPrice(item.codigo || "")) || 0;
+      const nombreResolved = (prodMatch ? prodMatch.nombre : getProductName(item.codigo || "")) || `Producto ${item.codigo}`;
+      const valorResolved = (prodMatch ? prodMatch.valor : getProductPrice(item.codigo || "")) || 0;
 
       const producto = {
         id: parseInt(item.codigo) || 0,
@@ -123,7 +123,7 @@ export default function ProfilePage() {
 
       addToCart(producto, {
         opcion: item.opcion,
-        precioUnit: item.valor,
+        precioUnit: valorResolved,
       });
     });
 
@@ -267,7 +267,7 @@ export default function ProfilePage() {
 
                   <div className="space-y-1 mb-3">
                     {order.items.map((item, idx) => {
-                      const displayName = item.nombre || getProductName(item.codigo || "") || `Producto ${item.codigo}`;
+                      const displayName = getProductName(item.codigo || "") || `Producto ${item.codigo}`;
                       return (
                         <div key={idx} className="text-sm text-gray-300">
                           {item.cantidad}x {displayName}

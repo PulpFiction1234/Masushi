@@ -22,6 +22,10 @@ interface Props {
   onAdd(e: React.MouseEvent<HTMLButtonElement>): void;
   fitMode?: FitMode;
   onFitChange(mode: FitMode): void;
+  isAvailable?: boolean;
+  showAddButton?: boolean;
+  showPrice?: boolean;
+  adminControls?: React.ReactNode;
 }
 
 const ProductCard: React.FC<Props> = ({
@@ -31,6 +35,10 @@ const ProductCard: React.FC<Props> = ({
   onAdd,
   fitMode = "cover",
   onFitChange,
+  isAvailable = true,
+  showAddButton = true,
+  showPrice = true,
+  adminControls,
 }) => {
   const user = useUser();
   const { isFavorite, addFavorite, removeFavorite } = useUserProfile();
@@ -55,7 +63,7 @@ const ProductCard: React.FC<Props> = ({
 
   // global override: if admin disabled this product, treat as out of stock
   const { map: overrides } = useProductOverrides();
-  const globallyDisabled = overrides[product.codigo ?? String(product.id)] === false;
+  const globallyDisabled = !isAvailable || overrides[product.codigo ?? String(product.id)] === false;
 
   const productCode = product.codigo || String(product.id);
   const isFav = user ? isFavorite(productCode) : false;
@@ -147,20 +155,26 @@ const ProductCard: React.FC<Props> = ({
       )}
 
       <div className="mt-auto">
-        <p className="font-bold text-gray-200 mt-3">
-          {"$"}
-          {fmtMiles.format(precioMostrar)}
-        </p>
+        {showPrice && (
+          <p className="font-bold text-gray-200 mt-3">
+            {"$"}
+            {fmtMiles.format(precioMostrar)}
+          </p>
+        )}
 
-        <button
-          type="button"
-          onClick={onAdd}
-          className={`${globallyDisabled ? 'bg-gray-600 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'} text-white px-4 py-2 mt-3 rounded w-full disabled:opacity-50 disabled:cursor-not-allowed`}
-          disabled={disabled || globallyDisabled}
-          aria-disabled={disabled || globallyDisabled}
-        >
-          {globallyDisabled ? 'Sin stock' : 'Agregar al carrito'}
-        </button>
+        {showAddButton && (
+          <button
+            type="button"
+            onClick={onAdd}
+            className={`${globallyDisabled ? 'bg-gray-600 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'} text-white px-4 py-2 mt-3 rounded w-full disabled:opacity-50 disabled:cursor-not-allowed`}
+            disabled={disabled || globallyDisabled}
+            aria-disabled={disabled || globallyDisabled}
+          >
+            {globallyDisabled ? 'Sin stock' : 'Agregar al carrito'}
+          </button>
+        )}
+        
+        {adminControls && <div className="mt-2">{adminControls}</div>}
       </div>
     </div>
   );

@@ -6,12 +6,10 @@ import { useRouter } from "next/router";
 import { RiShoppingBag4Fill } from "react-icons/ri";
 
 import { CartProvider, useCart } from "@/context/CartContext";
-import { UserProvider } from "@/context/UserContext";
+import { UserProvider, useUserProfile } from "@/context/UserContext";
 import CarritoPanel from "@/components/CarritoPanel";
 import { Analytics } from "@vercel/analytics/react";
-import { useUserProfile } from '@/context/UserContext';
 
-// 👇 OJO: Provider desde *react*, browser client desde *nextjs*
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 
@@ -73,12 +71,11 @@ export default function App({ Component, pageProps }: AppProps) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const router = useRouter();
 
-  // Cliente de Supabase del navegador (helpers)
   const [supabaseClient] = useState(() => createPagesBrowserClient());
 
   useEffect(() => {
     const open = () => setIsCartOpen(true);
-    const toggle = () => setIsCartOpen((v) => !v);
+    const toggle = () => setIsCartOpen((value) => !value);
     window.addEventListener("open-cart", open);
     window.addEventListener("toggle-cart", toggle);
     return () => {
@@ -97,7 +94,6 @@ export default function App({ Component, pageProps }: AppProps) {
             <FloatingCartButton onClick={() => setIsCartOpen(true)} />
           )}
 
-          {/* Floating favorites anchor so animateToFavorites can target it */}
           <FloatingFavoritesAnchor />
 
           <CarritoPanel open={isCartOpen} onClose={() => setIsCartOpen(false)} />

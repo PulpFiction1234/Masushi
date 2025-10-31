@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 
 interface Props {
   open: boolean;
@@ -17,7 +17,7 @@ export default function AuthRequiredModal({ open, onClose }: Props) {
       sessionStorage.setItem('post_auth_next', '/checkout');
     } catch {}
     onClose();
-    router.push(path);
+  router.push(path);
   };
 
   return (

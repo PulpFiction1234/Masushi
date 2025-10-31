@@ -3,7 +3,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
-import { useRouter } from "next/navigation"; // App Router
+import { useRouter } from "next/router";
 import { formatCLP } from "@/utils/format";
 import RecomendacionesModal from "./RecomendacionesModal";
 import AuthRequiredModal from "./AuthRequiredModal";
@@ -55,7 +55,7 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
       return;
     }
     onClose();
-    router.push("/checkout");
+  router.push("/checkout");
   };
 
   const handleClose = () => {

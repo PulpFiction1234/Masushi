@@ -5,7 +5,6 @@ export interface UserProfile {
   full_name: string;
   phone: string;
   address?: string; // Dirección de delivery opcional
-  role: 'user' | 'admin'; // Rol del usuario
   created_at: string;
   updated_at: string;
   // Optional admin marker / role. Can be either a boolean flag or a string role name.

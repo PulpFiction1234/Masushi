@@ -233,7 +233,7 @@ export default function Checkout() {
       .then((r) => r.json())
       .then((d) => {
         if (!mounted) return;
-        if (d?.ok) setEstimateText(d.estimatedMax ?? null);
+        if (d?.ok) setEstimateText(d.estimatedText ?? d.estimatedMax ?? null);
       })
       .catch(() => {
         if (mounted) setEstimateText(null);

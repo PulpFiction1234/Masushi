@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getEstimateRange, getEstimateWindow, formatWindow } from '@/utils/estimateTimes';
+import { getEstimateRange, getEstimateWindow, formatWindow, formatEstimate } from '@/utils/estimateTimes';
 
 type Resp = {
   ok: boolean;
@@ -7,6 +7,7 @@ type Resp = {
   range?: { min: number; max: number } | null;
   window?: { minAt: string; maxAt: string } | null;
   estimatedMax?: string | null;
+  estimatedText?: string | null;
   error?: string;
 };
 
@@ -22,6 +23,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse<Resp>)
       ? { minAt: win.minAt.toISOString(), maxAt: win.maxAt.toISOString() }
       : null;
 
+    const formattedWindow = formatWindow(win);
+
     // estimatedMax: prefer window.maxAt formatted (HH:MM in business tz), otherwise range.max in minutes
     let estimatedMax: string | null = null;
     if (win && win.maxAt) {
@@ -31,7 +34,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse<Resp>)
       estimatedMax = `${range.max} min`;
     }
 
-    return res.status(200).json({ ok: true, type, range, window: windowResp, estimatedMax });
+    const estimatedText = formattedWindow
+      || (range ? formatEstimate(range) : (type === 'delivery' ? 'Tiempo estimado de entrega' : 'Tiempo estimado de retiro'));
+
+    return res.status(200).json({ ok: true, type, range, window: windowResp, estimatedMax, estimatedText });
   } catch (e: unknown) {
     const msg = typeof e === 'object' && e !== null && 'message' in e ? String((e as { message?: unknown }).message ?? '') : String(e);
     return res.status(500).json({ ok: false, error: msg });

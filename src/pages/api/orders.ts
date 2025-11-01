@@ -152,9 +152,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const phoneNormalized = normalizePhone(customerPhoneRaw);
 
       // Helper to sanitize template parameters: remove newlines/tabs and collapse multiple spaces
-      const sanitizeParam = (v: unknown) => {
+      const sanitizeParam = (v: unknown, opts?: { allowNewlines?: boolean }) => {
         const s = v == null ? '' : String(v);
+        if (opts?.allowNewlines) {
+          return s
+            .replace(/\r/g, '')
+            .replace(/\t+/g, ' ')
+            .split('\n')
+            .map((line) => line.replace(/ {2,}/g, ' ').trim())
+            .filter(Boolean)
+            .join('\n');
+        }
         return s.replace(/[\r\n\t]+/g, ' ').replace(/ {2,}/g, ' ').trim();
+      };
+
+      const moneyFmt = new Intl.NumberFormat('es-CL');
+      const formatMoney = (value: unknown) => {
+        const num = typeof value === 'number' ? value : Number(value);
+        if (Number.isFinite(num)) return moneyFmt.format(num);
+        return value == null ? '' : String(value);
       };
 
       const detalle = Array.isArray(items)
@@ -162,13 +178,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             const item = it as { nombre?: unknown; codigo?: unknown; cantidad?: unknown; valor?: unknown };
             const nombre = typeof item.nombre === 'string' ? item.nombre : (typeof item.codigo === 'string' ? String(item.codigo) : '');
             const cantidad = typeof item.cantidad === 'number' ? item.cantidad : 1;
-            const valor = typeof item.valor === 'number' ? item.valor : '';
-            return `${nombre || ''} x${cantidad} - $${valor}`;
+            const valor = formatMoney(item.valor);
+            return `- ${nombre || ''} x${cantidad} - $${valor}`.trim();
           }).join('\n')
         : '';
 
-      const totalResolved = typeof data.total === 'number' ? data.total : finalTotal;
-      const totalText = `$ ${totalResolved}`;
+  const totalResolved = typeof data.total === 'number' ? data.total : finalTotal;
+  const totalText = `$ ${formatMoney(totalResolved)}`;
 
       // Use provided template name or fallback to approved `confirmacion_orden`
       const templateName = process.env.WHATSAPP_TEMPLATE_NAME || 'confirmacion_orden';
@@ -193,8 +209,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               { type: 'text', text: sanitizeParam(`${data.id}`) },
               { type: 'text', text: sanitizeParam(estimatedText) },
               { type: 'text', text: sanitizeParam(direccionResolved) },
-              { type: 'text', text: sanitizeParam(detalle) },
-              { type: 'text', text: sanitizeParam(`${totalResolved}`) },
+              { type: 'text', text: sanitizeParam(detalle, { allowNewlines: true }) },
+              { type: 'text', text: sanitizeParam(`${formatMoney(totalResolved)}`) },
             ],
           });
 
@@ -222,7 +238,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 { type: 'text', text: sanitizeParam(phoneNormalized) },
                 { type: 'text', text: sanitizeParam(estimatedText) },
                 { type: 'text', text: sanitizeParam(direccionResolved) },
-                { type: 'text', text: sanitizeParam(detalle) },
+                { type: 'text', text: sanitizeParam(detalle, { allowNewlines: true }) },
               ],
             },
           ];

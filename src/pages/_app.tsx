@@ -6,7 +6,7 @@ import { useRouter } from "next/router";
 import { RiShoppingBag4Fill } from "react-icons/ri";
 
 import { CartProvider, useCart } from "@/context/CartContext";
-import { UserProvider, useUserProfile } from "@/context/UserContext";
+import { UserProvider } from "@/context/UserContext";
 import CarritoPanel from "@/components/CarritoPanel";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -42,31 +42,6 @@ function FloatingCartButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-function FloatingFavoritesAnchor() {
-  const { favorites } = useUserProfile();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  const count = mounted ? favorites.size : 0;
-
-  return (
-    <button
-      data-fav-anchor
-      onClick={() => window.location.assign('/menu?cat=Mis%20favoritos')}
-      className="fixed bottom-6 right-20 bg-yellow-400 text-black w-12 h-12 rounded-full shadow-lg hover:bg-yellow-500 transition z-50 flex items-center justify-center"
-      aria-label={count ? `Mis favoritos, ${count} items` : 'Mis favoritos'}
-    >
-      <div className="relative flex items-center justify-center">
-        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4 8 4 9.5 5 10.5 6.5 11.5 5 13 4 14.5 4 17 4 19 6 19 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-        {mounted && count > 0 && (
-          <span className="absolute -top-2 -right-2 bg-gray-900 text-white text-xs font-bold rounded-full px-2 py-0.5">
-            {count}
-          </span>
-        )}
-      </div>
-    </button>
-  );
-}
-
 export default function App({ Component, pageProps }: AppProps) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const router = useRouter();
@@ -93,8 +68,6 @@ export default function App({ Component, pageProps }: AppProps) {
           {router.pathname !== "/checkout" && (
             <FloatingCartButton onClick={() => setIsCartOpen(true)} />
           )}
-
-          <FloatingFavoritesAnchor />
 
           <CarritoPanel open={isCartOpen} onClose={() => setIsCartOpen(false)} />
           <Analytics />

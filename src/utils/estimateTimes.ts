@@ -12,6 +12,8 @@ function inInterval(nowMinutes: number, from: string, to: string) {
 }
 
 // Define schedules per day for pickup (retiro) and delivery
+const DEFAULT_RANGE: Range = { min: 30, max: 30 };
+
 const SCHEDULE: Record<'retiro'|'delivery', Record<DayKey, Array<{ from: string; to: string; range: Range }>>> = {
   retiro: {
     mon: [
@@ -103,11 +105,12 @@ export function getEstimateRange(deliveryType: 'delivery'|'retiro', now = new Da
     if (inInterval(minutes, item.from, item.to)) return item.range;
   }
 
-  return null;
+  return DEFAULT_RANGE;
 }
 
 export function formatEstimate(range: Range | null) {
   if (!range) return null;
+  if (range.min === range.max) return `${range.min} min`;
   return `${range.min} a ${range.max} min`;
 }
 

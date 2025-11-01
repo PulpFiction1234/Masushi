@@ -114,6 +114,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ error: error.message });
     }
 
+    const mode: 'delivery' | 'retiro' = delivery_type === 'delivery' ? 'delivery' : 'retiro';
+    const nowEstimate = new Date();
+    const rangeForEta = getEstimateRange(mode, nowEstimate);
+    const windowForEta = getEstimateWindow(mode, nowEstimate);
+    const formattedWindow = formatWindow(windowForEta);
+    const estimatedText = formattedWindow
+      || (rangeForEta ? formatEstimate(rangeForEta) : (mode === 'delivery' ? 'Tiempo estimado de entrega' : 'Tiempo estimado de retiro'));
+    const pickupLabel = process.env.STORE_PICKUP_LABEL || 'Retiro en local Masushi';
+    const deliveryFallback = process.env.STORE_DELIVERY_FALLBACK || 'Dirección de entrega';
+    const direccionResolved = (address && String(address).trim()) || (mode === 'delivery' ? deliveryFallback : pickupLabel);
+
     // Build template variables and send WhatsApp notifications (awaited, return results)
     const whatsappResults: Array<{ target?: string; type?: 'template' | 'text'; result?: unknown } | { warning: string }> = [];
     try {
@@ -146,13 +157,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return s.replace(/[\r\n\t]+/g, ' ').replace(/ {2,}/g, ' ').trim();
       };
 
-      const range = getEstimateRange(delivery_type === 'delivery' ? 'delivery' : 'retiro', new Date());
-      const window = getEstimateWindow(delivery_type === 'delivery' ? 'delivery' : 'retiro', new Date());
-      const estimatedMax = (window && window.maxAt)
-        ? new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', hour12: false }).format(window.maxAt)
-        : (range ? `${range.max} min` : 'Tiempo de entrega');
-      const direccion = address || 'Dirección de entrega';
-
       const detalle = Array.isArray(items)
         ? items.map((it: unknown) => {
             const item = it as { nombre?: unknown; codigo?: unknown; cantidad?: unknown; valor?: unknown };
@@ -163,7 +167,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           }).join('\n')
         : '';
 
-      const totalText = `$ ${total}`;
+      const totalResolved = typeof data.total === 'number' ? data.total : finalTotal;
+      const totalText = `$ ${totalResolved}`;
 
       // Use provided template name or fallback to approved `confirmacion_orden`
       const templateName = process.env.WHATSAPP_TEMPLATE_NAME || 'confirmacion_orden';
@@ -186,18 +191,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             parameters: [
               { type: 'text', text: sanitizeParam(customerName) },
               { type: 'text', text: sanitizeParam(`${data.id}`) },
-              { type: 'text', text: sanitizeParam(estimatedMax) },
-              { type: 'text', text: sanitizeParam(direccion) },
+              { type: 'text', text: sanitizeParam(estimatedText) },
+              { type: 'text', text: sanitizeParam(direccionResolved) },
               { type: 'text', text: sanitizeParam(detalle) },
-              { type: 'text', text: sanitizeParam(`${total}`) },
+              { type: 'text', text: sanitizeParam(`${totalResolved}`) },
             ],
           });
 
           const sent = await sendWhatsAppTemplate(phoneNormalized, templateName, process.env.WHATSAPP_TEMPLATE_LANG || 'es_CL', components);
           whatsappResults.push({ target: phoneNormalized, type: 'template', result: sent });
         } else {
-          const etaText = estimatedMax;
-          const templateUser = `¡Hola! ${customerName}, tu orden #${data.id} ya está en cocina.\n\nHora de entrega estimada: ${etaText}\nDirección: ${direccion}\n\nDetalle:\n${detalle}\n\nTotal: ${totalText}\n\nGracias por preferirnos 🍣🥢`;
+          const etaText = estimatedText;
+          const templateUser = `¡Hola! ${customerName}, tu orden #${data.id} ya está en cocina.\n\nHora de entrega estimada: ${etaText}\nDirección: ${direccionResolved}\n\nDetalle:\n${detalle}\n\nTotal: ${totalText}\n\nGracias por preferirnos 🍣🥢`;
           const sent = await sendWhatsAppMessage(phoneNormalized, templateUser);
           whatsappResults.push({ target: phoneNormalized, type: 'text', result: sent });
         }
@@ -215,8 +220,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 { type: 'text', text: sanitizeParam(`${data.id}`) },
                 { type: 'text', text: sanitizeParam(customerName) },
                 { type: 'text', text: sanitizeParam(phoneNormalized) },
-                { type: 'text', text: sanitizeParam(estimatedMax) },
-                { type: 'text', text: sanitizeParam(direccion) },
+                { type: 'text', text: sanitizeParam(estimatedText) },
+                { type: 'text', text: sanitizeParam(direccionResolved) },
                 { type: 'text', text: sanitizeParam(detalle) },
               ],
             },
@@ -224,7 +229,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           const sentInternal = await sendWhatsAppTemplate(internalNumber.replace(/\D/g, ''), templateName, process.env.WHATSAPP_TEMPLATE_LANG || 'es_CL', internalComponents);
           whatsappResults.push({ target: internalNumber.replace(/\D/g, ''), type: 'template', result: sentInternal });
         } else {
-          const templateInternal = `Nuevo pedido #${data.id}\nCliente: ${customerName}\nTel: ${phoneNormalized}\nHora de entrega estimada: ${estimatedMax}\nDireccion: ${direccion}\nTotal: ${totalText}\n\nDetalle:\n${detalle}`;
+          const templateInternal = `Nuevo pedido #${data.id}\nCliente: ${customerName}\nTel: ${phoneNormalized}\nHora de entrega estimada: ${estimatedText}\nDireccion: ${direccionResolved}\nTotal: ${totalText}\n\nDetalle:\n${detalle}`;
           const sentInternal = await sendWhatsAppMessage(internalNumber.replace(/\D/g, ''), templateInternal);
           whatsappResults.push({ target: internalNumber.replace(/\D/g, ''), type: 'text', result: sentInternal });
         }

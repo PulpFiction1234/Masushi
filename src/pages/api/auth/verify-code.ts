@@ -40,8 +40,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // mark as used
     await supabaseAdmin.from('email_verifications').update({ used: true }).eq('id', ev.id);
 
+    // also confirm the user inside Supabase auth so they can sign in normally
+    const userIdForUpdate = targetUserId as string;
+    const { error: confirmErr } = await supabaseAdmin.auth.admin.updateUserById(userIdForUpdate, { email_confirm: true });
+    if (confirmErr) {
+      console.error('[verify-code] error confirming email in auth.users', confirmErr);
+      return res.status(500).json({ error: 'Error marcando email como verificado' });
+    }
+
     // Optionally mark profile as verified (if you added such field). For now we just return ok.
-    return res.status(200).json({ ok: true });
+    return res.status(200).json({ ok: true, method: 'custom' });
   } catch (e: any) {
     console.error('verify-code error', e);
     return res.status(500).json({ error: e?.message || String(e) });

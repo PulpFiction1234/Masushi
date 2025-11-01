@@ -102,6 +102,91 @@ export default function RegisterPage() {
     }
   };
 
+  const handleVerifyCodeClick = async () => {
+    if (!email) {
+      alert('No se encontró el correo del registro. Vuelve a intentarlo.');
+      return;
+    }
+
+    const rawCode = verificationCode.trim();
+    if (!rawCode) {
+      alert('Ingresa el código');
+      return;
+    }
+
+    const normalizedCode = rawCode.replace(/\s+/g, '');
+
+    setVerifying(true);
+    try {
+      let verifiedWith: 'supabase' | 'custom' | null = null;
+
+      try {
+        const otpResult = await supabase.auth.verifyOtp({
+          email,
+          token: normalizedCode,
+          type: 'signup',
+        });
+
+        if (!otpResult.error) {
+          verifiedWith = 'supabase';
+          if (!otpResult.data?.session && password) {
+            const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+            if (signInError) {
+              console.warn('Auto sign-in after verifyOtp failed', signInError);
+            }
+          }
+        } else {
+          console.warn('verifyOtp error', otpResult.error);
+        }
+      } catch (err) {
+        console.warn('verifyOtp threw', err);
+      }
+
+      if (!verifiedWith) {
+        const resp = await fetch('/api/auth/verify-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, userId: createdUserId, code: normalizedCode }),
+        });
+        const json = await resp.json().catch(() => null);
+        if (!resp.ok) {
+          throw new Error(json?.error || 'Código inválido o expirado');
+        }
+        verifiedWith = 'custom';
+        if (password) {
+          const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+          if (signInError) {
+            console.warn('Auto sign-in after custom verification failed', signInError);
+          }
+        }
+      }
+
+      if (!verifiedWith) {
+        throw new Error('Código inválido');
+      }
+
+      setShowVerificationModal(false);
+      setSuccessMessage('Correo verificado. Serás redirigido.');
+      setTimeout(() => {
+        try {
+          const next = sessionStorage.getItem('post_auth_next');
+          if (next) {
+            sessionStorage.removeItem('post_auth_next');
+            router.push(next);
+            return;
+          }
+        } catch {}
+        router.push('/menu');
+      }, 1200);
+    } catch (err) {
+      console.error('verify error', err);
+      const message = err instanceof Error ? err.message : 'Error verificando el código';
+      alert(message);
+    } finally {
+      setVerifying(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-950 text-white">
       <Seo title="Registrarse — Masushi" canonicalPath="/register" noIndex />
@@ -183,40 +268,8 @@ export default function RegisterPage() {
             <div className="flex justify-end gap-2">
               <button onClick={() => { setShowVerificationModal(false); }} className="px-4 py-2 rounded bg-gray-200">Cerrar</button>
               <button
-                onClick={async () => {
-                  if (!verificationCode.trim()) return alert('Ingresa el código');
-                  setVerifying(true);
-                    try {
-                    const resp = await fetch('/api/auth/verify-code', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ email, userId: createdUserId, code: verificationCode.trim() }),
-                    });
-                    const json = await resp.json().catch(() => null);
-                    if (resp.ok) {
-                      setShowVerificationModal(false);
-                      setSuccessMessage('Correo verificado. Serás redirigido.');
-                      setTimeout(() => {
-                        try {
-                          const next = sessionStorage.getItem('post_auth_next');
-                          if (next) {
-                            sessionStorage.removeItem('post_auth_next');
-                            router.push(next);
-                            return;
-                          }
-                        } catch {}
-                        router.push('/menu');
-                      }, 1200);
-                    } else {
-                      alert(json?.error || 'Código inválido');
-                    }
-                  } catch (e) {
-                    console.error('verify error', e);
-                    alert('Error verificando el código');
-                  } finally {
-                    setVerifying(false);
-                  }
-                }}
+                type="button"
+                onClick={handleVerifyCodeClick}
                 className="px-4 py-2 rounded bg-green-600 text-white"
                 disabled={verifying}
               >{verifying ? 'Verificando...' : 'Verificar'}</button>

@@ -40,51 +40,26 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      // Utilizamos metadata para guardar nombre y teléfono en el usuario
-      // Implementar reintentos para manejar 429 (Too Many Requests) en entornos de dev
-      const maxAttempts = 3;
-      let attempt = 0;
-      let data: any = null;
-      let error: any = null;
-      const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+      const resp = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, name, phone }),
+      });
+      const json = await resp.json().catch(() => null);
 
-      while (attempt < maxAttempts) {
-        attempt++;
-        const resp = await supabase.auth.signUp({
-          email,
-          password,
-          options: { data: { full_name: name, phone } },
-        });
-        data = resp.data;
-        error = resp.error;
-        if (!error) break;
-        const msg = String(error?.message || '');
-        // si es 429 o indica rate limit, reintentar con backoff
-        if (msg.toLowerCase().includes('too many') || (error?.status === 429)) {
-          const backoff = 500 * Math.pow(2, attempt - 1);
-          console.warn(`signUp attempt ${attempt} failed with rate limit, retrying in ${backoff}ms`);
-          await sleep(backoff);
-          continue;
-        }
-        // otro error -> no reintentar
-        break;
-      }
-
-      if (error) {
-        setErrorMessage(error.message || String(error));
+      if (!resp.ok) {
+        setErrorMessage(json?.error || 'No pudimos crear tu cuenta');
         setLoading(false);
         return;
       }
 
-      // Si se requiere confirmación por email, abrir modal para código
+      const createdId = json?.userId || null;
+      if (createdId) setCreatedUserId(createdId);
+
       setSuccessMessage("Cuenta creada. Revisa tu email para el código de verificación.");
       setLoading(false);
 
-      // capture user id if available and request server to send verification code
       try {
-        const createdId = (data as any)?.user?.id || (data as any)?.user_id || null;
-        if (createdId) setCreatedUserId(createdId);
-
         await fetch('/api/auth/send-verification-code', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

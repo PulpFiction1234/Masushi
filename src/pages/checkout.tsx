@@ -504,6 +504,38 @@ export default function Checkout() {
   const birthdayCouponCode = birthdayCouponActive ? BIRTHDAY_COUPON_CODE : null;
   const couponCodeForOrder = appliedCoupon || birthdayCouponCode;
 
+  const birthdayWeekRangeLabel = useMemo(() => {
+    if (!birthdayEligibility || !birthdayEligibility.birthday) return null;
+    const referenceWindow = birthdayEligibility.window ?? birthdayEligibility.nextWindow;
+    if (!referenceWindow) return null;
+    const referenceStart = new Date(referenceWindow.start);
+    if (Number.isNaN(referenceStart.getTime())) return null;
+    const parts = birthdayEligibility.birthday.split('-');
+    if (parts.length < 3) return null;
+    const monthIndex = Number.parseInt(parts[1] ?? '', 10) - 1;
+    const dayNumber = Number.parseInt(parts[2] ?? '', 10);
+    if (Number.isNaN(monthIndex) || Number.isNaN(dayNumber)) return null;
+    const year = referenceStart.getFullYear();
+    const birthdayDate = new Date(year, Math.max(0, Math.min(11, monthIndex)), dayNumber, 12, 0, 0, 0);
+    if (Number.isNaN(birthdayDate.getTime())) return null;
+    const dayOfWeek = birthdayDate.getDay();
+    const diffToMonday = (dayOfWeek + 6) % 7;
+    const monday = new Date(birthdayDate);
+    monday.setDate(birthdayDate.getDate() - diffToMonday);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const formatRangePart = (date: Date) => {
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      return `${day}-${month}`;
+    };
+    return `Válido del ${formatRangePart(monday)} al ${formatRangePart(sunday)}`;
+  }, [birthdayEligibility]);
+
+  const birthdayValidityReminder = birthdayWeekRangeLabel
+    ? `${birthdayWeekRangeLabel}.`
+    : 'Recuerda usarlo en tu semana de cumpleaños.';
+
   const birthdayCardTitle = birthdayCouponApplied
     ? "Descuento de cumpleaños activo"
     : skipBirthdayCoupon
@@ -513,7 +545,7 @@ export default function Checkout() {
   const birthdayCardBody = birthdayCouponApplied
     ? `${birthdayDiscountPercent}% · código ${BIRTHDAY_COUPON_CODE}. Se aplicará automáticamente en este pedido y es válido una sola vez durante tu semana de cumpleaños.`
     : skipBirthdayCoupon
-    ? "Lo guardaste para usarlo en otra compra de esta semana. Cuando quieras activarlo, presiona \"Usar en este pedido\"."
+    ? `Lo guardaste para usarlo en otra compra de esta semana. Cuando quieras activarlo, presiona "Usar en este pedido". ${birthdayValidityReminder}`
     : `${birthdayDiscountPercent}% · código ${BIRTHDAY_COUPON_CODE}. Puedes activarlo en esta compra o guardarlo para más tarde durante la semana de tu cumpleaños.`;
 
   const handleDeferBirthdayCoupon = useCallback(() => {
@@ -1083,7 +1115,7 @@ export default function Checkout() {
                         {birthdayCouponApplied ? "Guardar para otro pedido" : "Usar en este pedido"}
                       </button>
                       {skipBirthdayCoupon ? (
-                        <span className="text-xs text-green-200">Lo volverás a ver en tus próximos pedidos de esta semana.</span>
+                        <span className="text-xs text-green-200">{birthdayValidityReminder}</span>
                       ) : null}
                     </div>
                   </div>

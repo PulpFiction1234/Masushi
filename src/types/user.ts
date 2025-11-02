@@ -4,6 +4,7 @@ export interface UserProfile {
   id: string;
   full_name: string;
   phone: string;
+  birthday?: string | null;
   address?: string; // Dirección de delivery opcional
   created_at: string;
   updated_at: string;

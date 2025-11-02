@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useReducer, useEffect, useState } from "react";
+import React, { useMemo, useReducer, useEffect, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import useSWR from "swr";
 import { useCart } from "@/context/CartContext";
@@ -8,6 +8,8 @@ import { useUserProfile, MAX_SAVED_ADDRESSES } from "@/context/UserContext";
 import type { AddressRecord, AddressCoords } from "@/context/UserContext";
 import Navbar from "@/components/Navbar";
 import Seo from "@/components/Seo";
+import { BIRTHDAY_COUPON_CODE, BIRTHDAY_DISCOUNT_PERCENT } from "@/utils/birthday";
+import type { BirthdayEligibility } from "@/types/birthday";
 
 // THEME
 const ACCENT_FROM = "from-emerald-500";
@@ -467,6 +469,60 @@ export default function Checkout() {
   const [couponModalOpen, setCouponModalOpen] = useState(false);
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
+  const [birthdayEligibility, setBirthdayEligibility] = useState<BirthdayEligibility | null>(null);
+  const [birthdayStatusLoading, setBirthdayStatusLoading] = useState(false);
+
+  const birthdayCouponActive = useMemo(
+    () => !appliedCoupon && (birthdayEligibility?.eligibleNow ?? false),
+    [appliedCoupon, birthdayEligibility],
+  );
+
+  const birthdayDiscountPercent = birthdayEligibility?.discountPercent ?? BIRTHDAY_DISCOUNT_PERCENT;
+
+  const birthdayDiscountAmount = useMemo(() => {
+    if (!birthdayCouponActive) return 0;
+    return Math.max(0, Math.round(totalFinal * birthdayDiscountPercent / 100));
+  }, [birthdayCouponActive, totalFinal, birthdayDiscountPercent]);
+
+  const totalAfterDiscount = useMemo(
+    () => Math.max(0, totalFinal - birthdayDiscountAmount),
+    [totalFinal, birthdayDiscountAmount],
+  );
+
+  const birthdayCouponCode = birthdayCouponActive ? BIRTHDAY_COUPON_CODE : null;
+  const couponCodeForOrder = appliedCoupon || birthdayCouponCode;
+
+  const fetchBirthdayEligibility = useCallback(async () => {
+    if (!user) {
+      setBirthdayEligibility(null);
+      setBirthdayStatusLoading(false);
+      return;
+    }
+    setBirthdayStatusLoading(true);
+    try {
+      const response = await fetch("/api/coupons/birthday");
+      if (!response.ok) {
+        setBirthdayEligibility(null);
+        return;
+      }
+      const data = await response.json();
+      setBirthdayEligibility((data?.eligibility ?? null) as BirthdayEligibility | null);
+    } catch (error) {
+      console.error("Error fetching birthday eligibility:", error);
+      setBirthdayEligibility(null);
+    } finally {
+      setBirthdayStatusLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      setBirthdayEligibility(null);
+      setBirthdayStatusLoading(false);
+      return;
+    }
+    fetchBirthdayEligibility();
+  }, [user, fetchBirthdayEligibility]);
 
   // ⚠️ No permitir enviar si el estado aún está cargando o si ya estamos enviando
   const canSubmit = canSubmitBase && abierto === true && !loadingStatus && !submitting;
@@ -592,7 +648,11 @@ export default function Checkout() {
           lineaDelivery +
           bloqueObsCRLF;
 
-        const msg = `${cuerpoAntesDeTotal.replace(/(\r?\n)+$/, "")}${NL}${NL}Total: ${fmt(totalFinal)}`;
+        const discountInfo = birthdayCouponActive && birthdayDiscountAmount > 0
+          ? `${NL}Descuento cumpleaños (${birthdayDiscountPercent}%): -${fmt(birthdayDiscountAmount)}`
+          : "";
+        const couponInfo = couponCodeForOrder ? `${NL}Cupón aplicado: ${couponCodeForOrder}` : "";
+        const msg = `${cuerpoAntesDeTotal.replace(/(\r?\n)+$/, "")}${couponInfo}${discountInfo}${NL}${NL}Total: ${fmt(totalAfterDiscount)}`;
 
         const mensaje = encodeURIComponent(msg);
         
@@ -625,8 +685,8 @@ export default function Checkout() {
                   name: `${name} ${lastName}`,
                   phone,
                 },
-                // include coupon if user applied one in the UI
-                ...(appliedCoupon ? { coupon_code: appliedCoupon } : {}),
+                // include coupon if user aplicó uno o si aplica el automático de cumpleaños
+                ...(couponCodeForOrder ? { coupon_code: couponCodeForOrder } : {}),
               }),
             });
 
@@ -637,6 +697,7 @@ export default function Checkout() {
               if (oid) setLastOrderId(oid as number);
               setLastOrderWhatsApp(json?.whatsapp ?? null);
               setShowOrderModal(true);
+              fetchBirthdayEligibility();
               // Optionally clear cart here if you want: (not doing automatically)
             } else {
               console.error('Error saving order:', json);
@@ -902,12 +963,19 @@ export default function Checkout() {
                 </>
               )}
 
-              <div className="mt-6">
+              <div className="mt-6 space-y-2">
                 <a
                   href="#"
                   className="text-sm underline"
                   onClick={(e) => { e.preventDefault(); setCouponModalOpen(true); }}
                 >¿Tienes un cupón?</a>
+                {birthdayStatusLoading ? (
+                  <p className="text-xs text-neutral-400">Verificando descuento de cumpleaños…</p>
+                ) : birthdayCouponActive ? (
+                  <p className="text-xs text-green-300">
+                    Descuento de cumpleaños activo ({birthdayDiscountPercent}% · código {birthdayCouponCode}). Se aplicará automáticamente en este pedido.
+                  </p>
+                ) : null}
               </div>
 
               {couponModalOpen && (
@@ -974,12 +1042,18 @@ export default function Checkout() {
                     <div className="text-sm text-neutral-400">Subtotal</div>
                     <div className="text-sm font-semibold">{fmt(totalProductos)}</div>
                   </div>
-                  {appliedCoupon && (
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="text-sm text-neutral-400">Cupón</div>
-                      <div className="text-sm font-semibold text-green-300">{appliedCoupon}</div>
-                    </div>
-                  )}
+                    {couponCodeForOrder && (
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm text-neutral-400">Cupón</div>
+                        <div className="text-sm font-semibold text-green-300">{couponCodeForOrder}</div>
+                      </div>
+                    )}
+                    {birthdayDiscountAmount > 0 && (
+                      <div className="flex items-center justify-between mb-2 text-sm text-green-300">
+                        <div>Descuento cumpleaños ({birthdayDiscountPercent}%)</div>
+                        <div>-{fmt(birthdayDiscountAmount)}</div>
+                      </div>
+                    )}
                   {deliveryFee > 0 && (
                     <div className="flex items-center justify-between mb-2">
                       <div className="text-sm text-neutral-400">Delivery</div>
@@ -988,7 +1062,7 @@ export default function Checkout() {
                   )}
                   <div className="flex items-center justify-between mb-3">
                     <div className="text-lg text-white font-bold">Total</div>
-                    <div className="text-lg text-white font-bold">{fmt(totalFinal)}</div>
+                      <div className="text-lg text-white font-bold">{fmt(totalAfterDiscount)}</div>
                   </div>
                   <div className="mb-3 text-sm text-red-400">{estimateText ? `Hora estimada: ${estimateText}` : null}</div>
                   <div>

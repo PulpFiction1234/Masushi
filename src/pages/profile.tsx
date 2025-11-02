@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/router";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -11,6 +11,8 @@ import type { Producto } from "@/data/productos";
 import { getProductByCode, getProductName, getProductPrice, resolveProductImageUrl } from "@/utils/productLookup";
 import { useCart, type CartOpcion } from "@/context/CartContext";
 import { REPEAT_ORDER_META_KEY, type RepeatOrderMeta } from "@/utils/repeatOrder";
+import { BIRTHDAY_DISCOUNT_PERCENT, BIRTHDAY_WINDOW_DAYS, BIRTHDAY_MIN_MONTHS, BIRTHDAY_MIN_ORDERS } from "@/utils/birthday";
+import type { BirthdayEligibility } from "@/types/birthday";
 
 const PLACEHOLDER_IMAGE =
   'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="100%" height="100%" fill="%23222"/><text x="50%" y="50%" font-size="14" fill="%23fff" text-anchor="middle" alignment-baseline="central">Sin imagen</text></svg>';
@@ -130,7 +132,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const user = useUser();
   const supabase = useSupabaseClient();
-  const { profile, updateProfile, refreshProfile, loading: profileLoading } = useUserProfile();
+  const { profile, updateProfile, refreshProfile, loading: profileLoading, setBirthday } = useUserProfile();
   const { addToCart, clearCart, updateQuantity, ready } = useCart();
 
   const [editing, setEditing] = useState(false);
@@ -140,6 +142,37 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [totalOrders, setTotalOrders] = useState(0);
+  const [birthdayStatus, setBirthdayStatus] = useState<BirthdayEligibility | null>(null);
+  const [birthdayStatusLoading, setBirthdayStatusLoading] = useState(true);
+  const [showBirthdayModal, setShowBirthdayModal] = useState(false);
+  const [birthdayInput, setBirthdayInput] = useState("");
+  const [birthdayError, setBirthdayError] = useState("");
+  const [birthdaySaving, setBirthdaySaving] = useState(false);
+  const birthdayWindowLength = BIRTHDAY_WINDOW_DAYS * 2 + 1;
+
+  const fetchBirthdayStatus = useCallback(async () => {
+    if (!user) {
+      setBirthdayStatus(null);
+      setBirthdayStatusLoading(false);
+      return;
+    }
+    setBirthdayStatusLoading(true);
+    try {
+      const response = await fetch("/api/coupons/birthday");
+      if (!response.ok) {
+        setBirthdayStatus(null);
+        return;
+      }
+      const data = await response.json();
+      setBirthdayStatus((data?.eligibility ?? null) as BirthdayEligibility | null);
+    } catch (err) {
+      console.error("Error fetching birthday eligibility:", err);
+      setBirthdayStatus(null);
+    } finally {
+      setBirthdayStatusLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
     // Wait until profile/auth initialization finishes before redirecting.
@@ -158,6 +191,10 @@ export default function ProfilePage() {
   }, [user, profile, router, profileLoading]);
 
   useEffect(() => {
+    fetchBirthdayStatus();
+  }, [fetchBirthdayStatus]);
+
+  useEffect(() => {
     const loadOrders = async () => {
       if (!user) return;
 
@@ -166,6 +203,9 @@ export default function ProfilePage() {
         if (res.ok) {
           const data = await res.json();
           setRecentOrders(data.orders || []);
+          const total = Number(data?.totalOrders);
+          setTotalOrders(Number.isFinite(total) ? total : (Array.isArray(data?.orders) ? data.orders.length : 0));
+          await fetchBirthdayStatus();
         }
       } catch (error) {
         console.error("Error loading orders:", error);
@@ -175,7 +215,67 @@ export default function ProfilePage() {
     };
 
     loadOrders();
-  }, [user]);
+  }, [user, fetchBirthdayStatus]);
+
+  const formattedBirthday = useMemo(() => {
+    if (!profile?.birthday) return null;
+    const date = new Date(profile.birthday);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleDateString("es-CL", { day: "2-digit", month: "long" });
+  }, [profile?.birthday]);
+
+  const birthdayMaxDate = useMemo(() => new Date().toISOString().split("T")[0], []);
+
+  const birthdayWindowText = useMemo(() => {
+    const startIso = birthdayStatus?.window?.start;
+    const endIso = birthdayStatus?.window?.end;
+    if (!startIso || !endIso) return null;
+    const start = new Date(startIso);
+    const end = new Date(endIso);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+    const startLabel = start.toLocaleDateString("es-CL", { day: "numeric", month: "long" });
+    const endLabel = end.toLocaleDateString("es-CL", { day: "numeric", month: "long" });
+    return `${startLabel} – ${endLabel}`;
+  }, [birthdayStatus?.window]);
+
+  const birthdayRequirements = useMemo(
+    () => [
+      {
+        key: "birthday",
+        label: "Cumpleaños registrado",
+        met: Boolean(profile?.birthday),
+      },
+      {
+        key: "accountAge",
+        label: `Al menos ${BIRTHDAY_MIN_MONTHS} meses con nosotros`,
+        met: birthdayStatus?.requirements?.hasMinAccountAge ?? false,
+        helper: birthdayStatusLoading
+          ? "Cargando..."
+          : birthdayStatus
+          ? `${birthdayStatus.accountAgeMonths} meses`
+          : null,
+      },
+      {
+        key: "orders",
+        label: `${BIRTHDAY_MIN_ORDERS} pedidos completados`,
+        met: birthdayStatus?.requirements?.hasMinOrders ?? false,
+        helper: birthdayStatusLoading
+          ? "Cargando..."
+          : birthdayStatus
+          ? `${birthdayStatus.orderCount} pedidos`
+          : `${totalOrders} pedidos`,
+      },
+      {
+        key: "window",
+        label: "Estamos en la semana de tu cumpleaños",
+        met: birthdayStatus?.withinWindow ?? false,
+        helper: birthdayWindowText,
+      },
+    ],
+    [birthdayStatus, profile?.birthday, totalOrders, birthdayWindowText],
+  );
+
+  const birthdayEligibleNow = birthdayStatus?.eligibleNow ?? false;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -195,6 +295,48 @@ export default function ProfilePage() {
       setErrorMessage("Error al actualizar el perfil.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleBirthdaySubmit = async (e?: React.FormEvent) => {
+    if (e && typeof (e as { preventDefault?: () => void }).preventDefault === "function") {
+      (e as { preventDefault: () => void }).preventDefault();
+    }
+    setBirthdayError("");
+
+    const trimmed = birthdayInput.trim();
+    if (!trimmed) {
+      setBirthdayError("Selecciona una fecha válida.");
+      return;
+    }
+
+    const selected = new Date(trimmed);
+    if (Number.isNaN(selected.getTime())) {
+      setBirthdayError("La fecha seleccionada no es válida.");
+      return;
+    }
+
+    const today = new Date();
+    if (selected > today) {
+      setBirthdayError("La fecha de nacimiento no puede ser en el futuro.");
+      return;
+    }
+
+    setBirthdaySaving(true);
+    try {
+      const result = await setBirthday(trimmed);
+      if (!result.success) {
+        setBirthdayError(result.error || "No se pudo guardar la fecha de cumpleaños.");
+        return;
+      }
+      setShowBirthdayModal(false);
+      setBirthdayInput("");
+      await fetchBirthdayStatus();
+    } catch (error) {
+      console.error("Unexpected error saving birthday:", error);
+      setBirthdayError("Ocurrió un error al guardar la fecha de cumpleaños.");
+    } finally {
+      setBirthdaySaving(false);
     }
   };
 
@@ -361,6 +503,76 @@ export default function ProfilePage() {
           )}
         </div>
 
+        <div className="bg-gray-900 p-6 rounded-xl shadow space-y-5 mt-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-xl font-bold">Descuento de cumpleaños</h2>
+              <p className="text-sm text-gray-400">
+                Registra tu fecha para recibir un {BIRTHDAY_DISCOUNT_PERCENT}% de descuento durante {birthdayWindowLength} días en la semana de tu cumpleaños.
+              </p>
+            </div>
+            {profile.birthday ? (
+              <div className="self-start rounded-full bg-green-500/20 px-4 py-1 text-sm text-green-200">
+                Cumpleaños: {formattedBirthday ?? profile.birthday}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowBirthdayModal(true);
+                  setBirthdayError("");
+                  setBirthdayInput("");
+                }}
+                className="self-start rounded bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-500"
+              >
+                Registrar cumpleaños
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            {birthdayStatusLoading ? (
+              <p className="text-sm text-gray-400">Calculando tu estado…</p>
+            ) : (
+              birthdayRequirements.map((req) => (
+                <div key={req.key} className="flex items-center justify-between rounded-lg border border-white/5 bg-gray-800 px-3 py-2">
+                  <div className={`flex items-center gap-3 text-sm ${req.met ? "text-green-200" : "text-gray-400"}`}>
+                    <span className={`h-2.5 w-2.5 rounded-full ${req.met ? "bg-green-400" : "bg-gray-600"}`} />
+                    <span>{req.label}</span>
+                  </div>
+                  {req.helper ? <span className="text-xs text-gray-400">{req.helper}</span> : null}
+                </div>
+              ))
+            )}
+          </div>
+
+          {profile.birthday ? (
+            birthdayStatusLoading ? (
+              <div className="rounded-lg border border-white/10 bg-gray-800 p-4 text-sm text-gray-300">
+                Verificando tu estado de descuento de cumpleaños…
+              </div>
+            ) : birthdayStatus ? (
+              birthdayEligibleNow ? (
+                <div className="rounded-lg border border-green-500/40 bg-green-500/10 p-4 text-sm text-green-100">
+                  ¡Listo! El descuento se aplicará automáticamente a tus pedidos de esta semana.
+                </div>
+              ) : (
+                <div className="rounded-lg border border-white/10 bg-gray-800 p-4 text-sm text-gray-300">
+                  El descuento se activará automáticamente cuando cumplas todos los requisitos. Puedes revisarlos en cualquier momento aquí.
+                </div>
+              )
+            ) : (
+              <div className="rounded-lg border border-yellow-400/40 bg-yellow-500/10 p-4 text-sm text-yellow-100">
+                No pudimos cargar tu estado de descuento en este momento. Intenta recargar la página.
+              </div>
+            )
+          ) : (
+            <div className="rounded-lg border border-yellow-400/40 bg-yellow-500/10 p-4 text-sm text-yellow-100">
+              Solo podrás registrar tu cumpleaños una vez, así que asegúrate de ingresar la fecha correcta.
+            </div>
+          )}
+        </div>
+
         {/* Últimos pedidos */}
         <div className="bg-gray-900 p-6 rounded-xl shadow space-y-4 mt-6">
           <h2 className="text-xl font-bold">Mis últimos pedidos</h2>
@@ -436,6 +648,56 @@ export default function ProfilePage() {
           )}
         </div>
       </main>
+
+      {showBirthdayModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 text-gray-900 shadow-xl">
+            <h2 className="text-lg font-semibold">Registra tu cumpleaños</h2>
+            <p className="mt-1 text-sm text-gray-600">
+              Esta fecha se usará para activar el descuento automático del {BIRTHDAY_DISCOUNT_PERCENT}% durante la semana de tu cumpleaños.
+            </p>
+            <form onSubmit={handleBirthdaySubmit} className="mt-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700" htmlFor="birthday-input">
+                  Fecha de nacimiento
+                </label>
+                <input
+                  id="birthday-input"
+                  type="date"
+                  value={birthdayInput}
+                  onChange={(e) => setBirthdayInput(e.target.value)}
+                  max={birthdayMaxDate}
+                  required
+                  className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/40"
+                />
+              </div>
+              {birthdayError && <p className="text-sm text-red-500">{birthdayError}</p>}
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!birthdaySaving) {
+                      setShowBirthdayModal(false);
+                      setBirthdayInput("");
+                    }
+                  }}
+                  className="rounded-lg px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  disabled={birthdaySaving}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={birthdaySaving}
+                  className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-500 disabled:opacity-60"
+                >
+                  {birthdaySaving ? "Guardando..." : "Guardar"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

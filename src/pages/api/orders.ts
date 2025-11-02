@@ -5,6 +5,7 @@ import sendEmail from '@/utils/sendEmail';
 import supabaseAdmin from '@/server/supabase';
 import { normalizePhone } from '@/utils/phone';
 import { getEstimateRange, formatEstimate, getEstimateWindow, formatWindow } from '@/utils/estimateTimes';
+import { computeBirthdayEligibility, BIRTHDAY_COUPON_CODE } from '@/server/birthdayEligibility';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const supabase = createPagesServerClient({ req, res });
@@ -18,9 +19,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'GET') {
     // Obtener últimos 5 pedidos del usuario
-    const { data, error } = await supabase
+    const { data, error, count } = await supabase
       .from('orders')
-      .select('*')
+      .select('*', { count: 'exact' })
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(5);
@@ -34,7 +35,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ error: error.message, code: error.code });
     }
 
-    return res.status(200).json({ orders: data || [] });
+    return res.status(200).json({
+      orders: data || [],
+      totalOrders: typeof count === 'number' ? count : (data?.length ?? 0),
+    });
   }
 
   if (req.method === 'POST') {
@@ -62,14 +66,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (deliveryTypeValue === null) return res.status(400).json({ error: 'Invalid delivery_type' });
 
     // Antes de insertar, validar cupón si es provisto
+    const normalizedCoupon = typeof coupon_code === 'string' ? coupon_code.trim().toUpperCase() : null;
     let finalTotal = total;
-    let appliedCoupon: { id: number; code: string } | null = null;
-    if (coupon_code) {
+    let appliedCoupon: { id: number | null; code: string; type: 'manual' | 'birthday' } | null = null;
+    if (normalizedCoupon === BIRTHDAY_COUPON_CODE) {
+      try {
+        const eligibility = await computeBirthdayEligibility(userId);
+        if (!eligibility.eligibleNow) {
+          return res.status(400).json({ error: 'No cumples con los requisitos para el descuento de cumpleaños' });
+        }
+        finalTotal = Math.max(0, Math.round(total * (100 - eligibility.discountPercent) / 100));
+        appliedCoupon = { id: null, code: BIRTHDAY_COUPON_CODE, type: 'birthday' };
+      } catch (error) {
+        console.error('Error validating birthday coupon:', error);
+        return res.status(500).json({ error: 'Error validando el cupón de cumpleaños' });
+      }
+    } else if (normalizedCoupon) {
       try {
         const { data: coupons, error: couponErr } = await supabaseAdmin
           .from('discount_codes')
           .select('*')
-          .eq('code', coupon_code)
+          .eq('code', normalizedCoupon)
           .eq('user_id', userId)
           .limit(1);
 
@@ -84,14 +101,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           return res.status(400).json({ error: 'Cupón expirado' });
         }
 
-        // Aplicar descuento: preferir percent, si no usar amount
         if (typeof coupon.percent === 'number') {
           finalTotal = Math.max(0, Math.round(total * (100 - coupon.percent) / 100));
         } else if (typeof coupon.amount === 'number') {
           finalTotal = Math.max(0, total - coupon.amount);
         }
 
-        appliedCoupon = { id: coupon.id, code: coupon.code } as any;
+        appliedCoupon = { id: coupon.id, code: coupon.code, type: 'manual' };
       } catch (e) {
         console.error('Error validating coupon:', e);
         return res.status(500).json({ error: 'Error validating coupon' });
@@ -240,7 +256,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Si se aplicó un cupón, marcarlo como usado y referenciar el pedido
-    if (appliedCoupon && data?.id) {
+    if (appliedCoupon?.type === 'manual' && appliedCoupon.id && data?.id) {
       try {
         await supabaseAdmin
           .from('discount_codes')

@@ -41,6 +41,7 @@ interface UserContextType {
   fetchAddresses: () => Promise<void>;
   addAddress: (params: AddAddressParams) => Promise<AddressRecord | null>;
   deleteAddress: (id: number) => Promise<boolean>;
+  setBirthday: (dateIso: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const UserContext = createContext<UserContextType | null>(null);
@@ -224,6 +225,37 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user, supabase, refreshProfile]);
 
+  const setBirthday = useCallback(async (dateIso: string) => {
+    if (!user) return { success: false, error: 'Usuario no autenticado' };
+
+    const normalized = dateIso.trim();
+    if (!normalized) return { success: false, error: 'Fecha inválida' };
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ birthday: normalized })
+        .eq('id', user.id)
+        .is('birthday', null)
+        .select('birthday');
+
+      if (error) {
+        console.error('Error setting birthday:', error);
+        return { success: false, error: 'No se pudo guardar la fecha de cumpleaños' };
+      }
+
+      if (!Array.isArray(data) || data.length === 0 || !data[0]?.birthday) {
+        return { success: false, error: 'El cumpleaños ya estaba registrado o no se pudo actualizar' };
+      }
+
+      await refreshProfile();
+      return { success: true };
+    } catch (error) {
+      console.error('Unexpected error setting birthday:', error);
+      return { success: false, error: 'Error inesperado al guardar la fecha de cumpleaños' };
+    }
+  }, [user, supabase, refreshProfile]);
+
   // Addresses helpers
   const fetchAddresses = useCallback(async () => {
     if (!user) {
@@ -325,6 +357,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fetchAddresses,
         addAddress,
         deleteAddress,
+        setBirthday,
       }}
     >
       {children}

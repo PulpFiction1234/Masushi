@@ -1000,7 +1000,7 @@ export default function Checkout() {
                 </>
               )}
 
-              <div className="mt-6 space-y-2">
+              <div className="mt-6 space-y-3">
                 <a
                   href="#"
                   className="text-sm underline"
@@ -1009,9 +1009,15 @@ export default function Checkout() {
                 {birthdayStatusLoading ? (
                   <p className="text-xs text-neutral-400">Verificando descuento de cumpleaños…</p>
                 ) : birthdayCouponActive ? (
-                  <p className="text-xs text-green-300">
-                    Descuento de cumpleaños activo ({birthdayDiscountPercent}% · código {birthdayCouponCode}). Se aplicará automáticamente en este pedido y es válido una sola vez durante tu semana de cumpleaños.
-                  </p>
+                  <div className="flex items-start gap-3 rounded-2xl border border-green-400/40 bg-green-500/10 p-3 text-xs text-green-100">
+                    <div className="mt-0.5 text-base">🎂</div>
+                    <div>
+                      <p className="font-semibold text-green-200">Descuento de cumpleaños activo</p>
+                      <p>
+                        {birthdayDiscountPercent}% · código {birthdayCouponCode}. Se aplicará automáticamente en este pedido y es válido una sola vez durante tu semana de cumpleaños.
+                      </p>
+                    </div>
+                  </div>
                 ) : null}
               </div>
 

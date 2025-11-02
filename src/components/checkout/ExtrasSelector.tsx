@@ -44,9 +44,15 @@ export default function ExtrasSelector({
           if (disabled) return;
           onChange(!checked);
         }}
-        className={`relative inline-flex items-center h-6 w-11 rounded-full transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 ${disabled ? 'opacity-40 cursor-not-allowed' : ''} ${checked ? 'bg-emerald-500' : 'bg-red-500'}`}
+        className={`relative inline-flex items-center h-6 w-11 px-1 rounded-full transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 ${
+          disabled ? "opacity-40 cursor-not-allowed" : ""
+        } ${checked ? "bg-emerald-500" : "bg-red-500"}`}
       >
-        <span className={`inline-block w-4 h-4 bg-white rounded-full transform transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
+        <span
+          className={`inline-block w-4 h-4 bg-white rounded-full transform transition-transform ${
+            checked ? "translate-x-5" : "translate-x-0"
+          }`}
+        />
       </button>
     );
   };
@@ -142,7 +148,7 @@ export default function ExtrasSelector({
             
             {/* Checkbox Sin salsas básicas */}
             <div className="mb-2 flex items-center justify-between">
-              <div className="text-sm text-neutral-200">Sin salsas Soya/Teriyaki</div>
+              <div className="text-sm text-neutral-200">Incluir salsas Soya/Teriyaki</div>
               <div>
                 <Toggle
                   ariaLabel="Sin salsas Soya/Teriyaki"

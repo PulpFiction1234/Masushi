@@ -43,6 +43,28 @@ const fallbackProductId = (codigo: string, nombre: string) => {
 
 type ExtendedOrderItem = Order["items"][number] & { nombre?: string; valor?: number };
 
+type DeliveryTypeLike = Order["delivery_type"] | number | string | null | undefined;
+
+const resolveDeliveryTypeValue = (value: DeliveryTypeLike): "delivery" | "retiro" | null => {
+  if (value === "delivery" || value === "retiro") return value;
+  if (typeof value === "number") {
+    if (value === 1) return "delivery";
+    if (value === 0) return "retiro";
+    return null;
+  }
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "delivery" || normalized === "retiro") return normalized;
+    const numeric = Number.parseInt(normalized, 10);
+    if (!Number.isNaN(numeric)) {
+      if (numeric === 1) return "delivery";
+      if (numeric === 0) return "retiro";
+    }
+    return null;
+  }
+  return null;
+};
+
 type RepeatItemResolution =
   | {
       type: "ok";
@@ -214,16 +236,7 @@ export default function ProfilePage() {
       .map((entry) => entry.reason);
 
     if (typeof window !== "undefined") {
-      const deliveryTypeNormalized =
-        order.delivery_type === "delivery"
-          ? "delivery"
-          : order.delivery_type === "retiro"
-          ? "retiro"
-          : (order as unknown as { delivery_type?: number }).delivery_type === 1
-          ? "delivery"
-          : (order as unknown as { delivery_type?: number }).delivery_type === 0
-          ? "retiro"
-          : null;
+      const deliveryTypeNormalized = resolveDeliveryTypeValue(order.delivery_type);
 
       const meta: RepeatOrderMeta = {
         orderId: order.id,
@@ -371,10 +384,21 @@ export default function ProfilePage() {
                           minute: "2-digit",
                         })}
                       </p>
-                      <p className="text-sm text-gray-400">
-                        {order.delivery_type === "delivery" ? "🚚 Delivery" : "🏪 Retiro"}
-                        {order.address && ` - ${order.address}`}
-                      </p>
+                      {(() => {
+                        const deliveryType = resolveDeliveryTypeValue(order.delivery_type);
+                        const label =
+                          deliveryType === "delivery"
+                            ? "🚚 Delivery"
+                            : deliveryType === "retiro"
+                            ? "🏪 Retiro"
+                            : "Tipo de entrega desconocido";
+                        return (
+                          <p className="text-sm text-gray-400">
+                            {label}
+                            {order.address && ` - ${order.address}`}
+                          </p>
+                        );
+                      })()}
                     </div>
                     <p className="text-lg font-bold">${fmtMiles.format(order.total)}</p>
                   </div>

@@ -4,13 +4,42 @@ import dynamic from "next/dynamic";
 import useSWR from "swr";
 import { useCart } from "@/context/CartContext";
 import { useUser } from "@supabase/auth-helpers-react";
-import { useUserProfile } from "@/context/UserContext";
+import { useUserProfile, MAX_SAVED_ADDRESSES } from "@/context/UserContext";
+import type { AddressRecord, AddressCoords } from "@/context/UserContext";
 import Navbar from "@/components/Navbar";
 import Seo from "@/components/Seo";
 
 // THEME
 const ACCENT_FROM = "from-emerald-500";
 const ACCENT_TO = "to-green-600";
+
+type SavedAddress = AddressRecord;
+
+const coordsToLngLat = (coords?: AddressCoords | null): [number, number] | null => {
+  if (!coords) return null;
+  const { lng, lat } = coords;
+  if (typeof lng === "number" && typeof lat === "number") {
+    return [lng, lat];
+  }
+  return null;
+};
+
+const labelLooksLikeNumeroCasa = (value: string): boolean => {
+  if (!value) return false;
+  return REGEX_NUMERO_CALLE.test(value);
+};
+
+const extractNumeroCasa = (addr: SavedAddress): string => {
+  if (!addr) return "";
+  const coordsNumero = addr.coords && typeof addr.coords === "object" ? addr.coords.numeroCasa ?? null : null;
+  if (coordsNumero && String(coordsNumero).trim()) return String(coordsNumero).trim();
+  const metaVersion = addr.coords && typeof addr.coords === "object" ? addr.coords.metaVersion ?? null : null;
+  const label = addr.label ?? "";
+  if (!metaVersion && label && labelLooksLikeNumeroCasa(label)) {
+    return label.trim();
+  }
+  return "";
+};
 
 // Tipado del endpoint /api/status
 type StatusApi = {
@@ -195,13 +224,29 @@ export default function Checkout() {
   const [estimateText, setEstimateText] = React.useState<string | null>(null);
   const userProfileCtx = useUserProfile();
   const profile = userProfileCtx?.profile ?? null;
-  type SavedAddress = { id: number; label?: string | null; address_text: string; coords?: { lat: number; lng: number } | null };
   const [savedAddresses, setSavedAddresses] = React.useState<SavedAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = React.useState<number | null>(null);
   const [deletingAddressIds, setDeletingAddressIds] = React.useState<number[]>([]);
   const [addingNewAddress, setAddingNewAddress] = React.useState(false);
   const [newAddressCandidate, setNewAddressCandidate] = React.useState<{ address: string; coords: [number, number] } | null>(null);
+  const [addressLabelInput, setAddressLabelInput] = React.useState("");
+  const [saveAddressError, setSaveAddressError] = React.useState<string | null>(null);
   // Map of cartKey -> included (true means included in order)
+  const addressLimitReached = savedAddresses.length >= MAX_SAVED_ADDRESSES;
+
+  React.useEffect(() => {
+    if (addressLimitReached && addingNewAddress) {
+      setAddingNewAddress(false);
+      setNewAddressCandidate(null);
+      setAddressLabelInput("");
+    }
+  }, [addressLimitReached, addingNewAddress]);
+
+  React.useEffect(() => {
+    if (!addressLimitReached) {
+      setSaveAddressError(null);
+    }
+  }, [addressLimitReached]);
   const [includedMap, setIncludedMap] = React.useState<Record<string, boolean>>(() => {
     const m: Record<string, boolean> = {};
     for (const it of cartTyped) m[`${it.id}:${it.opcion?.id ?? 'base'}`] = true;
@@ -253,8 +298,11 @@ export default function Checkout() {
       .then((r) => r.json())
       .then((d) => {
         if (!mounted) return;
-        setSavedAddresses(d?.addresses ?? []);
-        if ((d?.addresses ?? []).length > 0) setSelectedAddressId(d.addresses[0].id);
+        const fetched = ((d?.addresses ?? []) as SavedAddress[]).slice(0, MAX_SAVED_ADDRESSES);
+        setSavedAddresses(fetched);
+        if (fetched.length > 0) setSelectedAddressId(fetched[0].id);
+        setAddressLabelInput("");
+        setSaveAddressError(null);
       })
       .catch(() => {
         if (mounted) setSavedAddresses([]);
@@ -584,61 +632,98 @@ export default function Checkout() {
                     <label className="block font-medium mb-2 text-neutral-200">Direcciones</label>
                     {savedAddresses.length > 0 && (
                       <div className="mb-3">
-                        {savedAddresses.map((a) => (
-                          <div key={a.id} className={`block p-3 rounded-md border ${selectedAddressId===a.id? 'border-green-400 bg-neutral-800/60': 'border-white/5' } mb-2`}>
-                            <div className="flex items-start justify-between">
-                              <label className="flex-1 cursor-pointer" onClick={() => {
-                                  // select this address and populate checkout fields
-                                  setSelectedAddressId(a.id);
-                                  setAddingNewAddress(false);
-                                  dispatch({ type: "SET_FIELD", field: "address", value: a.address_text });
-                                  const crds = a.coords ? [a.coords.lng, a.coords.lat] : null;
-                                  dispatch({ type: "SET_FIELD", field: "coords", value: crds });
-                                  // restore house number stored in label (if any)
-                                  dispatch({ type: "SET_FIELD", field: "numeroCasa", value: a.label ?? "" });
-                                }}>
-                                <div className="flex items-center">
-                                  <input type="radio" name="savedAddress" checked={selectedAddressId===a.id} readOnly className="mr-2" />
-                                  <span className="font-medium">{a.label ? `Dirección ${a.label}` : 'Dirección'}</span>
-                                </div>
-                                <div className="text-sm text-neutral-400">{a.address_text}</div>
-                              </label>
-                              <div className="ml-3 flex-shrink-0">
-                                <button
-                                  type="button"
-                                  aria-label={`Eliminar dirección ${a.address_text}`}
-                                  onClick={async (e) => {
-                                    e.stopPropagation();
-                                    // visually mark deleting
-                                    setDeletingAddressIds(prev => [...prev, a.id]);
-                                    try {
-                                      const ok = await userProfileCtx?.deleteAddress(a.id);
-                                      if (ok) {
-                                        setSavedAddresses(prev => prev.filter(x => x.id !== a.id));
-                                        if (selectedAddressId === a.id) setSelectedAddressId(null);
-                                      }
-                                    } finally {
-                                      setDeletingAddressIds(prev => prev.filter(id => id !== a.id));
-                                    }
+                        {savedAddresses.map((a) => {
+                          const alias = (a.label ?? "").trim();
+                          const numeroGuardado = extractNumeroCasa(a);
+                          const coordsPair = coordsToLngLat(a.coords);
+                          const isSelected = selectedAddressId === a.id;
+                          return (
+                            <div key={a.id} className={`block p-3 rounded-md border ${isSelected ? 'border-green-400 bg-neutral-800/60' : 'border-white/5'} mb-2`}>
+                              <div className="flex items-start justify-between">
+                                <label
+                                  className="flex-1 cursor-pointer"
+                                  onClick={() => {
+                                    setSelectedAddressId(a.id);
+                                    setAddingNewAddress(false);
+                                    dispatch({ type: "SET_FIELD", field: "address", value: a.address_text });
+                                    dispatch({ type: "SET_FIELD", field: "coords", value: coordsPair });
+                                    dispatch({ type: "SET_FIELD", field: "numeroCasa", value: numeroGuardado });
+                                    setAddressLabelInput("");
+                                    setSaveAddressError(null);
+                                    setNewAddressCandidate(null);
                                   }}
-                                  className="p-1 rounded-md text-neutral-400 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-500"
-                                  disabled={deletingAddressIds.includes(a.id)}
                                 >
-                                  {deletingAddressIds.includes(a.id) ? (
-                                    <svg className="w-4 h-4 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/></svg>
-                                  ) : (
-                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m5 0V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2"/></svg>
-                                  )}
-                                </button>
+                                  <div className="flex items-center">
+                                    <input type="radio" name="savedAddress" checked={isSelected} readOnly className="mr-2" />
+                                    <span className="font-medium">{alias || 'Dirección guardada'}</span>
+                                  </div>
+                                  <div className="text-sm text-neutral-400">
+                                    {a.address_text}
+                                    {numeroGuardado ? ` - ${numeroGuardado}` : ""}
+                                  </div>
+                                </label>
+                                <div className="ml-3 flex-shrink-0">
+                                  <button
+                                    type="button"
+                                    aria-label={`Eliminar dirección ${a.address_text}`}
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      setDeletingAddressIds(prev => [...prev, a.id]);
+                                      try {
+                                        const ok = await userProfileCtx?.deleteAddress(a.id);
+                                        if (ok) {
+                                          setSavedAddresses(prev => prev.filter(x => x.id !== a.id));
+                                          if (selectedAddressId === a.id) {
+                                            setSelectedAddressId(null);
+                                            dispatch({ type: "SET_FIELD", field: "address", value: "" });
+                                            dispatch({ type: "SET_FIELD", field: "coords", value: null });
+                                            dispatch({ type: "SET_FIELD", field: "numeroCasa", value: "" });
+                                          }
+                                          setSaveAddressError(null);
+                                        }
+                                      } finally {
+                                        setDeletingAddressIds(prev => prev.filter(id => id !== a.id));
+                                      }
+                                    }}
+                                    className="p-1 rounded-md text-neutral-400 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-500"
+                                    disabled={deletingAddressIds.includes(a.id)}
+                                  >
+                                    {deletingAddressIds.includes(a.id) ? (
+                                      <svg className="w-4 h-4 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/></svg>
+                                    ) : (
+                                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m5 0V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2"/></svg>
+                                    )}
+                                  </button>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
 
-                    <div className="mb-3">
-                      <button type="button" onClick={() => { setAddingNewAddress(v => !v); setSelectedAddressId(null); }} className="text-sm underline">{addingNewAddress ? 'Cancelar' : 'Agregar nueva dirección'}</button>
+                    <div className="mb-3 flex flex-col gap-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (addressLimitReached && !addingNewAddress) return;
+                          setAddingNewAddress((v) => !v);
+                          if (!addingNewAddress) {
+                            setSelectedAddressId(null);
+                            setAddressLabelInput("");
+                            setSaveAddressError(null);
+                          }
+                        }}
+                        className={`text-sm underline ${addressLimitReached && !addingNewAddress ? 'cursor-not-allowed text-neutral-500' : ''}`}
+                        disabled={addressLimitReached && !addingNewAddress}
+                      >
+                        {addingNewAddress ? 'Cancelar' : 'Agregar nueva dirección'}
+                      </button>
+                      {addressLimitReached && !addingNewAddress && (
+                        <span className="text-xs text-neutral-400">
+                          Alcanzaste el máximo de {MAX_SAVED_ADDRESSES} direcciones guardadas. Elimina una para agregar otra.
+                        </span>
+                      )}
                     </div>
 
                     {addingNewAddress && (
@@ -648,40 +733,87 @@ export default function Checkout() {
                           dispatch({ type: "SET_FIELD", field: "address", value: addr });
                           dispatch({ type: "SET_FIELD", field: "coords", value: crds });
                           setNewAddressCandidate({ address: addr, coords: crds });
+                          setSaveAddressError(null);
                         }} />
 
-                        <div className="mt-3 flex items-center gap-2">
-                          <input
-                            id="numeroCasa_in_block"
-                            type="text"
-                            className={`${inputBase} w-44`}
-                            placeholder="N° casa / Depto (opcional)"
-                            value={numeroCasa || ""}
-                            onChange={(e) => dispatch({ type: "SET_FIELD", field: "numeroCasa", value: e.target.value })}
-                          />
-                          <button
-                            type="button"
-                            disabled={!newAddressCandidate}
-                            onClick={async () => {
-                              if (!newAddressCandidate) return;
-                                try {
-                                const lat = newAddressCandidate.coords[1];
-                                const lng = newAddressCandidate.coords[0];
-                                const saved = await userProfileCtx?.addAddress(newAddressCandidate.address, { lat, lng }, numeroCasa ?? null);
-                                if (saved) {
-                                  setSavedAddresses(prev => [saved, ...prev]);
-                                  setSelectedAddressId(saved.id);
-                                  setAddingNewAddress(false);
-                                  setNewAddressCandidate(null);
+                        <div className="mt-3 flex flex-col gap-2">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                            <input
+                              id="aliasDireccion"
+                              type="text"
+                              className={`${inputBase} sm:w-56`}
+                              placeholder="Nombre (ej. Casa mama)"
+                              value={addressLabelInput}
+                              onChange={(e) => {
+                                setAddressLabelInput(e.target.value);
+                                setSaveAddressError(null);
+                              }}
+                              maxLength={64}
+                            />
+                            <input
+                              id="numeroCasa_in_block"
+                              type="text"
+                              className={`${inputBase} sm:w-44`}
+                              placeholder="N° casa / Depto (opcional)"
+                              value={numeroCasa || ""}
+                              onChange={(e) => {
+                                setSaveAddressError(null);
+                                dispatch({ type: "SET_FIELD", field: "numeroCasa", value: e.target.value });
+                              }}
+                            />
+                          </div>
+                          {saveAddressError && (
+                            <div className="text-xs text-red-400">{saveAddressError}</div>
+                          )}
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              disabled={!newAddressCandidate || addressLimitReached}
+                              onClick={async () => {
+                                if (!newAddressCandidate || addressLimitReached) {
+                                  setSaveAddressError(`Alcanzaste el máximo de ${MAX_SAVED_ADDRESSES} direcciones guardadas.`);
+                                  return;
                                 }
-                              } catch (e) {
-                                // keep UX simple: user can retry
-                                console.error('Error saving address', e);
-                              }
-                            }}
-                            className="ml-2 rounded-md bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-500 disabled:opacity-50"
-                          >Guardar dirección</button>
-                          <button type="button" onClick={() => { setNewAddressCandidate(null); dispatch({ type: "SET_FIELD", field: "address", value: "" }); dispatch({ type: "SET_FIELD", field: "coords", value: null }); }} className="text-sm underline">Limpiar</button>
+                                try {
+                                  const lat = newAddressCandidate.coords[1];
+                                  const lng = newAddressCandidate.coords[0];
+                                  const saved = await userProfileCtx?.addAddress({
+                                    address: newAddressCandidate.address,
+                                    coords: { lat, lng },
+                                    label: addressLabelInput.trim() ? addressLabelInput.trim() : null,
+                                    numeroCasa: numeroCasa ?? null,
+                                  });
+                                  if (saved) {
+                                    setSavedAddresses(prev => [saved, ...prev].slice(0, MAX_SAVED_ADDRESSES));
+                                    setSelectedAddressId(saved.id);
+                                    setAddingNewAddress(false);
+                                    setNewAddressCandidate(null);
+                                    setAddressLabelInput("");
+                                    setSaveAddressError(null);
+                                  } else {
+                                    setSaveAddressError(`No se pudo guardar la dirección. Verifica que no hayas alcanzado el máximo de ${MAX_SAVED_ADDRESSES} direcciones.`);
+                                  }
+                                } catch (e) {
+                                  console.error('Error saving address', e);
+                                  setSaveAddressError('No se pudo guardar la dirección. Intenta nuevamente.');
+                                }
+                              }}
+                              className="rounded-md bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-500 disabled:opacity-50"
+                            >Guardar dirección</button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setNewAddressCandidate(null);
+                                setAddressLabelInput("");
+                                setSaveAddressError(null);
+                                setSelectedAddressId(null);
+                                dispatch({ type: "SET_FIELD", field: "address", value: "" });
+                                dispatch({ type: "SET_FIELD", field: "coords", value: null });
+                                dispatch({ type: "SET_FIELD", field: "numeroCasa", value: "" });
+                              }}
+                              className="text-sm underline"
+                            >Limpiar</button>
+                          </div>
                         </div>
                       </div>
                     )}

@@ -3,12 +3,28 @@ import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { UserProfile, Favorite } from '@/types/user';
 
+export const MAX_SAVED_ADDRESSES = 2;
+
+export type AddressCoords = {
+  lat?: number;
+  lng?: number;
+  numeroCasa?: string | null;
+  metaVersion?: number | null;
+};
+
 export type AddressRecord = {
   id: number;
   label?: string | null;
   address_text: string;
-  coords?: { lat: number; lng: number } | null;
+  coords?: AddressCoords | null;
   created_at?: string | null;
+};
+
+export type AddAddressParams = {
+  address: string;
+  coords?: { lat: number; lng: number } | null;
+  label?: string | null;
+  numeroCasa?: string | null;
 };
 
 interface UserContextType {
@@ -23,7 +39,7 @@ interface UserContextType {
   refreshProfile: () => Promise<void>;
   updateProfile: (data: { full_name: string; phone: string }) => Promise<void>;
   fetchAddresses: () => Promise<void>;
-  addAddress: (address: string, coords?: { lat: number; lng: number } | null, label?: string | null) => Promise<AddressRecord | null>;
+  addAddress: (params: AddAddressParams) => Promise<AddressRecord | null>;
   deleteAddress: (id: number) => Promise<boolean>;
 }
 
@@ -126,11 +142,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       // Cargar direcciones guardadas
       const { data: addrData, error: addrErr } = await supabase
-  .from('addresses')
-  .select('*')
-  .eq('user_id', effectiveUser.id)
-  .order('created_at', { ascending: false });
-  if (!addrErr && addrData) setAddresses(addrData as AddressRecord[]);
+        .from('addresses')
+        .select('*')
+        .eq('user_id', effectiveUser.id)
+        .order('created_at', { ascending: false });
+      if (!addrErr && addrData) {
+        setAddresses((addrData as AddressRecord[]).slice(0, MAX_SAVED_ADDRESSES));
+      }
     } catch (error) {
       console.error('Error loading user data:', error);
     } finally {
@@ -218,30 +236,62 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
-  if (!error && data) setAddresses(data as AddressRecord[]);
+      if (!error && data) {
+        setAddresses((data as AddressRecord[]).slice(0, MAX_SAVED_ADDRESSES));
+      }
     } catch (e) {
       console.error('Error fetching addresses:', e);
     }
   }, [user, supabase]);
 
-  const addAddress = useCallback(async (address: string, coords?: { lat: number; lng: number } | null, label?: string | null) => {
+  const addAddress = useCallback(async ({ address, coords, label, numeroCasa }: AddAddressParams) => {
     if (!user) return null;
+    if (addresses.length >= MAX_SAVED_ADDRESSES) {
+      console.warn('Address limit reached for user (local cache)');
+      return null;
+    }
     try {
-      const payload = { user_id: user.id, label: label ?? null, address_text: address, coords: coords ?? null };
+      const { count: existingCount, error: countError } = await supabase
+        .from('addresses')
+        .select('*', { head: true, count: 'exact' })
+        .eq('user_id', user.id);
+
+      if (countError) {
+        console.error('Error checking address count:', countError);
+        return null;
+      }
+
+      if ((existingCount ?? 0) >= MAX_SAVED_ADDRESSES) {
+        console.warn('Address limit reached for user (remote check)');
+        return null;
+      }
+
+      const trimmedLabel = label ? label.trim().slice(0, 64) : null;
+      let coordsPayload: AddressCoords | null = null;
+      if (coords && typeof coords.lat === 'number' && typeof coords.lng === 'number') {
+        coordsPayload = { lat: coords.lat, lng: coords.lng };
+      }
+      const numeroCasaTrimmed = numeroCasa ? numeroCasa.trim() : '';
+      if (numeroCasaTrimmed) {
+        coordsPayload = { ...(coordsPayload ?? {}), numeroCasa: numeroCasaTrimmed };
+      }
+      if (coordsPayload) {
+        coordsPayload.metaVersion = 1;
+      }
+      const payload = { user_id: user.id, label: trimmedLabel, address_text: address, coords: coordsPayload };
       const { data, error } = await supabase.from('addresses').insert(payload).select().single();
       if (error) {
         console.error('Error adding address:', error);
         return null;
       }
-  // prepend new address
-  const row = data as AddressRecord | null;
-  setAddresses(prev => (row ? [row, ...prev] : prev));
-  return row;
+      const row = data as AddressRecord | null;
+  setAddresses(prev => (row ? [row, ...prev].slice(0, MAX_SAVED_ADDRESSES) : prev));
+      return row;
     } catch (e) {
       console.error('Error adding address:', e);
       return null;
     }
-  }, [user, supabase]);
+  }, [user, supabase, addresses.length]);
 
   const deleteAddress = useCallback(async (id: number) => {
     if (!user) return false;

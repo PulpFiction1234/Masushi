@@ -808,10 +808,12 @@ export default function Checkout() {
             {/* Optionally show whatsapp status if present in lastOrderResult */}
             {/* lastOrderWhatsApp is set when the API returns whatsapp result */}
             {/**/}
-            <div className="mb-4 text-sm text-neutral-700">
-              <div className="font-medium mb-1">Notificación WhatsApp:</div>
-              <p>En minutos recibirás un mensaje automático por WhatsApp con el resumen de tu pedido. Por favor no respondas ese mensaje.</p>
-            </div>
+            {lastOrderWhatsApp && (
+              <div className="mb-4 text-sm">
+                <div className="font-medium mb-1">Notificación WhatsApp:</div>
+                <pre className="whitespace-pre-wrap text-xs bg-neutral-100 p-2 rounded text-neutral-800 max-h-40 overflow-auto">{JSON.stringify(lastOrderWhatsApp, null, 2)}</pre>
+              </div>
+            )}
             <div className="flex justify-end">
               <button onClick={() => setShowOrderModal(false)} className="px-4 py-2 rounded bg-green-600 text-white">Cerrar</button>
             </div>

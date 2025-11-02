@@ -41,6 +41,12 @@ const extractNumeroCasa = (addr: SavedAddress): string => {
   return "";
 };
 
+const shortLabelFromSavedAddress = (addr: SavedAddress): string => {
+  const base = toShortCLAddress(addr.address_text);
+  const numero = extractNumeroCasa(addr);
+  return numero ? `${base}, N° ${numero}` : base;
+};
+
 // Tipado del endpoint /api/status
 type StatusApi = {
   timeZone: string;
@@ -234,6 +240,7 @@ export default function Checkout() {
   const [saveAddressError, setSaveAddressError] = React.useState<string | null>(null);
   // Map of cartKey -> included (true means included in order)
   const addressLimitReached = savedAddresses.length >= MAX_SAVED_ADDRESSES;
+  const [repeatMeta, setRepeatMeta] = React.useState<RepeatOrderMeta | null>(null);
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
@@ -242,6 +249,7 @@ export default function Checkout() {
     sessionStorage.removeItem(REPEAT_ORDER_META_KEY);
     try {
       const meta = JSON.parse(rawMeta) as RepeatOrderMeta;
+      setRepeatMeta(meta);
       const normalizedDelivery =
         meta?.deliveryType === "delivery"
           ? "delivery"
@@ -274,7 +282,38 @@ export default function Checkout() {
     } catch (err) {
       console.warn("No se pudo aplicar la metadata del pedido repetido", err);
     }
-  }, [dispatch, setSelectedAddressId, setAddressLabelInput, setSaveAddressError, setNewAddressCandidate, setAddingNewAddress]);
+  }, [dispatch, setSelectedAddressId, setAddressLabelInput, setSaveAddressError, setNewAddressCandidate, setAddingNewAddress, repeatMeta]);
+
+  React.useEffect(() => {
+    if (!repeatMeta || !repeatMeta.address) return;
+    if (!savedAddresses.length) return;
+    const desired = repeatMeta.address.trim();
+    if (!desired) return;
+    const normalizedDesired = desired.replace(/\s+/g, " ").trim().toLowerCase();
+
+    const matched = savedAddresses.find((addr) => {
+      const shortFull = shortLabelFromSavedAddress(addr);
+      const normalizedShort = shortFull.replace(/\s+/g, " ").trim().toLowerCase();
+      if (normalizedShort === normalizedDesired) return true;
+      const baseOnly = toShortCLAddress(addr.address_text).replace(/\s+/g, " ").trim().toLowerCase();
+      return baseOnly === normalizedDesired;
+    });
+
+    if (!matched) return;
+
+    const coordsPair = coordsToLngLat(matched.coords);
+    const numero = extractNumeroCasa(matched);
+
+    dispatch({ type: "SET_FIELD", field: "address", value: matched.address_text });
+    dispatch({ type: "SET_FIELD", field: "coords", value: coordsPair });
+    dispatch({ type: "SET_FIELD", field: "numeroCasa", value: numero });
+    setSelectedAddressId(matched.id);
+    setAddingNewAddress(false);
+    setAddressLabelInput("");
+    setSaveAddressError(null);
+    setNewAddressCandidate(null);
+    setRepeatMeta(null);
+  }, [repeatMeta, savedAddresses, dispatch]);
 
   React.useEffect(() => {
     if (addressLimitReached && addingNewAddress) {

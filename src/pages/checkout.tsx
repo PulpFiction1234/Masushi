@@ -474,11 +474,20 @@ export default function Checkout() {
   const [birthdayStatusLoading, setBirthdayStatusLoading] = useState(false);
   const [availableCoupons, setAvailableCoupons] = useState<DiscountCode[]>([]);
   const [loadingCoupons, setLoadingCoupons] = useState(false);
+  const [skipBirthdayCoupon, setSkipBirthdayCoupon] = useState(false);
+
+  const birthdayCouponEligible = birthdayEligibility?.eligibleNow ?? false;
+
+  const birthdayCouponAppliedCode = (appliedCoupon || "").toUpperCase() === BIRTHDAY_COUPON_CODE;
 
   const birthdayCouponActive = useMemo(
-    () => !appliedCoupon && (birthdayEligibility?.eligibleNow ?? false),
-    [appliedCoupon, birthdayEligibility],
+    () => birthdayCouponEligible && !skipBirthdayCoupon && !appliedCoupon,
+    [birthdayCouponEligible, skipBirthdayCoupon, appliedCoupon],
   );
+
+  const birthdayCouponApplied = birthdayCouponActive || birthdayCouponAppliedCode;
+
+  const hasOtherCoupon = Boolean(appliedCoupon && !birthdayCouponAppliedCode);
 
   const birthdayDiscountPercent = birthdayEligibility?.discountPercent ?? BIRTHDAY_DISCOUNT_PERCENT;
 
@@ -494,6 +503,33 @@ export default function Checkout() {
 
   const birthdayCouponCode = birthdayCouponActive ? BIRTHDAY_COUPON_CODE : null;
   const couponCodeForOrder = appliedCoupon || birthdayCouponCode;
+
+  const birthdayCardTitle = birthdayCouponApplied
+    ? "Descuento de cumpleaños activo"
+    : skipBirthdayCoupon
+    ? "Descuento de cumpleaños guardado"
+    : "Descuento de cumpleaños disponible";
+
+  const birthdayCardBody = birthdayCouponApplied
+    ? `${birthdayDiscountPercent}% · código ${BIRTHDAY_COUPON_CODE}. Se aplicará automáticamente en este pedido y es válido una sola vez durante tu semana de cumpleaños.`
+    : skipBirthdayCoupon
+    ? "Lo guardaste para usarlo en otra compra de esta semana. Cuando quieras activarlo, presiona \"Usar en este pedido\"."
+    : `${birthdayDiscountPercent}% · código ${BIRTHDAY_COUPON_CODE}. Puedes activarlo en esta compra o guardarlo para más tarde durante la semana de tu cumpleaños.`;
+
+  const handleDeferBirthdayCoupon = useCallback(() => {
+    setSkipBirthdayCoupon(true);
+    if (birthdayCouponAppliedCode) {
+      setAppliedCoupon(null);
+    }
+  }, [birthdayCouponAppliedCode]);
+
+  const handleActivateBirthdayCoupon = useCallback(() => {
+    if (hasOtherCoupon || birthdayCouponAppliedCode) {
+      setAppliedCoupon(null);
+    }
+    setSkipBirthdayCoupon(false);
+    setCouponModalOpen(false);
+  }, [hasOtherCoupon, birthdayCouponAppliedCode]);
 
   const fetchBirthdayEligibility = useCallback(async () => {
     if (!user) {
@@ -559,6 +595,18 @@ export default function Checkout() {
     }
     fetchAvailableCoupons();
   }, [user, fetchAvailableCoupons]);
+
+  useEffect(() => {
+    if (!user) {
+      setSkipBirthdayCoupon(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!birthdayCouponEligible) {
+      setSkipBirthdayCoupon(false);
+    }
+  }, [birthdayCouponEligible]);
 
   // ⚠️ No permitir enviar si el estado aún está cargando o si ya estamos enviando
   const canSubmit = canSubmitBase && abierto === true && !loadingStatus && !submitting;
@@ -1000,7 +1048,7 @@ export default function Checkout() {
                 </>
               )}
 
-              <div className="mt-6 space-y-3">
+              <div className="mt-6 space-y-4">
                 <a
                   href="#"
                   className="text-sm underline"
@@ -1008,14 +1056,35 @@ export default function Checkout() {
                 >¿Tienes un cupón?</a>
                 {birthdayStatusLoading ? (
                   <p className="text-xs text-neutral-400">Verificando descuento de cumpleaños…</p>
-                ) : birthdayCouponActive ? (
-                  <div className="flex items-start gap-3 rounded-2xl border border-green-400/40 bg-green-500/10 p-3 text-xs text-green-100">
-                    <div className="mt-0.5 text-base">🎂</div>
-                    <div>
-                      <p className="font-semibold text-green-200">Descuento de cumpleaños activo</p>
-                      <p>
-                        {birthdayDiscountPercent}% · código {birthdayCouponCode}. Se aplicará automáticamente en este pedido y es válido una sola vez durante tu semana de cumpleaños.
-                      </p>
+                ) : birthdayCouponEligible ? (
+                  <div className="flex flex-col gap-3 rounded-2xl border border-green-400/40 bg-green-500/10 p-4 text-xs text-green-100 shadow-[0_8px_20px_rgba(16,185,129,0.25)]">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 text-base">🎂</div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-green-200">{birthdayCardTitle}</p>
+                        <p className="mt-1 leading-relaxed">{birthdayCardBody}</p>
+                        {hasOtherCoupon ? (
+                          <p className="mt-2 text-xs text-green-200">
+                            Usaremos este descuento y quitaremos el cupón {appliedCoupon} cuando lo actives.
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-green-100">
+                      <button
+                        type="button"
+                        onClick={birthdayCouponApplied ? handleDeferBirthdayCoupon : handleActivateBirthdayCoupon}
+                        className={`rounded-full px-5 py-2 font-semibold transition-all duration-150 ${
+                          birthdayCouponApplied
+                            ? "bg-green-700/40 text-green-200 hover:bg-green-700/60"
+                            : "bg-green-600 text-white hover:bg-green-500 shadow-lg shadow-green-500/40"
+                        }`}
+                      >
+                        {birthdayCouponApplied ? "Guardar para otro pedido" : "Usar en este pedido"}
+                      </button>
+                      {skipBirthdayCoupon ? (
+                        <span className="text-xs text-green-200">Lo volverás a ver en tus próximos pedidos de esta semana.</span>
+                      ) : null}
                     </div>
                   </div>
                 ) : null}

@@ -44,7 +44,7 @@ export default function ExtrasSelector({
           if (disabled) return;
           onChange(!checked);
         }}
-        className={`relative inline-flex items-center h-6 w-11 rounded-full transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 ${disabled ? 'opacity-40 cursor-not-allowed' : ''} ${checked ? 'bg-red-500' : 'bg-neutral-700/60'}`}
+        className={`relative inline-flex items-center h-6 w-11 rounded-full transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 ${disabled ? 'opacity-40 cursor-not-allowed' : ''} ${checked ? 'bg-emerald-500' : 'bg-red-500'}`}
       >
         <span className={`inline-block w-4 h-4 bg-white rounded-full transform transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
       </button>

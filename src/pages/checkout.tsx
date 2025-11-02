@@ -132,6 +132,7 @@ import {
 } from "@/utils/checkout";
 import SummaryPanel from "@/components/checkout/SummaryPanel";
 import PaymentSelector from "@/components/checkout/PaymentSelector";
+import { REPEAT_ORDER_META_KEY, type RepeatOrderMeta } from "@/utils/repeatOrder";
 
 // Catálogo
 import { productos } from "@/data/productos";
@@ -233,6 +234,47 @@ export default function Checkout() {
   const [saveAddressError, setSaveAddressError] = React.useState<string | null>(null);
   // Map of cartKey -> included (true means included in order)
   const addressLimitReached = savedAddresses.length >= MAX_SAVED_ADDRESSES;
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const rawMeta = sessionStorage.getItem(REPEAT_ORDER_META_KEY);
+    if (!rawMeta) return;
+    sessionStorage.removeItem(REPEAT_ORDER_META_KEY);
+    try {
+      const meta = JSON.parse(rawMeta) as RepeatOrderMeta;
+      const normalizedDelivery =
+        meta?.deliveryType === "delivery"
+          ? "delivery"
+          : meta?.deliveryType === "retiro"
+          ? "retiro"
+          : null;
+      if (normalizedDelivery) {
+        dispatch({ type: "SET_FIELD", field: "deliveryType", value: normalizedDelivery });
+        if (normalizedDelivery === "delivery") {
+          setAddingNewAddress(false);
+        }
+      }
+      if (typeof meta?.address === "string" && meta.address.trim()) {
+        let addressValue = meta.address.trim();
+        let numeroCasaFromAddress = "";
+        const numeroMatch = addressValue.match(/(?:^|,\s*)(?:N°|No\.?|#)\s*([A-Za-z0-9-]+)/i);
+        if (numeroMatch) {
+          numeroCasaFromAddress = numeroMatch[1].trim();
+          addressValue = addressValue.replace(/(?:,\s*)?(?:N°|No\.?|#)\s*[A-Za-z0-9-]+\s*$/i, "").trim();
+        }
+        dispatch({ type: "SET_FIELD", field: "address", value: addressValue || meta.address });
+        if (numeroCasaFromAddress) {
+          dispatch({ type: "SET_FIELD", field: "numeroCasa", value: numeroCasaFromAddress });
+        }
+        setSelectedAddressId(null);
+        setAddressLabelInput("");
+        setSaveAddressError(null);
+        setNewAddressCandidate(null);
+      }
+    } catch (err) {
+      console.warn("No se pudo aplicar la metadata del pedido repetido", err);
+    }
+  }, [dispatch, setSelectedAddressId, setAddressLabelInput, setSaveAddressError, setNewAddressCandidate, setAddingNewAddress]);
 
   React.useEffect(() => {
     if (addressLimitReached && addingNewAddress) {

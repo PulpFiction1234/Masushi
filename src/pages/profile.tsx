@@ -7,16 +7,109 @@ import { useUserProfile } from "@/context/UserContext";
 import Seo from "@/components/Seo";
 import type { Order } from "@/types/user";
 import { fmtMiles } from "@/utils/format";
-import { productos } from "@/data/productos";
-import { getProductName, getProductPrice } from "@/utils/productLookup";
-import { useCart } from "@/context/CartContext";
+import type { Producto } from "@/data/productos";
+import { getProductByCode, getProductName, getProductPrice, resolveProductImageUrl } from "@/utils/productLookup";
+import { useCart, type CartOpcion } from "@/context/CartContext";
+import { REPEAT_ORDER_META_KEY, type RepeatOrderMeta } from "@/utils/repeatOrder";
+
+const PLACEHOLDER_IMAGE =
+  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="100%" height="100%" fill="%23222"/><text x="50%" y="50%" font-size="14" fill="%23fff" text-anchor="middle" alignment-baseline="central">Sin imagen</text></svg>';
+
+const normalizeOptionId = (value?: string | null) =>
+  (value ?? "base")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+
+const buildCartKey = (productId: number, optionId?: string | null) =>
+  `${productId}:${normalizeOptionId(optionId)}`;
+
+const sanitizeOrderCode = (codigo: string) => codigo.replace(/\s*\|\s*$/, "").trim();
+
+const fallbackProductId = (codigo: string, nombre: string) => {
+  const digits = codigo.replace(/\D/g, "");
+  if (digits) {
+    const asNumber = Number.parseInt(digits, 10);
+    if (!Number.isNaN(asNumber) && asNumber > 0) return asNumber;
+  }
+  let hash = 0;
+  const base = (nombre || codigo || "legacy").trim();
+  for (let i = 0; i < base.length; i += 1) {
+    hash = (hash * 31 + base.charCodeAt(i)) >>> 0;
+  }
+  return 100_000 + (hash % 900_000);
+};
+
+type ExtendedOrderItem = Order["items"][number] & { nombre?: string; valor?: number };
+
+type RepeatItemResolution =
+  | {
+      type: "ok";
+      product: Producto;
+      cantidad: number;
+      opcion?: CartOpcion;
+      precioUnit: number;
+      label: string;
+    }
+  | { type: "skip"; reason: string };
+
+const resolveOrderItemForRepeat = (item: ExtendedOrderItem): RepeatItemResolution => {
+  const rawCode = typeof item.codigo === "string" ? item.codigo : "";
+  const sanitizedCode = sanitizeOrderCode(rawCode);
+  const productMatch = sanitizedCode ? getProductByCode(sanitizedCode) : rawCode ? getProductByCode(rawCode) : undefined;
+  const label = (item as { nombre?: unknown }).nombre && typeof (item as { nombre?: unknown }).nombre === "string"
+    ? (item as { nombre: string }).nombre
+    : productMatch?.nombre || getProductName(sanitizedCode || rawCode || "");
+  const valorRegistro = (item as { valor?: unknown }).valor;
+  const precioUnit = typeof valorRegistro === "number" ? valorRegistro : productMatch?.valor || getProductPrice(sanitizedCode || rawCode || "");
+  const cantidad = Math.max(1, Number(item.cantidad) || 1);
+  const opcion = item.opcion && typeof item.opcion === "object" && typeof (item.opcion as { id?: unknown }).id === "string"
+    ? { id: (item.opcion as { id: string }).id, label: (item.opcion as { label?: string }).label || (item.opcion as { id: string }).id }
+    : undefined;
+
+  if (productMatch && productMatch.enabled === false) {
+    return { type: "skip", reason: `${label} (no disponible)` };
+  }
+
+  if (!productMatch && !sanitizedCode && !label) {
+    return { type: "skip", reason: "Producto sin referencia" };
+  }
+
+  const resolvedProduct: Producto = productMatch
+    ? productMatch
+    : (() => {
+        const fallbackIdValue = fallbackProductId(sanitizedCode, label);
+        return {
+          id: fallbackIdValue,
+          codigo: sanitizedCode || `LEGACY-${fallbackIdValue}`,
+          nombre: label || "Producto sin nombre",
+          descripcion: "",
+          valor: typeof precioUnit === "number" && !Number.isNaN(precioUnit) ? precioUnit : 0,
+          imagen: resolveProductImageUrl(sanitizedCode || rawCode) || PLACEHOLDER_IMAGE,
+          categoria: "Legacy",
+          enabled: true,
+        };
+      })();
+
+  const precioUnitFinal = typeof precioUnit === "number" && !Number.isNaN(precioUnit) ? precioUnit : resolvedProduct.valor;
+
+  return {
+    type: "ok",
+    product: resolvedProduct,
+    cantidad,
+    opcion,
+    precioUnit: precioUnitFinal,
+    label,
+  };
+};
 
 export default function ProfilePage() {
   const router = useRouter();
   const user = useUser();
   const supabase = useSupabaseClient();
   const { profile, updateProfile, refreshProfile, loading: profileLoading } = useUserProfile();
-  const { addToCart } = useCart();
+  const { addToCart, clearCart, updateQuantity, ready } = useCart();
 
   const [editing, setEditing] = useState(false);
   const [fullName, setFullName] = useState("");
@@ -92,44 +185,65 @@ export default function ProfilePage() {
     router.push("/");
   };
 
-  const repeatOrder = (order: Order) => {
-    // Agregar todos los items del pedido al carrito
-    order.items.forEach((item) => {
-      // Buscar el producto correspondiente (simplificado)
-      // Intentar resolver la imagen real por código; si no existe, usar un placeholder pequeño (SVG data URL)
-      // Intento rápido de resolver la imagen usando el listado estático de productos
-      const prodMatch = productos.find((p) => (p.codigo || "").trim() === (item.codigo || "").trim());
-      const resolved = prodMatch
-        ? (typeof prodMatch.imagen === "string"
-            ? prodMatch.imagen
-            : ((prodMatch.imagen as unknown) as { src?: string }).src)
-        : undefined;
-      const placeholderSvg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="100%" height="100%" fill="%23222"/><text x="50%" y="50%" font-size="14" fill="%23fff" text-anchor="middle" alignment-baseline="central">Sin imagen</text></svg>';
+  const repeatOrder = async (order: Order) => {
+    if (!ready) {
+      alert("El carrito se está inicializando. Intenta nuevamente en unos segundos.");
+      return;
+    }
 
-      // Ensure we have a sensible nombre/valor when older orders lack them
-      const nombreResolved = (prodMatch ? prodMatch.nombre : getProductName(item.codigo || "")) || `Producto ${item.codigo}`;
-      const valorResolved = (prodMatch ? prodMatch.valor : getProductPrice(item.codigo || "")) || 0;
+    const resolutions = order.items.map((item) => resolveOrderItemForRepeat(item as ExtendedOrderItem));
+    const addable = resolutions.filter((entry): entry is Extract<RepeatItemResolution, { type: "ok" }> => entry.type === "ok");
 
-      const producto = {
-        id: parseInt(item.codigo) || 0,
-        codigo: item.codigo,
-        nombre: nombreResolved,
-        valor: valorResolved,
-        descripcion: "",
-        imagen: resolved || placeholderSvg,
-        categoria: "",
-        // nota: no incluimos blurDataUrl aquí; los componentes gestionan fallback
-      };
+    if (addable.length === 0) {
+      alert("No pudimos repetir este pedido porque ninguno de los productos está disponible.");
+      return;
+    }
 
-      addToCart(producto, {
-        opcion: item.opcion,
-        precioUnit: valorResolved,
-      });
+    clearCart();
+
+    addable.forEach(({ product, cantidad, opcion, precioUnit }) => {
+      addToCart(product, { opcion, precioUnit });
+      if (cantidad > 1) {
+        const cartKey = buildCartKey(product.id, opcion?.id);
+        updateQuantity(cartKey, cantidad);
+      }
     });
 
-    // Abrir el carrito
-    window.dispatchEvent(new Event("open-cart"));
-    alert("Pedido agregado al carrito");
+    const skipped = resolutions
+      .filter((entry): entry is Extract<RepeatItemResolution, { type: "skip" }> => entry.type === "skip")
+      .map((entry) => entry.reason);
+
+    if (typeof window !== "undefined") {
+      const deliveryTypeNormalized =
+        order.delivery_type === "delivery"
+          ? "delivery"
+          : order.delivery_type === "retiro"
+          ? "retiro"
+          : (order as unknown as { delivery_type?: number }).delivery_type === 1
+          ? "delivery"
+          : (order as unknown as { delivery_type?: number }).delivery_type === 0
+          ? "retiro"
+          : null;
+
+      const meta: RepeatOrderMeta = {
+        orderId: order.id,
+        deliveryType: deliveryTypeNormalized,
+        address: order.address ?? null,
+        createdAt: Date.now(),
+      };
+
+      try {
+        sessionStorage.setItem(REPEAT_ORDER_META_KEY, JSON.stringify(meta));
+      } catch (err) {
+        console.warn("No se pudo guardar la metadata del pedido repetido", err);
+      }
+    }
+
+    if (skipped.length) {
+      alert(`Los siguientes productos no se pudieron agregar: ${skipped.join(", ")}`);
+    }
+
+    await router.push(`/checkout?repeat=${order.id}`);
   };
 
   if (!user || !profile) {

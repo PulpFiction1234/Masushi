@@ -151,11 +151,13 @@ export default function ExtrasSelector({
               <div className="text-sm text-neutral-200">Incluir salsas Soya/Teriyaki</div>
               <div>
                 <Toggle
-                  ariaLabel="Sin salsas Soya/Teriyaki"
-                  checked={sinSalsasBasicas}
+                  ariaLabel="Incluir salsas Soya/Teriyaki"
+                  checked={!sinSalsasBasicas}
                   onChange={(checked) => {
-                    setSinSalsasBasicas(checked);
-                    if (checked) {
+                    const incluir = checked;
+                    const nextSinSalsas = !incluir;
+                    setSinSalsasBasicas(nextSinSalsas);
+                    if (nextSinSalsas) {
                       dispatch({ type: "SET_FIELD", field: "soya", value: 0 });
                       dispatch({ type: "SET_FIELD", field: "teriyaki", value: 0 });
                     }

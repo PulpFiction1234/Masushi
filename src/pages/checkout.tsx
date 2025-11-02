@@ -10,6 +10,7 @@ import Navbar from "@/components/Navbar";
 import Seo from "@/components/Seo";
 import { BIRTHDAY_COUPON_CODE, BIRTHDAY_DISCOUNT_PERCENT } from "@/utils/birthday";
 import type { BirthdayEligibility } from "@/types/birthday";
+import type { DiscountCode } from "@/types/coupon";
 
 // THEME
 const ACCENT_FROM = "from-emerald-500";
@@ -471,6 +472,8 @@ export default function Checkout() {
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [birthdayEligibility, setBirthdayEligibility] = useState<BirthdayEligibility | null>(null);
   const [birthdayStatusLoading, setBirthdayStatusLoading] = useState(false);
+  const [availableCoupons, setAvailableCoupons] = useState<DiscountCode[]>([]);
+  const [loadingCoupons, setLoadingCoupons] = useState(false);
 
   const birthdayCouponActive = useMemo(
     () => !appliedCoupon && (birthdayEligibility?.eligibleNow ?? false),
@@ -515,6 +518,30 @@ export default function Checkout() {
     }
   }, [user]);
 
+  const fetchAvailableCoupons = useCallback(async () => {
+    if (!user) {
+      setAvailableCoupons([]);
+      setLoadingCoupons(false);
+      return;
+    }
+    setLoadingCoupons(true);
+    try {
+      const response = await fetch("/api/coupons");
+      if (!response.ok) {
+        setAvailableCoupons([]);
+        return;
+      }
+      const data = await response.json();
+      const rows = Array.isArray(data?.coupons) ? data.coupons as DiscountCode[] : [];
+      setAvailableCoupons(rows);
+    } catch (error) {
+      console.error("Error fetching coupons:", error);
+      setAvailableCoupons([]);
+    } finally {
+      setLoadingCoupons(false);
+    }
+  }, [user]);
+
   useEffect(() => {
     if (!user) {
       setBirthdayEligibility(null);
@@ -523,6 +550,15 @@ export default function Checkout() {
     }
     fetchBirthdayEligibility();
   }, [user, fetchBirthdayEligibility]);
+
+  useEffect(() => {
+    if (!user) {
+      setAvailableCoupons([]);
+      setLoadingCoupons(false);
+      return;
+    }
+    fetchAvailableCoupons();
+  }, [user, fetchAvailableCoupons]);
 
   // ⚠️ No permitir enviar si el estado aún está cargando o si ya estamos enviando
   const canSubmit = canSubmitBase && abierto === true && !loadingStatus && !submitting;
@@ -698,6 +734,7 @@ export default function Checkout() {
               setLastOrderWhatsApp(json?.whatsapp ?? null);
               setShowOrderModal(true);
               fetchBirthdayEligibility();
+              fetchAvailableCoupons();
               // Optionally clear cart here if you want: (not doing automatically)
             } else {
               console.error('Error saving order:', json);
@@ -977,6 +1014,73 @@ export default function Checkout() {
                   </p>
                 ) : null}
               </div>
+
+              {loadingCoupons ? (
+                <p className="mt-3 text-xs text-neutral-400">Buscando cupones disponibles…</p>
+              ) : availableCoupons.length > 0 ? (
+                <div className="mt-3 space-y-4">
+                  {availableCoupons.map((coupon) => {
+                    const percent = typeof coupon.percent === "number" ? coupon.percent : null;
+                    const amount = typeof coupon.amount === "number" ? coupon.amount : null;
+                    const codeUpper = (coupon.code || "").trim().toUpperCase();
+                    const benefitLabel = percent
+                      ? `Descuento ${percent}%`
+                      : amount
+                      ? `Descuento ${fmt(amount)}`
+                      : "Cupón disponible";
+                    const expiresLabel = coupon.expires_at
+                      ? new Date(coupon.expires_at).toLocaleDateString("es-CL", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })
+                      : null;
+                    const isApplied = (appliedCoupon || "").toUpperCase() === codeUpper;
+                    return (
+                      <div
+                        key={coupon.id}
+                        className="overflow-hidden rounded-2xl border border-green-400/40 bg-gradient-to-br from-green-500/15 via-green-500/5 to-green-500/20 p-4 text-sm text-green-50 shadow-[0_10px_25px_rgba(16,185,129,0.25)]"
+                      >
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex flex-1 items-start gap-4">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500/30 text-2xl">🎁</div>
+                            <div>
+                              <p className="text-lg font-semibold tracking-wide text-white">{codeUpper}</p>
+                              <p className="text-xs uppercase tracking-[0.2em] text-green-200">{benefitLabel}</p>
+                              <div className="mt-2 space-y-1 text-xs text-green-100">
+                                {coupon.single_use ? <p>Uso único</p> : null}
+                                {expiresLabel ? <p>Vence {expiresLabel}</p> : null}
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const normalized = codeUpper;
+                              setAppliedCoupon(normalized);
+                              setCouponInput(normalized);
+                              setCouponModalOpen(false);
+                            }}
+                            disabled={isApplied}
+                            className={`min-w-[120px] rounded-full px-5 py-2 text-xs font-semibold transition-all duration-150 ${
+                              isApplied
+                                ? "bg-green-700/40 text-green-200 cursor-default"
+                                : "bg-green-600 text-white hover:bg-green-500 shadow-lg shadow-green-500/40"
+                            }`}
+                          >
+                            {isApplied ? "Aplicado" : "Aplicar cupón"}
+                          </button>
+                        </div>
+                        {coupon.description ? (
+                          <p className="mt-3 rounded-lg bg-green-500/15 px-3 py-2 text-xs text-green-100">
+                            {coupon.description}
+                          </p>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
 
               {couponModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">

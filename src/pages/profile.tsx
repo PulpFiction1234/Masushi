@@ -508,7 +508,7 @@ export default function ProfilePage() {
             <div>
               <h2 className="text-xl font-bold">Descuento de cumpleaños</h2>
               <p className="text-sm text-gray-400">
-                Registra tu fecha para recibir un {BIRTHDAY_DISCOUNT_PERCENT}% de descuento durante {birthdayWindowLength} días en la semana de tu cumpleaños.
+                Registra tu fecha para recibir un {BIRTHDAY_DISCOUNT_PERCENT}% de descuento (válido por una compra) durante {birthdayWindowLength} días en la semana de tu cumpleaños.
               </p>
             </div>
             {profile.birthday ? (
@@ -554,11 +554,11 @@ export default function ProfilePage() {
             ) : birthdayStatus ? (
               birthdayEligibleNow ? (
                 <div className="rounded-lg border border-green-500/40 bg-green-500/10 p-4 text-sm text-green-100">
-                  ¡Listo! El descuento se aplicará automáticamente a tus pedidos de esta semana.
+                  ¡Listo! El descuento se aplicará automáticamente en tu primera compra de esta semana de cumpleaños.
                 </div>
               ) : (
                 <div className="rounded-lg border border-white/10 bg-gray-800 p-4 text-sm text-gray-300">
-                  El descuento se activará automáticamente cuando cumplas todos los requisitos. Puedes revisarlos en cualquier momento aquí.
+                  El descuento se activará automáticamente cuando cumplas todos los requisitos y aplicará a tu primera compra de la semana de cumpleaños. Puedes revisarlo aquí cuando quieras.
                 </div>
               )
             ) : (
@@ -654,7 +654,7 @@ export default function ProfilePage() {
           <div className="w-full max-w-md rounded-xl bg-white p-6 text-gray-900 shadow-xl">
             <h2 className="text-lg font-semibold">Registra tu cumpleaños</h2>
             <p className="mt-1 text-sm text-gray-600">
-              Esta fecha se usará para activar el descuento automático del {BIRTHDAY_DISCOUNT_PERCENT}% durante la semana de tu cumpleaños.
+              Esta fecha se usará para activar automáticamente un descuento del {BIRTHDAY_DISCOUNT_PERCENT}% válido por una compra durante la semana de tu cumpleaños.
             </p>
             <form onSubmit={handleBirthdaySubmit} className="mt-4 space-y-4">
               <div>

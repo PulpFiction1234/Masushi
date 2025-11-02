@@ -973,7 +973,7 @@ export default function Checkout() {
                   <p className="text-xs text-neutral-400">Verificando descuento de cumpleaños…</p>
                 ) : birthdayCouponActive ? (
                   <p className="text-xs text-green-300">
-                    Descuento de cumpleaños activo ({birthdayDiscountPercent}% · código {birthdayCouponCode}). Se aplicará automáticamente en este pedido.
+                    Descuento de cumpleaños activo ({birthdayDiscountPercent}% · código {birthdayCouponCode}). Se aplicará automáticamente en este pedido y es válido una sola vez durante tu semana de cumpleaños.
                   </p>
                 ) : null}
               </div>

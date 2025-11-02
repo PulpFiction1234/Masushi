@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
 import { useRouter } from "next/router";
 import { formatCLP } from "@/utils/format";
-import RecomendacionesModal from "./RecomendacionesModal";
 import AuthRequiredModal from "./AuthRequiredModal";
 import { useUser } from "@supabase/auth-helpers-react";
 
@@ -19,8 +18,6 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
   const router = useRouter();
   const user = useUser();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showRecomendaciones, setShowRecomendaciones] = useState(false);
-  const [modalYaMostrado, setModalYaMostrado] = useState(false);
 
   // Mientras no esté listo el provider, evita parpadeo
   const safeCart = useMemo(() => (ready ? cart : []), [ready, cart]);
@@ -29,26 +26,7 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
   const safeTotal = useMemo(() => (ready ? total : 0), [ready, total]);
 
   // Detectar si hay salsas en el carrito
-  const tieneSalsas = useMemo(() => {
-    // Buscar productos con IDs de salsas (80, 81, 82 según tu código)
-    return safeCart.some(item => [80, 81, 82].includes(item.id));
-  }, [safeCart]);
-
-  // Mostrar modal de recomendaciones cuando se abre el carrito si hay productos pero no salsas
-  useEffect(() => {
-    if (open && ready && hasItems && !tieneSalsas && !showRecomendaciones && !modalYaMostrado) {
-      // Delay pequeño para que se vea la apertura del carrito primero
-      const timer = setTimeout(() => {
-        setShowRecomendaciones(true);
-        setModalYaMostrado(true); // Marcar que ya se mostró
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-    // No cerrar automáticamente el modal cuando se agreguen salsas
-  }, [open, ready, hasItems, tieneSalsas, showRecomendaciones, modalYaMostrado]);
-
   const handlePedido = () => {
-    setShowRecomendaciones(false);
     // If user not logged in, show auth modal instead of navigating
     if (!user) {
       setShowAuthModal(true);
@@ -59,21 +37,8 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
   };
 
   const handleClose = () => {
-    setShowRecomendaciones(false);
     onClose();
   };
-
-  // Resetear el estado cuando se cierre el carrito
-  useEffect(() => {
-    if (!open) {
-      setShowRecomendaciones(false);
-      // Resetear el flag cuando el carrito se cierre completamente
-      const timer = setTimeout(() => {
-        setModalYaMostrado(false);
-      }, 500); // Delay para evitar que se muestre inmediatamente al reabrir
-      return () => clearTimeout(timer);
-    }
-  }, [open]);
 
   return (
     <>
@@ -182,12 +147,7 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
         )}
       </div>
       
-      {/* Modal de recomendaciones */}
           <AuthRequiredModal open={!!showAuthModal} onClose={() => setShowAuthModal(false)} />
-      <RecomendacionesModal 
-        open={showRecomendaciones} 
-        onClose={() => setShowRecomendaciones(false)} 
-      />
     </>
   );
 };

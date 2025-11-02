@@ -33,14 +33,18 @@ export default function ExtrasSelector({
   onValidationChange,
 }: Props) {
   // Small Toggle component to mimic pill switches used in the mock
-  const Toggle: React.FC<{ checked: boolean; onChange: (v: boolean) => void; ariaLabel?: string }> = ({ checked, onChange, ariaLabel }) => {
+  const Toggle: React.FC<{ checked: boolean; onChange: (v: boolean) => void; ariaLabel?: string; disabled?: boolean }> = ({ checked, onChange, ariaLabel, disabled }) => {
     return (
       <button
         type="button"
         aria-label={ariaLabel}
         aria-pressed={checked}
-        onClick={() => onChange(!checked)}
-        className={`relative inline-flex items-center h-6 w-11 rounded-full transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 ${checked ? 'bg-red-500' : 'bg-neutral-700/60'}`}
+        disabled={disabled}
+        onClick={() => {
+          if (disabled) return;
+          onChange(!checked);
+        }}
+        className={`relative inline-flex items-center h-6 w-11 rounded-full transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 ${disabled ? 'opacity-40 cursor-not-allowed' : ''} ${checked ? 'bg-red-500' : 'bg-neutral-700/60'}`}
       >
         <span className={`inline-block w-4 h-4 bg-white rounded-full transform transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
       </button>
@@ -48,22 +52,17 @@ export default function ExtrasSelector({
   };
   // ===== Estados de "Sin salsas" =====
   const [sinSalsasBasicas, setSinSalsasBasicas] = React.useState(false);
-  const [sinJengibreWasabi, setSinJengibreWasabi] = React.useState(false);
 
   // ===== Validación de salsas obligatorias =====
   React.useEffect(() => {
     const tieneSalsasBasicas = Number(state.soya || 0) > 0 || Number(state.teriyaki || 0) > 0;
-    const tieneJengibreWasabi = Number(state.jengibre || 0) > 0 || Number(state.wasabi || 0) > 0;
     
     // Es válido si:
     // 1. Marcó "sin salsas básicas" O tiene al menos una salsa básica
-    // 2. Marcó "sin jengibre/wasabi" O tiene al menos uno de estos
     const esSalsasBasicasValido = sinSalsasBasicas || tieneSalsasBasicas;
-    const esJengibreWasabiValido = sinJengibreWasabi || tieneJengibreWasabi;
-    
-    const esValido = esSalsasBasicasValido && esJengibreWasabiValido;
+    const esValido = esSalsasBasicasValido;
     onValidationChange?.(esValido);
-  }, [state.soya, state.teriyaki, state.jengibre, state.wasabi, sinSalsasBasicas, sinJengibreWasabi, onValidationChange]);
+  }, [state.soya, state.teriyaki, sinSalsasBasicas, onValidationChange]);
 
   // ===== Pool GRATIS: Soya/Teriyaki =====
   const soyaGratis = Number(state.soya || 0);
@@ -87,22 +86,31 @@ export default function ExtrasSelector({
   };
 
   // ===== Pool GRATIS: Jengibre/Wasabi (máx 2 entre ambos) =====
-  const jengibreFree = Number(state.jengibre || 0);
-  const wasabiFree = Number(state.wasabi || 0);
-  // const restantesJW = Math.max(0, maxGratisJWas - (jengibreFree + wasabiFree));
+  const jengibreSelected = Number(state.jengibre || 0) > 0;
+  const wasabiSelected = Number(state.wasabi || 0) > 0;
 
-  const onChangeJengibreGratis = (raw: string) => {
-    let next = clampInt(Number(raw === "" ? 0 : raw));
-    const maxForJ = Math.max(0, maxGratisJWas - wasabiFree);
-    if (next > maxForJ) next = maxForJ;
-    dispatch({ type: "SET_FIELD", field: "jengibre", value: raw === "" ? "" : next });
+  const handleToggleJengibre = (checked: boolean) => {
+    if (checked) {
+      if (!jengibreSelected) {
+        const otherSelected = wasabiSelected ? 1 : 0;
+        if (otherSelected + 1 > maxGratisJWas) return;
+      }
+      dispatch({ type: "SET_FIELD", field: "jengibre", value: 1 });
+    } else {
+      dispatch({ type: "SET_FIELD", field: "jengibre", value: 0 });
+    }
   };
 
-  const onChangeWasabiGratis = (raw: string) => {
-    let next = clampInt(Number(raw === "" ? 0 : raw));
-    const maxForW = Math.max(0, maxGratisJWas - jengibreFree);
-    if (next > maxForW) next = maxForW;
-    dispatch({ type: "SET_FIELD", field: "wasabi", value: raw === "" ? "" : next });
+  const handleToggleWasabi = (checked: boolean) => {
+    if (checked) {
+      if (!wasabiSelected) {
+        const otherSelected = jengibreSelected ? 1 : 0;
+        if (otherSelected + 1 > maxGratisJWas) return;
+      }
+      dispatch({ type: "SET_FIELD", field: "wasabi", value: 1 });
+    } else {
+      dispatch({ type: "SET_FIELD", field: "wasabi", value: 0 });
+    }
   };
 
   // ===== Palitos (gratis) con tope por carrito =====
@@ -114,10 +122,8 @@ export default function ExtrasSelector({
 
   // Estado de validación para mostrar
   const tieneSalsasBasicas = Number(state.soya || 0) > 0 || Number(state.teriyaki || 0) > 0;
-  const tieneJengibreWasabi = Number(state.jengibre || 0) > 0 || Number(state.wasabi || 0) > 0;
   const esSalsasBasicasValido = sinSalsasBasicas || tieneSalsasBasicas;
-  const esJengibreWasabiValido = sinJengibreWasabi || tieneJengibreWasabi;
-  const esValido = esSalsasBasicasValido && esJengibreWasabiValido;
+  const esValido = esSalsasBasicasValido;
 
   return (
     <div>
@@ -191,59 +197,27 @@ export default function ExtrasSelector({
             <p className="text-xs text-neutral-400 mb-1">
               Jengibre/Wasabi:{" "}
               <span className="font-semibold text-neutral-200">{maxGratisJWas}</span>
-
             </p>
-            
-            {/* Checkbox Sin jengibre/wasabi */}
-            <div className="mb-2 flex items-center justify-between">
-              <div className="text-sm text-neutral-200">Sin Jengibre/Wasabi</div>
-              <div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-neutral-200">Incluir Jengibre</div>
                 <Toggle
-                  ariaLabel="Sin Jengibre/Wasabi"
-                  checked={sinJengibreWasabi}
-                  onChange={(checked) => {
-                    setSinJengibreWasabi(checked);
-                    if (checked) {
-                      dispatch({ type: "SET_FIELD", field: "jengibre", value: 0 });
-                      dispatch({ type: "SET_FIELD", field: "wasabi", value: 0 });
-                    }
-                  }}
+                  ariaLabel="Incluir Jengibre"
+                  checked={jengibreSelected}
+                  disabled={!jengibreSelected && wasabiSelected && maxGratisJWas <= 1}
+                  onChange={handleToggleJengibre}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-neutral-200">Incluir Wasabi</div>
+                <Toggle
+                  ariaLabel="Incluir Wasabi"
+                  checked={wasabiSelected}
+                  disabled={!wasabiSelected && jengibreSelected && maxGratisJWas <= 1}
+                  onChange={handleToggleWasabi}
                 />
               </div>
             </div>
-
-            {!sinJengibreWasabi && (
-              <div className="grid grid-cols-2 gap-2">
-                <div className="flex flex-col items-center">
-                  <label htmlFor="jengibreFree" className="block text-sm font-medium text-neutral-200 mb-1">
-                    Jengibre
-                  </label>
-                  <input
-                    id="jengibreFree"
-                    type="number"
-                    min={0}
-                    max={Math.max(0, maxGratisJWas - wasabiFree)}
-                    value={state.jengibre}
-                    onChange={(e) => onChangeJengibreGratis(e.target.value)}
-                    className={smallInput}
-                  />
-                </div>
-                <div className="flex flex-col items-center">
-                  <label htmlFor="wasabiFree" className="block text-sm font-medium text-neutral-200 mb-1">
-                    Wasabi
-                  </label>
-                  <input
-                    id="wasabiFree"
-                    type="number"
-                    min={0}
-                    max={Math.max(0, maxGratisJWas - jengibreFree)}
-                    value={state.wasabi}
-                    onChange={(e) => onChangeWasabiGratis(e.target.value)}
-                    className={smallInput}
-                  />
-                </div>
-              </div>
-            )}
           </div>
         </div>
 

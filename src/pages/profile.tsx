@@ -295,7 +295,7 @@ export default function ProfilePage() {
         helper: birthdayWindowText,
       },
     ],
-    [birthdayStatus, profile?.birthday, totalOrders, birthdayWindowText],
+    [birthdayStatus, profile?.birthday, totalOrders, birthdayWindowText, birthdayStatusLoading],
   );
 
   const birthdayEligibleNow = birthdayStatus?.eligibleNow ?? false;
@@ -314,7 +314,7 @@ export default function ProfilePage() {
       await updateProfile({ full_name: fullName, phone });
       setEditing(false);
       await refreshProfile();
-    } catch (error) {
+    } catch {
       setErrorMessage("Error al actualizar el perfil.");
     } finally {
       setSaving(false);

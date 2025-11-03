@@ -4,6 +4,7 @@ import type { AppProps } from "next/app";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { FaShoppingBag } from "react-icons/fa";
+import { Inclusive_Sans } from "next/font/google";
 
 import { CartProvider, useCart } from "@/context/CartContext";
 import { UserProvider } from "@/context/UserContext";
@@ -12,6 +13,14 @@ import { Analytics } from "@vercel/analytics/react";
 
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+
+const inclusiveSans = Inclusive_Sans({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  display: "swap",
+  variable: "--font-inclusive-sans",
+});
 
 function FloatingCartButton({ onClick }: { onClick: () => void }) {
   const { cart } = useCart();
@@ -31,7 +40,7 @@ function FloatingCartButton({ onClick }: { onClick: () => void }) {
       suppressHydrationWarning
     >
       <div className="relative flex items-center justify-center">
-  <FaShoppingBag className="text-[32px] leading-none" aria-hidden="true" />
+        <FaShoppingBag className="text-[32px] leading-none" aria-hidden="true" />
         {mounted && safeCount > 0 && (
           <span className="absolute -top-2 -right-2 bg-gray-900 text-white text-xs font-bold rounded-full px-2 py-0.5 shadow-lg">
             {safeCount}
@@ -63,14 +72,16 @@ export default function App({ Component, pageProps }: AppProps) {
     <SessionContextProvider supabaseClient={supabaseClient} initialSession={pageProps.initialSession}>
       <UserProvider>
         <CartProvider>
-          <Component {...pageProps} />
+          <div className={`${inclusiveSans.className} ${inclusiveSans.variable}`}>
+            <Component {...pageProps} />
 
-          {router.pathname !== "/checkout" && (
-            <FloatingCartButton onClick={() => setIsCartOpen(true)} />
-          )}
+            {router.pathname !== "/checkout" && (
+              <FloatingCartButton onClick={() => setIsCartOpen(true)} />
+            )}
 
-          <CarritoPanel open={isCartOpen} onClose={() => setIsCartOpen(false)} />
-          <Analytics />
+            <CarritoPanel open={isCartOpen} onClose={() => setIsCartOpen(false)} />
+            <Analytics />
+          </div>
         </CartProvider>
       </UserProvider>
     </SessionContextProvider>

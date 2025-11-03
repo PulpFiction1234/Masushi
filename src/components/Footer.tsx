@@ -57,9 +57,14 @@ const Footer: React.FC<FooterProps> = ({ showSocial = true, className = "" }) =>
             Masushi © {new Date().getFullYear()} - Todos los derechos reservados
           </p>
 
-          <Link href="/terminos" className="text-right">
-            Terminos y condiciones
-          </Link>
+          <div className="text-right flex flex-col items-end gap-1">
+            <Link href="/terminos" className="hover:underline">
+              Términos y condiciones
+            </Link>
+            <Link href="/privacidad" className="hover:underline">
+              Política de privacidad
+            </Link>
+          </div>
 
           {/* Right: spacer */}
           <div className="justify-self-end" aria-hidden />

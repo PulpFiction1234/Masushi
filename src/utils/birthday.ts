@@ -3,8 +3,29 @@ export const BIRTHDAY_WEEK_LENGTH_DAYS = 7;
 export const BIRTHDAY_COUPON_CODE = 'BIRTHDAY10';
 export const BIRTHDAY_MIN_MONTHS = 3;
 export const BIRTHDAY_MIN_ORDERS = 6;
+export const BIRTHDAY_TIME_ZONE = 'America/Santiago';
 
 const DAY_NAMES_ES = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"] as const;
+
+const getTimeZoneDateParts = (date: Date, timeZone: string = BIRTHDAY_TIME_ZONE) => {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  const [yearStr, monthStr, dayStr] = formatter.format(date).split('-');
+  return {
+    year: Number.parseInt(yearStr, 10),
+    month: Number.parseInt(monthStr, 10),
+    day: Number.parseInt(dayStr, 10),
+  };
+};
+
+export const normalizeDateToBirthdayZone = (date: Date, timeZone: string = BIRTHDAY_TIME_ZONE): Date => {
+  const { year, month, day } = getTimeZoneDateParts(date, timeZone);
+  return new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0));
+};
 
 export type BirthdayWindowLike = { start: string; end: string } | null | undefined;
 export type BirthdayWeekBounds = { monday: Date; sunday: Date };
@@ -45,22 +66,27 @@ export const getBirthdayWindowForYear = (birthdayIso: string, year: number): Bir
 };
 
 export const getBirthdayWindow = (birthdayIso: string, reference: Date = new Date()): BirthdayWindow | null => {
-  const window = getBirthdayWindowForYear(birthdayIso, reference.getFullYear());
+  const normalized = normalizeDateToBirthdayZone(reference);
+  const window = getBirthdayWindowForYear(birthdayIso, normalized.getUTCFullYear());
   if (!window) return null;
   return window;
 };
 
 export const getNextBirthdayWindow = (birthdayIso: string, reference: Date = new Date()): BirthdayWindow | null => {
-  const current = getBirthdayWindowForYear(birthdayIso, reference.getFullYear());
+  const normalized = normalizeDateToBirthdayZone(reference);
+  const current = getBirthdayWindowForYear(birthdayIso, normalized.getUTCFullYear());
   if (!current) return null;
-  if (reference <= current.end) return current;
-  return getBirthdayWindowForYear(birthdayIso, reference.getFullYear() + 1);
+  if (normalized <= current.end) return current;
+  return getBirthdayWindowForYear(birthdayIso, normalized.getUTCFullYear() + 1);
 };
 
 export const isWithinBirthdayWindow = (birthdayIso: string, reference: Date = new Date()): boolean => {
-  const window = getBirthdayWindow(birthdayIso, reference);
+  const referenceNormalized = normalizeDateToBirthdayZone(reference);
+  const window = getBirthdayWindow(birthdayIso, referenceNormalized);
   if (!window) return false;
-  return reference >= window.start && reference <= window.end;
+  const startNormalized = normalizeDateToBirthdayZone(window.start);
+  const endNormalized = normalizeDateToBirthdayZone(window.end);
+  return referenceNormalized >= startNormalized && referenceNormalized <= endNormalized;
 };
 
 export const monthsBetween = (startIso: string | null | undefined, reference: Date = new Date()): number => {
@@ -68,9 +94,12 @@ export const monthsBetween = (startIso: string | null | undefined, reference: Da
   const startDate = new Date(startIso);
   if (Number.isNaN(startDate.getTime())) return 0;
 
-  let months = (reference.getFullYear() - startDate.getFullYear()) * 12;
-  months += reference.getMonth() - startDate.getMonth();
-  if (reference.getDate() < startDate.getDate()) months -= 1;
+  const referenceNormalized = normalizeDateToBirthdayZone(reference);
+  const startNormalized = normalizeDateToBirthdayZone(startDate);
+
+  let months = (referenceNormalized.getUTCFullYear() - startNormalized.getUTCFullYear()) * 12;
+  months += referenceNormalized.getUTCMonth() - startNormalized.getUTCMonth();
+  if (referenceNormalized.getUTCDate() < startNormalized.getUTCDate()) months -= 1;
 
   return Math.max(months, 0);
 };
@@ -81,24 +110,30 @@ export const getBirthdayWeekBounds = (
   reference: Date = new Date(),
 ): BirthdayWeekBounds | null => {
   if (window) {
-    const monday = new Date(window.start);
+    const monday = normalizeDateToBirthdayZone(new Date(window.start));
     if (!Number.isNaN(monday.getTime())) {
-      const sunday = new Date(monday);
-      sunday.setDate(monday.getDate() + 6);
+      const sunday = normalizeDateToBirthdayZone(new Date(window.end));
       return { monday, sunday };
     }
   }
 
   if (!birthdayIso) return null;
 
-  const current = getBirthdayWindowForYear(birthdayIso, reference.getFullYear());
-  if (current && reference <= current.end) {
-    return { monday: current.start, sunday: current.end };
+  const referenceNormalized = normalizeDateToBirthdayZone(reference);
+  const current = getBirthdayWindowForYear(birthdayIso, referenceNormalized.getUTCFullYear());
+  if (current) {
+    const monday = normalizeDateToBirthdayZone(current.start);
+    const sunday = normalizeDateToBirthdayZone(current.end);
+    if (referenceNormalized <= sunday) {
+      return { monday, sunday };
+    }
   }
 
-  const next = getBirthdayWindowForYear(birthdayIso, reference.getFullYear() + 1);
+  const next = getBirthdayWindowForYear(birthdayIso, referenceNormalized.getUTCFullYear() + 1);
   if (next) {
-    return { monday: next.start, sunday: next.end };
+    const monday = normalizeDateToBirthdayZone(next.start);
+    const sunday = normalizeDateToBirthdayZone(next.end);
+    return { monday, sunday };
   }
 
   return null;

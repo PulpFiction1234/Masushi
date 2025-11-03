@@ -8,6 +8,7 @@ import {
   getNextBirthdayWindow,
   isWithinBirthdayWindow,
   monthsBetween,
+  normalizeDateToBirthdayZone,
 } from '@/utils/birthday';
 
 export type BirthdayEligibilityResult = {
@@ -50,12 +51,13 @@ export const computeBirthdayEligibility = async (
   }
 
   const birthday: string | null = profileData?.birthday ?? null;
-  const accountAgeMonths = monthsBetween(profileData?.created_at ?? null, reference);
+  const referenceNormalized = normalizeDateToBirthdayZone(reference);
+  const accountAgeMonths = monthsBetween(profileData?.created_at ?? null, referenceNormalized);
   const orderCount = typeof orderCountRaw === 'number' ? orderCountRaw : 0;
-  const withinWindow = birthday ? isWithinBirthdayWindow(birthday, reference) : false;
+  const withinWindow = birthday ? isWithinBirthdayWindow(birthday, referenceNormalized) : false;
 
-  const windowRaw = birthday ? getBirthdayWindow(birthday, reference) : null;
-  const nextWindowRaw = birthday ? getNextBirthdayWindow(birthday, reference) : null;
+  const windowRaw = birthday ? getBirthdayWindow(birthday, referenceNormalized) : null;
+  const nextWindowRaw = birthday ? getNextBirthdayWindow(birthday, referenceNormalized) : null;
 
   const hasBirthday = Boolean(birthday);
   const hasMinAccountAge = accountAgeMonths >= BIRTHDAY_MIN_MONTHS;

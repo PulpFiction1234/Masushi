@@ -7,7 +7,7 @@ import { fmtMiles } from "@/utils/format";
 import { WIDE_THRESHOLD, type FitMode } from "@/utils/constants";
 import { useUserProfile } from "@/context/UserContext";
 import { useUser } from "@supabase/auth-helpers-react";
-import { PiHeartFill, PiHeart } from "react-icons/pi";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
 import useProductOverrides from '@/hooks/useProductOverrides';
 
 function parseArmalo(encoded?: string) {
@@ -123,9 +123,9 @@ const ProductCard: React.FC<Props> = ({
             aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
           >
             {isFav ? (
-              <PiHeartFill className="text-red-500 text-xl" aria-hidden="true" />
+              <FaHeart className="text-red-500 text-xl" aria-hidden="true" />
             ) : (
-              <PiHeart className="text-white text-xl" aria-hidden="true" />
+              <FaRegHeart className="text-white text-xl" aria-hidden="true" />
             )}
           </button>
         )}

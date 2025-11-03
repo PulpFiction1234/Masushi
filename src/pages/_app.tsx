@@ -3,7 +3,7 @@ import type { AppProps } from "next/app";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { PiShoppingBagFill } from "react-icons/pi";
+import { FaShoppingBag } from "react-icons/fa";
 
 import { CartProvider, useCart } from "@/context/CartContext";
 import { UserProvider } from "@/context/UserContext";
@@ -31,7 +31,7 @@ function FloatingCartButton({ onClick }: { onClick: () => void }) {
       suppressHydrationWarning
     >
       <div className="relative flex items-center justify-center">
-  <PiShoppingBagFill className="text-[32px] leading-none" />
+  <FaShoppingBag className="text-[32px] leading-none" aria-hidden="true" />
         {mounted && safeCount > 0 && (
           <span className="absolute -top-2 -right-2 bg-gray-900 text-white text-xs font-bold rounded-full px-2 py-0.5 shadow-lg">
             {safeCount}

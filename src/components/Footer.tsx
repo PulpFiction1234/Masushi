@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { PiInstagramLogoFill, PiFacebookLogoFill, PiWhatsappLogoFill } from "react-icons/pi";
+import { FaInstagram, FaFacebook, FaWhatsapp } from "react-icons/fa";
 
 interface FooterProps {
   showSocial?: boolean;
@@ -25,7 +25,7 @@ const Footer: React.FC<FooterProps> = ({ showSocial = true, className = "" }) =>
                 className="transition hover:scale-110 "
                 title="Instagram"
               >
-                <PiInstagramLogoFill className="text-2xl text-pink-500 hover:text-gray-100" aria-hidden="true" />
+                <FaInstagram className="text-2xl text-pink-500 hover:text-gray-100" aria-hidden="true" />
               </a>
               <a
                 href="https://www.facebook.com/mazushiltda"
@@ -35,7 +35,7 @@ const Footer: React.FC<FooterProps> = ({ showSocial = true, className = "" }) =>
                 className="transition hover:scale-110 "
                 title="Facebook"
               >
-                <PiFacebookLogoFill className="text-2xl text-blue-500 hover:text-gray-100" aria-hidden="true" />
+                <FaFacebook className="text-2xl text-blue-500 hover:text-gray-100" aria-hidden="true" />
               </a>
               <a
                 href="https://api.whatsapp.com/send?phone=56940873865&text=Hola%20quiero%20más%20información" 
@@ -45,7 +45,7 @@ const Footer: React.FC<FooterProps> = ({ showSocial = true, className = "" }) =>
                 className="transition hover:scale-110 "
                 title="WhatsApp"
               >
-                <PiWhatsappLogoFill className="text-2xl text-green-500 hover:text-gray-100" aria-hidden="true" />
+                <FaWhatsapp className="text-2xl text-green-500 hover:text-gray-100" aria-hidden="true" />
               </a>
             </div>
           ) : (

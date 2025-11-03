@@ -1,6 +1,13 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import type { IconType } from "react-icons";
-import { PiCakeFill, PiCalendarCheckFill, PiStorefrontBold, PiIdentificationBadgeFill, PiShoppingBagFill } from "react-icons/pi";
+import {
+  FaBirthdayCake,
+  FaCalendarCheck,
+  FaStore,
+  FaIdBadge,
+  FaShoppingBag,
+  FaTruck,
+} from "react-icons/fa";
 import { useRouter } from "next/router";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -162,10 +169,10 @@ export default function ProfilePage() {
   const birthdayWindowLength = BIRTHDAY_WEEK_LENGTH_DAYS;
   const requirementIcons = useMemo<Record<string, IconType>>(
     () => ({
-      birthday: PiCakeFill,
-      accountAge: PiIdentificationBadgeFill,
-      orders: PiShoppingBagFill,
-      window: PiCalendarCheckFill,
+      birthday: FaBirthdayCake,
+      accountAge: FaIdBadge,
+      orders: FaShoppingBag,
+      window: FaCalendarCheck,
     }),
     [],
   );
@@ -529,7 +536,7 @@ export default function ProfilePage() {
               aria-controls="birthday-discount-details"
             >
               <div className="flex items-start gap-3">
-                <PiCakeFill className="mt-1 h-6 w-6 text-green-300" aria-hidden="true" />
+                <FaBirthdayCake className="mt-1 h-6 w-6 text-green-300" aria-hidden="true" />
                 <div>
                   <h2 className="text-xl font-bold">Descuento de cumpleaños</h2>
                   <p className="mt-1 text-sm text-gray-400">
@@ -624,7 +631,7 @@ export default function ProfilePage() {
         {/* Últimos pedidos */}
         <div className="bg-gray-900 p-6 rounded-xl shadow space-y-4 mt-6">
           <h2 className="flex items-center gap-2 text-xl font-bold">
-            <PiStorefrontBold className="h-5 w-5 text-green-300" aria-hidden="true" />
+            <FaStore className="h-5 w-5 text-green-300" aria-hidden="true" />
             <span>Mis últimos pedidos</span>
           </h2>
 
@@ -649,16 +656,23 @@ export default function ProfilePage() {
                       </p>
                       {(() => {
                         const deliveryType = resolveDeliveryTypeValue(order.delivery_type);
-                        const label =
-                          deliveryType === "delivery"
-                            ? "🚚 Delivery"
-                            : deliveryType === "retiro"
-                            ? "🏪 Retiro"
-                            : "Tipo de entrega desconocido";
+                        const deliveryMeta = (() => {
+                          if (deliveryType === "delivery") {
+                            return { Icon: FaTruck, text: "Delivery" };
+                          }
+                          if (deliveryType === "retiro") {
+                            return { Icon: FaStore, text: "Retiro" };
+                          }
+                          return { Icon: null, text: "Tipo de entrega desconocido" };
+                        })();
+                        const DeliveryIcon = deliveryMeta.Icon;
                         return (
-                          <p className="text-sm text-gray-400">
-                            {label}
-                            {order.address && ` - ${order.address}`}
+                          <p className="flex flex-wrap items-center gap-2 text-sm text-gray-400">
+                            {DeliveryIcon ? (
+                              <DeliveryIcon className="h-4 w-4 text-gray-300" aria-hidden="true" />
+                            ) : null}
+                            <span>{deliveryMeta.text}</span>
+                            {order.address ? <span className="text-gray-500">· {order.address}</span> : null}
                           </p>
                         );
                       })()}

@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import type { IconType } from "react-icons";
+import { PiCakeFill, PiCalendarCheckFill, PiStorefrontBold, PiIdentificationBadgeFill, PiShoppingBagFill } from "react-icons/pi";
 import { useRouter } from "next/router";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -158,6 +160,15 @@ export default function ProfilePage() {
   const [birthdaySaving, setBirthdaySaving] = useState(false);
   const [birthdayDetailsOpen, setBirthdayDetailsOpen] = useState(false);
   const birthdayWindowLength = BIRTHDAY_WEEK_LENGTH_DAYS;
+  const requirementIcons = useMemo<Record<string, IconType>>(
+    () => ({
+      birthday: PiCakeFill,
+      accountAge: PiIdentificationBadgeFill,
+      orders: PiShoppingBagFill,
+      window: PiCalendarCheckFill,
+    }),
+    [],
+  );
 
   const fetchBirthdayStatus = useCallback(async () => {
     if (!user) {
@@ -517,11 +528,14 @@ export default function ProfilePage() {
               aria-expanded={birthdayDetailsOpen}
               aria-controls="birthday-discount-details"
             >
-              <div>
-                <h2 className="text-xl font-bold">Descuento de cumpleaños</h2>
-                <p className="mt-1 text-sm text-gray-400">
-                  Registra tu fecha para recibir un {BIRTHDAY_DISCOUNT_PERCENT}% de descuento (válido por una compra) durante {birthdayWindowLength} días en la semana de tu cumpleaños.
-                </p>
+              <div className="flex items-start gap-3">
+                <PiCakeFill className="mt-1 h-6 w-6 text-green-300" aria-hidden="true" />
+                <div>
+                  <h2 className="text-xl font-bold">Descuento de cumpleaños</h2>
+                  <p className="mt-1 text-sm text-gray-400">
+                    Registra tu fecha para recibir un {BIRTHDAY_DISCOUNT_PERCENT}% de descuento (válido por una compra) durante {birthdayWindowLength} días en la semana de tu cumpleaños.
+                  </p>
+                </div>
               </div>
               <svg
                 className={`mt-1 h-5 w-5 flex-shrink-0 text-gray-400 transition-transform ${birthdayDetailsOpen ? "-rotate-180" : ""}`}
@@ -557,15 +571,24 @@ export default function ProfilePage() {
                 {birthdayStatusLoading ? (
                   <p className="text-sm text-gray-400">Calculando tu estado…</p>
                 ) : (
-                  birthdayRequirements.map((req) => (
-                    <div key={req.key} className="flex items-center justify-between rounded-lg border border-white/5 bg-gray-800 px-3 py-2">
-                      <div className={`flex items-center gap-3 text-sm ${req.met ? "text-green-200" : "text-gray-400"}`}>
-                        <span className={`h-2.5 w-2.5 rounded-full ${req.met ? "bg-green-400" : "bg-gray-600"}`} />
-                        <span>{req.label}</span>
+                  birthdayRequirements.map((req) => {
+                    const RequirementIcon = requirementIcons[req.key];
+                    return (
+                      <div key={req.key} className="flex items-center justify-between rounded-lg border border-white/5 bg-gray-800 px-3 py-2">
+                        <div className={`flex items-center gap-3 text-sm ${req.met ? "text-green-200" : "text-gray-400"}`}>
+                          <span className={`h-2.5 w-2.5 rounded-full ${req.met ? "bg-green-400" : "bg-gray-600"}`} />
+                          {RequirementIcon ? (
+                            <RequirementIcon
+                              className={`h-4 w-4 ${req.met ? "text-green-300" : "text-gray-500"}`}
+                              aria-hidden="true"
+                            />
+                          ) : null}
+                          <span>{req.label}</span>
+                        </div>
+                        {req.helper ? <span className="text-xs text-gray-400">{req.helper}</span> : null}
                       </div>
-                      {req.helper ? <span className="text-xs text-gray-400">{req.helper}</span> : null}
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
 
@@ -600,7 +623,10 @@ export default function ProfilePage() {
 
         {/* Últimos pedidos */}
         <div className="bg-gray-900 p-6 rounded-xl shadow space-y-4 mt-6">
-          <h2 className="text-xl font-bold">Mis últimos pedidos</h2>
+          <h2 className="flex items-center gap-2 text-xl font-bold">
+            <PiStorefrontBold className="h-5 w-5 text-green-300" aria-hidden="true" />
+            <span>Mis últimos pedidos</span>
+          </h2>
 
           {loading ? (
             <p className="text-gray-400">Cargando pedidos...</p>

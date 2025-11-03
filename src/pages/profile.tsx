@@ -13,7 +13,7 @@ import { useCart, type CartOpcion } from "@/context/CartContext";
 import { REPEAT_ORDER_META_KEY, type RepeatOrderMeta } from "@/utils/repeatOrder";
 import {
   BIRTHDAY_DISCOUNT_PERCENT,
-  BIRTHDAY_WINDOW_DAYS,
+  BIRTHDAY_WEEK_LENGTH_DAYS,
   BIRTHDAY_MIN_MONTHS,
   BIRTHDAY_MIN_ORDERS,
   getBirthdayWeekBounds,
@@ -156,7 +156,8 @@ export default function ProfilePage() {
   const [birthdayInput, setBirthdayInput] = useState("");
   const [birthdayError, setBirthdayError] = useState("");
   const [birthdaySaving, setBirthdaySaving] = useState(false);
-  const birthdayWindowLength = BIRTHDAY_WINDOW_DAYS * 2 + 1;
+  const [birthdayDetailsOpen, setBirthdayDetailsOpen] = useState(false);
+  const birthdayWindowLength = BIRTHDAY_WEEK_LENGTH_DAYS;
 
   const fetchBirthdayStatus = useCallback(async () => {
     if (!user) {
@@ -509,12 +510,28 @@ export default function ProfilePage() {
 
         <div className="bg-gray-900 p-6 rounded-xl shadow space-y-5 mt-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h2 className="text-xl font-bold">Descuento de cumpleaños</h2>
-              <p className="text-sm text-gray-400">
-                Registra tu fecha para recibir un {BIRTHDAY_DISCOUNT_PERCENT}% de descuento (válido por una compra) durante {birthdayWindowLength} días en la semana de tu cumpleaños.
-              </p>
-            </div>
+            <button
+              type="button"
+              onClick={() => setBirthdayDetailsOpen((open) => !open)}
+              className="flex w-full flex-1 items-start justify-between gap-3 rounded-lg border border-white/10 bg-gray-800/60 px-4 py-3 text-left transition-colors hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500/60"
+              aria-expanded={birthdayDetailsOpen}
+              aria-controls="birthday-discount-details"
+            >
+              <div>
+                <h2 className="text-xl font-bold">Descuento de cumpleaños</h2>
+                <p className="mt-1 text-sm text-gray-400">
+                  Registra tu fecha para recibir un {BIRTHDAY_DISCOUNT_PERCENT}% de descuento (válido por una compra) durante {birthdayWindowLength} días en la semana de tu cumpleaños.
+                </p>
+              </div>
+              <svg
+                className={`mt-1 h-5 w-5 flex-shrink-0 text-gray-400 transition-transform ${birthdayDetailsOpen ? "-rotate-180" : ""}`}
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.168l3.71-2.938a.75.75 0 0 1 .94 1.17l-4.2 3.325a.75.75 0 0 1-.94 0l-4.2-3.325a.75.75 0 0 1 .02-1.06z" />
+              </svg>
+            </button>
             {profile.birthday ? (
               <div className="self-start rounded-full bg-green-500/20 px-4 py-1 text-sm text-green-200">
                 Cumpleaños: {formattedBirthday ?? profile.birthday}
@@ -534,47 +551,51 @@ export default function ProfilePage() {
             )}
           </div>
 
-          <div className="space-y-2">
-            {birthdayStatusLoading ? (
-              <p className="text-sm text-gray-400">Calculando tu estado…</p>
-            ) : (
-              birthdayRequirements.map((req) => (
-                <div key={req.key} className="flex items-center justify-between rounded-lg border border-white/5 bg-gray-800 px-3 py-2">
-                  <div className={`flex items-center gap-3 text-sm ${req.met ? "text-green-200" : "text-gray-400"}`}>
-                    <span className={`h-2.5 w-2.5 rounded-full ${req.met ? "bg-green-400" : "bg-gray-600"}`} />
-                    <span>{req.label}</span>
-                  </div>
-                  {req.helper ? <span className="text-xs text-gray-400">{req.helper}</span> : null}
-                </div>
-              ))
-            )}
-          </div>
+          {birthdayDetailsOpen ? (
+            <div id="birthday-discount-details" className="space-y-4">
+              <div className="space-y-2">
+                {birthdayStatusLoading ? (
+                  <p className="text-sm text-gray-400">Calculando tu estado…</p>
+                ) : (
+                  birthdayRequirements.map((req) => (
+                    <div key={req.key} className="flex items-center justify-between rounded-lg border border-white/5 bg-gray-800 px-3 py-2">
+                      <div className={`flex items-center gap-3 text-sm ${req.met ? "text-green-200" : "text-gray-400"}`}>
+                        <span className={`h-2.5 w-2.5 rounded-full ${req.met ? "bg-green-400" : "bg-gray-600"}`} />
+                        <span>{req.label}</span>
+                      </div>
+                      {req.helper ? <span className="text-xs text-gray-400">{req.helper}</span> : null}
+                    </div>
+                  ))
+                )}
+              </div>
 
-          {profile.birthday ? (
-            birthdayStatusLoading ? (
-              <div className="rounded-lg border border-white/10 bg-gray-800 p-4 text-sm text-gray-300">
-                Verificando tu estado de descuento de cumpleaños…
-              </div>
-            ) : birthdayStatus ? (
-              birthdayEligibleNow ? (
-                <div className="rounded-lg border border-green-500/40 bg-green-500/10 p-4 text-sm text-green-100">
-                  ¡Listo! El descuento se aplicará automáticamente en tu primera compra de esta semana de cumpleaños.
-                </div>
+              {profile.birthday ? (
+                birthdayStatusLoading ? (
+                  <div className="rounded-lg border border-white/10 bg-gray-800 p-4 text-sm text-gray-300">
+                    Verificando tu estado de descuento de cumpleaños…
+                  </div>
+                ) : birthdayStatus ? (
+                  birthdayEligibleNow ? (
+                    <div className="rounded-lg border border-green-500/40 bg-green-500/10 p-4 text-sm text-green-100">
+                      ¡Listo! El descuento se aplicará automáticamente en tu primera compra de esta semana de cumpleaños.
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border border-white/10 bg-gray-800 p-4 text-sm text-gray-300">
+                      El descuento se activará automáticamente cuando cumplas todos los requisitos y aplicará a tu primera compra de la semana de cumpleaños. Puedes revisarlo aquí cuando quieras.
+                    </div>
+                  )
+                ) : (
+                  <div className="rounded-lg border border-yellow-400/40 bg-yellow-500/10 p-4 text-sm text-yellow-100">
+                    No pudimos cargar tu estado de descuento en este momento. Intenta recargar la página.
+                  </div>
+                )
               ) : (
-                <div className="rounded-lg border border-white/10 bg-gray-800 p-4 text-sm text-gray-300">
-                  El descuento se activará automáticamente cuando cumplas todos los requisitos y aplicará a tu primera compra de la semana de cumpleaños. Puedes revisarlo aquí cuando quieras.
+                <div className="rounded-lg border border-yellow-400/40 bg-yellow-500/10 p-4 text-sm text-yellow-100">
+                  Solo podrás registrar tu cumpleaños una vez, así que asegúrate de ingresar la fecha correcta.
                 </div>
-              )
-            ) : (
-              <div className="rounded-lg border border-yellow-400/40 bg-yellow-500/10 p-4 text-sm text-yellow-100">
-                No pudimos cargar tu estado de descuento en este momento. Intenta recargar la página.
-              </div>
-            )
-          ) : (
-            <div className="rounded-lg border border-yellow-400/40 bg-yellow-500/10 p-4 text-sm text-yellow-100">
-              Solo podrás registrar tu cumpleaños una vez, así que asegúrate de ingresar la fecha correcta.
+              )}
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Últimos pedidos */}

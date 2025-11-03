@@ -19,12 +19,18 @@ type NotifyResult =
 
 const sanitize = (value: unknown) => {
   if (value == null) return '';
-  const normalized = String(value).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-  return normalized
+  const normalized = String(value)
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/\t+/g, ' ');
+
+  const flattened = normalized
     .split('\n')
-    .map((line) => line.replace(/\t+/g, ' ').replace(/ {2,}/g, ' ').trimEnd())
-    .join('\n')
-    .trim();
+    .map((line) => line.replace(/ {2,}/g, ' ').trim())
+    .filter(Boolean)
+    .join(' | ');
+
+  return flattened.replace(/ {2,}/g, ' ').trim();
 };
 
 const sanitizedOrFallback = (value: unknown, fallback: string) => {

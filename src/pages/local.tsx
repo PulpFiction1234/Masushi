@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Image from "next/image";
 import dynamic from "next/dynamic";
+import { FaPhoneAlt, FaWhatsapp, FaMapMarkedAlt } from "react-icons/fa";
 
 import Seo from "@/components/Seo"; // 👈 metadatos (no visible)
 import LocalBusinessJsonLd from "@/components/LocalBusinessJsonLd"; // 👈 JSON-LD (no visible)
@@ -107,25 +108,28 @@ export default function LocalPage() {
               <div className="flex items-center gap-3">
                 <a
                   href={`tel:${LOCAL.telefonoPlain}`}
-                  className="bg-gray-800 hover:bg-gray-700 transition px-3 py-2 rounded-lg text-sm"
+                  className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 transition px-3 py-2 rounded-lg text-sm"
                 >
-                  📞 Llamar
+                  <FaPhoneAlt className="text-base" aria-hidden="true" />
+                  <span>Llamar</span>
                 </a>
                 <a
                   href={`https://wa.me/${LOCAL.whatsapp}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-green-600 hover:bg-green-700 transition px-3 py-2 rounded-lg text-sm"
+                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700 transition px-3 py-2 rounded-lg text-sm"
                 >
-                  💬 WhatsApp
+                  <FaWhatsapp className="text-base" aria-hidden="true" />
+                  <span>WhatsApp</span>
                 </a>
                 <a
                   href={`https://www.google.com/maps?daddr=${LOCAL.lat},${LOCAL.lng}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-blue-600 hover:bg-blue-700 transition px-3 py-2 rounded-lg text-sm"
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 transition px-3 py-2 rounded-lg text-sm"
                 >
-                  🗺️ Cómo llegar
+                  <FaMapMarkedAlt className="text-base" aria-hidden="true" />
+                  <span>Cómo llegar</span>
                 </a>
               </div>
 

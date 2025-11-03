@@ -1,5 +1,6 @@
 "use client";
 import React, { useMemo, useReducer, useEffect, useState, useCallback } from "react";
+import { FaBirthdayCake, FaGift } from "react-icons/fa";
 import dynamic from "next/dynamic";
 import useSWR from "swr";
 import { useCart } from "@/context/CartContext";
@@ -1070,9 +1071,9 @@ export default function Checkout() {
                 {birthdayStatusLoading ? (
                   <p className="text-xs text-neutral-400">Verificando descuento de cumpleaños…</p>
                 ) : birthdayCouponEligible ? (
-                  <div className="flex flex-col gap-3 rounded-2xl border border-green-400/40 bg-green-500/10 p-4 text-xs text-green-100 shadow-[0_8px_20px_rgba(16,185,129,0.25)]">
+                    <div className="flex flex-col gap-3 rounded-2xl border border-green-400/40 bg-green-500/10 p-4 text-xs text-green-100 shadow-[0_8px_20px_rgba(16,185,129,0.25)]">
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 text-base">🎂</div>
+                      <FaBirthdayCake className="mt-0.5 text-base" aria-hidden="true" />
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-green-200">{birthdayCardTitle}</p>
                         <p className="mt-1 leading-relaxed">{birthdayCardBody}</p>
@@ -1131,7 +1132,9 @@ export default function Checkout() {
                       >
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                           <div className="flex flex-1 items-start gap-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500/30 text-2xl">🎁</div>
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500/30 text-2xl">
+                              <FaGift aria-hidden="true" />
+                            </div>
                             <div>
                               <p className="text-lg font-semibold tracking-wide text-white">{codeUpper}</p>
                               <p className="text-xs uppercase tracking-[0.2em] text-green-200">{benefitLabel}</p>

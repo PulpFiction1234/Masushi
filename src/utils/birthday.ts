@@ -36,8 +36,10 @@ export const getBirthdayWindowForYear = (birthdayIso: string, year: number): Bir
   const diffToMonday = (base.getDay() + 6) % 7;
   const start = new Date(base);
   start.setDate(base.getDate() - diffToMonday);
+  start.setUTCHours(12, 0, 0, 0);
   const end = new Date(start);
   end.setDate(start.getDate() + 6);
+  end.setUTCHours(12, 0, 0, 0);
 
   return { start, end, year };
 };

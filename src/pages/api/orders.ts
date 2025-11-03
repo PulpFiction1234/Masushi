@@ -297,17 +297,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .trim();
       };
 
-      const padLine = (text: string, width = 37, filler = '-') => {
+      const LINE_WIDTH = 36;
+
+      const padLine = (text: string, width = LINE_WIDTH, filler = '-') => {
         const cleaned = text.trim();
         if (!cleaned) return filler.repeat(width);
 
         const chunks: string[] = [];
         let remaining = cleaned;
 
+        const pushChunk = (segment: string) => {
+          const clipped = segment.length > width ? segment.slice(0, width) : segment;
+          const padded = clipped + filler.repeat(Math.max(0, width - clipped.length));
+          chunks.push(padded);
+        };
+
         const takeChunk = () => {
           if (remaining.length <= width) {
-            const padded = remaining + filler.repeat(width - remaining.length);
-            chunks.push(padded);
+            pushChunk(remaining);
             remaining = '';
             return;
           }
@@ -315,22 +322,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           const window = remaining.slice(0, width + 1);
           const breakIdx = window.lastIndexOf(' ');
           if (breakIdx > 0 && breakIdx < width) {
-            chunks.push(remaining.slice(0, breakIdx));
+            pushChunk(remaining.slice(0, breakIdx));
             remaining = remaining.slice(breakIdx + 1);
             return;
           }
 
-          chunks.push(remaining.slice(0, width));
+          pushChunk(remaining.slice(0, width));
           remaining = remaining.slice(width);
         };
 
         while (remaining) takeChunk();
-
-        if (chunks.length) {
-          const lastIdx = chunks.length - 1;
-          const last = chunks[lastIdx];
-          chunks[lastIdx] = last + filler.repeat(Math.max(0, width - last.length));
-        }
 
         return chunks.join('\n');
       };
@@ -388,7 +389,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     .replace(/^Env:\s*/i, 'Env: ')
                     .replace(/\s+/g, ' ')
                     .trim();
-                  const prefix = idx === 0 ? 'Det:' : '    ';
+                  const prefix = idx === 0 ? '' : '    ';
                   lines.push(formatLine([`${prefix}${cleaned}`]));
                 });
               }

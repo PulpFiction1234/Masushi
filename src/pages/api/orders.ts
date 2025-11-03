@@ -299,8 +299,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const padLine = (text: string, width = 37, filler = '-') => {
         const cleaned = text.trim();
-        if (cleaned.length >= width) return cleaned.slice(0, width);
-        return cleaned + filler.repeat(width - cleaned.length);
+        if (!cleaned) return filler.repeat(width);
+
+        const chunks: string[] = [];
+        let remaining = cleaned;
+
+        const takeChunk = () => {
+          if (remaining.length <= width) {
+            const padded = remaining + filler.repeat(width - remaining.length);
+            chunks.push(padded);
+            remaining = '';
+            return;
+          }
+
+          const window = remaining.slice(0, width + 1);
+          const breakIdx = window.lastIndexOf(' ');
+          if (breakIdx > 0 && breakIdx < width) {
+            chunks.push(remaining.slice(0, breakIdx));
+            remaining = remaining.slice(breakIdx + 1);
+            return;
+          }
+
+          chunks.push(remaining.slice(0, width));
+          remaining = remaining.slice(width);
+        };
+
+        while (remaining) takeChunk();
+
+        if (chunks.length) {
+          const lastIdx = chunks.length - 1;
+          const last = chunks[lastIdx];
+          chunks[lastIdx] = last + filler.repeat(Math.max(0, width - last.length));
+        }
+
+        return chunks.join('\n');
       };
 
       const formatLine = (parts: string[]) => padLine(parts.filter(Boolean).join(' | '));

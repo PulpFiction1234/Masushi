@@ -5,8 +5,7 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useCart } from "@/context/CartContext";
 import { useUser, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useUserProfile } from "@/context/UserContext";
-import { RiShoppingBag4Fill } from "react-icons/ri";
-import { FaUser } from "react-icons/fa";
+import { PiShoppingBagFill, PiUserCircleFill, PiPhoneCallFill, PiSignOutFill } from "react-icons/pi";
 import { useRouter } from "next/router";
 import logoMasushi from "@/public/images/logo-masushi.webp";
 
@@ -91,7 +90,7 @@ const Navbar: React.FC = () => {
               className="relative inline-flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/40"
               aria-label="Mi perfil"
             >
-              <FaUser className="text-xl" />
+              <PiUserCircleFill className="text-2xl" aria-hidden="true" />
             </button>
 
             {/* Menú desplegable */}
@@ -112,7 +111,7 @@ const Navbar: React.FC = () => {
                     onClick={() => setShowProfileMenu(false)}
                     className="flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition-colors"
                   >
-                    <FaUser className="text-white" />
+                    <PiUserCircleFill className="text-xl text-white" aria-hidden="true" />
                     <span className="text-white">Mi perfil</span>
                   </Link>
 
@@ -123,7 +122,7 @@ const Navbar: React.FC = () => {
                     onClick={() => setShowProfileMenu(false)}
                     className="flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition-colors"
                   >
-                    <span className="text-white">📞</span>
+                    <PiPhoneCallFill className="text-xl text-white" aria-hidden="true" />
                     <span className="text-white">Contáctanos</span>
                   </a>
 
@@ -131,7 +130,7 @@ const Navbar: React.FC = () => {
                     onClick={handleLogout}
                     className="w-full flex items-center gap-3 px-4 py-3 bg-red-600 hover:bg-red-700 transition-colors text-white font-semibold"
                   >
-                    <span>🚪</span>
+                    <PiSignOutFill className="text-xl" aria-hidden="true" />
                     <span>Cerrar Sesión</span>
                   </button>
                 </div>
@@ -157,7 +156,7 @@ const Navbar: React.FC = () => {
             aria-label={safeCount ? `Abrir carrito, ${safeCount} items` : "Abrir carrito"}
             suppressHydrationWarning
           >
-            <RiShoppingBag4Fill className="text-2xl" />
+            <PiShoppingBagFill className="text-2xl" aria-hidden="true" />
             {mounted && safeCount > 0 && (
               <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1.5 text-[11px] leading-[20px] text-white bg-red-500 rounded-full text-center font-bold">
                 {safeCount}

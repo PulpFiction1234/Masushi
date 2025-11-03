@@ -280,36 +280,83 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
 
+      const cleanCode = (raw: unknown) => {
+        if (typeof raw !== 'string') return '---';
+        const trimmed = raw.trim();
+        if (!trimmed) return '---';
+        const match = trimmed.match(/\d{2,3}/);
+        return match ? match[0] : trimmed.replace(/\|/g, '').trim() || '---';
+      };
+
+      const normalizeObservation = (raw: unknown) => {
+        if (typeof raw !== 'string') return '';
+        return raw
+          .replace(/\b(de|en|con)\s+/gi, '')
+          .replace(/\s*\bextra\b/gi, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+      };
+
+      const formatLine = (parts: string[]) => parts.filter(Boolean).join(' | ');
+
       const localProductLines = Array.isArray(items)
-        ? items
-            .map((raw: unknown) => {
-              if (!raw || typeof raw !== 'object') return null;
+        ? (items as unknown[])
+            .flatMap((raw: unknown) => {
+              if (!raw || typeof raw !== 'object') return [];
               const entry = raw as {
                 codigo?: unknown;
                 nombre?: unknown;
                 cantidad?: unknown;
                 valor?: unknown;
-                opcion?: { label?: unknown } | null;
+                opcion?: { id?: unknown; label?: unknown } | null;
               };
-              const code = typeof entry.codigo === 'string' && entry.codigo.trim() ? entry.codigo.trim() : '—';
-              const nameBase = typeof entry.nombre === 'string' && entry.nombre.trim()
-                ? entry.nombre.trim()
-                : (typeof entry.codigo === 'string' ? entry.codigo.trim() : 'Producto');
-              const optionLabel = entry.opcion && typeof entry.opcion === 'object' && typeof (entry.opcion as any).label === 'string'
-                ? String((entry.opcion as any).label).trim()
-                : '';
+
+              const code = cleanCode(entry.codigo);
               const quantityRaw = typeof entry.cantidad === 'number' ? entry.cantidad : Number(entry.cantidad);
               const quantity = Number.isFinite(quantityRaw) && quantityRaw > 0 ? quantityRaw : 1;
               const unitRaw = typeof entry.valor === 'number' ? entry.valor : Number(entry.valor);
               const unitPrice = Number.isFinite(unitRaw) ? unitRaw : 0;
               const lineTotal = unitPrice * quantity;
-              const pricePart = Number.isFinite(lineTotal) ? fmt(lineTotal) : '';
-              const displayName = optionLabel ? `${nameBase} - ${optionLabel}` : nameBase;
-              const separator = ' :: ';
-              const base = `${code}${separator}${displayName}${separator}x${quantity}`;
-              return pricePart ? `${base} - ${pricePart}` : base;
+              const pricePart = Number.isFinite(lineTotal) && lineTotal > 0 ? fmt(lineTotal) : '';
+
+              const optionLabel = entry.opcion && typeof entry.opcion === 'object' && typeof (entry.opcion as any).label === 'string'
+                ? String((entry.opcion as any).label)
+                : '';
+
+              const isArmalo = entry.opcion && typeof entry.opcion === 'object' && typeof (entry.opcion as any).id === 'string'
+                ? String((entry.opcion as any).id).startsWith('armalo:')
+                : false;
+
+              const observation = !isArmalo ? normalizeObservation(optionLabel) : '';
+              const obsSegment = observation ? `Obs:(${observation})` : '';
+
+              const baseLineParts = [
+                `Cod:${code}`,
+                `x${quantity}`,
+                obsSegment,
+                pricePart ? `Total:${pricePart}` : '',
+              ];
+
+              const lines: string[] = [formatLine(baseLineParts)];
+
+              if (isArmalo) {
+                const label = typeof optionLabel === 'string' ? optionLabel : '';
+                const segments = label.split('·').map((seg) => seg.trim()).filter(Boolean);
+                if (segments.length === 0 && label.trim()) segments.push(label.trim());
+                segments.forEach((segment, idx) => {
+                  const cleaned = segment
+                    .replace(/^P:\s*/i, 'Prot: ')
+                    .replace(/^A:\s*/i, 'Acomp: ')
+                    .replace(/^Env:\s*/i, 'Env: ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                  const prefix = idx === 0 ? 'Det:' : '    ';
+                  lines.push(formatLine([`${prefix}${cleaned}`]));
+                });
+              }
+
+              return lines;
             })
-            .filter(Boolean) as string[]
         : [];
 
       const detailSections: string[] = [];

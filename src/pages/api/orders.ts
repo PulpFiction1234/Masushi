@@ -360,12 +360,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         : [];
 
       const detailSections: string[] = [];
-      detailSections.push(`Tipo: ${mode === 'delivery' ? 'Delivery' : 'Retiro en local'}`);
-      if (estimatedText) detailSections.push(`Estimado: ${estimatedText}`);
       if (localProductLines.length) {
-        detailSections.push('', '--- Productos ---', ...localProductLines);
+        detailSections.push(...localProductLines);
       } else {
-        detailSections.push('', 'Sin productos registrados');
+        detailSections.push('Sin productos registrados');
       }
       if (discountAmount > 0) {
         const discountLine = `${discountLabel ?? 'Descuento aplicado'}: -${fmt(discountAmount)}`;

@@ -1,10 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
 import { sendWhatsAppMessage, sendWhatsAppTemplate } from '@/utils/sendWhatsapp';
+import { notifyLocalNewOrder } from '@/utils/notifyLocalNewOrder';
 import sendEmail from '@/utils/sendEmail';
 import supabaseAdmin from '@/server/supabase';
 import { normalizePhone } from '@/utils/phone';
 import { getEstimateRange, formatEstimate, getEstimateWindow, formatWindow } from '@/utils/estimateTimes';
+import { fmt } from '@/utils/checkout';
 import { computeBirthdayEligibility, BIRTHDAY_COUPON_CODE } from '@/server/birthdayEligibility';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -49,6 +51,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    const originalTotal = typeof total === 'number' ? total : Number(total);
+    if (!Number.isFinite(originalTotal)) {
+      return res.status(400).json({ error: 'Invalid total amount' });
+    }
+
     // Map delivery_type to smallint expected by DB: 0 = retiro, 1 = delivery
     let deliveryTypeValue: number | null = null;
     if (typeof delivery_type === 'string') {
@@ -67,16 +74,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Antes de insertar, validar cupón si es provisto
     const normalizedCoupon = typeof coupon_code === 'string' ? coupon_code.trim().toUpperCase() : null;
-    let finalTotal = total;
-    let appliedCoupon: { id: number | null; code: string; type: 'manual' | 'birthday' } | null = null;
+  let finalTotal = originalTotal;
+  let appliedCoupon: { id: number | null; code: string; type: 'manual' | 'birthday'; percent?: number; amount?: number } | null = null;
+  let discountAmount = 0;
+  let discountLabel: string | null = null;
     if (normalizedCoupon === BIRTHDAY_COUPON_CODE) {
       try {
         const eligibility = await computeBirthdayEligibility(userId);
         if (!eligibility.eligibleNow) {
           return res.status(400).json({ error: 'No cumples con los requisitos para el descuento de cumpleaños' });
         }
-        finalTotal = Math.max(0, Math.round(total * (100 - eligibility.discountPercent) / 100));
-        appliedCoupon = { id: null, code: BIRTHDAY_COUPON_CODE, type: 'birthday' };
+        finalTotal = Math.max(0, Math.round(originalTotal * (100 - eligibility.discountPercent) / 100));
+        discountLabel = `Descuento cumpleaños (${eligibility.discountPercent}%)`;
+        appliedCoupon = { id: null, code: BIRTHDAY_COUPON_CODE, type: 'birthday', percent: eligibility.discountPercent };
       } catch (error) {
         console.error('Error validating birthday coupon:', error);
         return res.status(500).json({ error: 'Error validando el cupón de cumpleaños' });
@@ -102,16 +112,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         if (typeof coupon.percent === 'number') {
-          finalTotal = Math.max(0, Math.round(total * (100 - coupon.percent) / 100));
+          finalTotal = Math.max(0, Math.round(originalTotal * (100 - coupon.percent) / 100));
         } else if (typeof coupon.amount === 'number') {
-          finalTotal = Math.max(0, total - coupon.amount);
+          finalTotal = Math.max(0, originalTotal - coupon.amount);
         }
 
-        appliedCoupon = { id: coupon.id, code: coupon.code, type: 'manual' };
+        const percent = typeof coupon.percent === 'number' ? coupon.percent : undefined;
+        const amount = typeof coupon.amount === 'number' ? coupon.amount : undefined;
+        const labelSuffix = percent != null ? ` (${percent}% desc)` : '';
+        discountLabel = `Cupón ${coupon.code}${labelSuffix}`;
+        appliedCoupon = { id: coupon.id, code: coupon.code, type: 'manual', percent, amount };
       } catch (e) {
         console.error('Error validating coupon:', e);
         return res.status(500).json({ error: 'Error validating coupon' });
       }
+    }
+
+    discountAmount = Math.max(0, originalTotal - finalTotal);
+    if (discountAmount <= 0) {
+      discountAmount = 0;
+      discountLabel = null;
     }
 
     const { data, error } = await supabase
@@ -142,7 +162,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const direccionResolved = (address && String(address).trim()) || (mode === 'delivery' ? deliveryFallback : pickupLabel);
 
     // Build template variables and send WhatsApp notifications (awaited, return results)
-    const whatsappResults: Array<{ target?: string; type?: 'template' | 'text'; result?: unknown } | { warning: string }> = [];
+  const whatsappResults: Array<{ target?: string; type?: 'template' | 'text' | 'template-local'; result?: unknown } | { warning: string }> = [];
     try {
       // Prefer server-side profile values when available (safer than trusting client payload)
       let customerName = '';
@@ -173,6 +193,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return s.replace(/[\r\n\t]+/g, ' ').replace(/ {2,}/g, ' ').trim();
       };
 
+      const pickFirstString = (...values: unknown[]) => {
+        for (const value of values) {
+          if (typeof value === 'string' && value.trim()) {
+            return value;
+          }
+        }
+        return '';
+      };
+
       const detalle = Array.isArray(items)
         ? items.map((it: unknown) => {
             const item = it as { nombre?: unknown; codigo?: unknown; cantidad?: unknown; valor?: unknown };
@@ -183,8 +212,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           }).join('\n')
         : '';
 
-      const totalResolved = typeof data.total === 'number' ? data.total : finalTotal;
-      const totalText = `$ ${totalResolved}`;
+  const totalResolved = typeof data.total === 'number' ? data.total : finalTotal;
+  const totalText = fmt(totalResolved);
 
       // Use provided template name or fallback to approved `confirmacion_orden`
       const templateName = process.env.WHATSAPP_TEMPLATE_NAME || 'confirmacion_orden';
@@ -249,6 +278,98 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           const sentInternal = await sendWhatsAppMessage(internalNumber.replace(/\D/g, ''), templateInternal);
           whatsappResults.push({ target: internalNumber.replace(/\D/g, ''), type: 'text', result: sentInternal });
         }
+      }
+
+      const localProductLines = Array.isArray(items)
+        ? items
+            .map((raw: unknown) => {
+              if (!raw || typeof raw !== 'object') return null;
+              const entry = raw as {
+                codigo?: unknown;
+                nombre?: unknown;
+                cantidad?: unknown;
+                valor?: unknown;
+                opcion?: { label?: unknown } | null;
+              };
+              const code = typeof entry.codigo === 'string' && entry.codigo.trim() ? entry.codigo.trim() : '—';
+              const nameBase = typeof entry.nombre === 'string' && entry.nombre.trim()
+                ? entry.nombre.trim()
+                : (typeof entry.codigo === 'string' ? entry.codigo.trim() : 'Producto');
+              const optionLabel = entry.opcion && typeof entry.opcion === 'object' && typeof (entry.opcion as any).label === 'string'
+                ? String((entry.opcion as any).label).trim()
+                : '';
+              const quantityRaw = typeof entry.cantidad === 'number' ? entry.cantidad : Number(entry.cantidad);
+              const quantity = Number.isFinite(quantityRaw) && quantityRaw > 0 ? quantityRaw : 1;
+              const unitRaw = typeof entry.valor === 'number' ? entry.valor : Number(entry.valor);
+              const unitPrice = Number.isFinite(unitRaw) ? unitRaw : 0;
+              const lineTotal = unitPrice * quantity;
+              const pricePart = Number.isFinite(lineTotal) ? fmt(lineTotal) : '';
+              const displayName = optionLabel ? `${nameBase} - ${optionLabel}` : nameBase;
+              const base = `- ${code} | ${displayName} | x${quantity}`;
+              return pricePart ? `${base} - ${pricePart}` : base;
+            })
+            .filter(Boolean) as string[]
+        : [];
+
+      const detailSections: string[] = [];
+      detailSections.push(`Tipo: ${mode === 'delivery' ? 'Delivery' : 'Retiro en local'}`);
+      if (estimatedText) detailSections.push(`Estimado: ${estimatedText}`);
+      if (localProductLines.length) {
+        detailSections.push('', '--- Productos ---', ...localProductLines);
+      } else {
+        detailSections.push('', 'Sin productos registrados');
+      }
+      if (discountAmount > 0) {
+        const discountLine = `${discountLabel ?? 'Descuento aplicado'}: -${fmt(discountAmount)}`;
+        detailSections.push('', discountLine);
+      }
+
+      const localDetailText = detailSections.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+
+      let extrasText = '';
+      if (typeof req.body?.extras === 'string') {
+        extrasText = req.body.extras;
+      } else if (Array.isArray(req.body?.extras)) {
+        extrasText = req.body.extras
+          .map((entry: unknown) =>
+            typeof entry === 'string' || typeof entry === 'number' || typeof entry === 'boolean' ? String(entry) : ''
+          )
+          .filter(Boolean)
+          .join('\n');
+      } else if (typeof req.body?.extrasText === 'string') {
+        extrasText = req.body.extrasText;
+      } else if (typeof req.body?.extra_text === 'string') {
+        extrasText = req.body.extra_text;
+      }
+
+      const observationsText = pickFirstString(
+        req.body?.observaciones,
+        req.body?.observations,
+        req.body?.observation,
+        req.body?.notes,
+        req.body?.note,
+        customer?.observacion,
+        customer?.observations,
+        customer?.observation,
+        customer?.notes,
+        customer?.note
+      );
+
+      const localNotify = await notifyLocalNewOrder({
+        orderId: data.id,
+        customerName,
+        customerPhone: phoneNormalized || customerPhoneRaw || '',
+        address: direccionResolved,
+        detail: localDetailText || detalle,
+        totalLabel: totalText,
+        extras: extrasText,
+        observations: observationsText,
+      });
+
+      if ('skipped' in localNotify) {
+        whatsappResults.push({ warning: `Local WhatsApp skipped: ${localNotify.reason}` });
+      } else {
+        whatsappResults.push({ target: localNotify.target, type: 'template-local', result: localNotify.result });
       }
     } catch (e) {
       console.error('Error sending WhatsApp notifications', e);

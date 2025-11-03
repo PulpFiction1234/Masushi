@@ -305,7 +305,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               const lineTotal = unitPrice * quantity;
               const pricePart = Number.isFinite(lineTotal) ? fmt(lineTotal) : '';
               const displayName = optionLabel ? `${nameBase} - ${optionLabel}` : nameBase;
-              const base = `- ${code} | ${displayName} | x${quantity}`;
+              const separator = ' :: ';
+              const base = `${code}${separator}${displayName}${separator}x${quantity}`;
               return pricePart ? `${base} - ${pricePart}` : base;
             })
             .filter(Boolean) as string[]

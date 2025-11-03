@@ -8,7 +8,7 @@ import { useUserProfile, MAX_SAVED_ADDRESSES } from "@/context/UserContext";
 import type { AddressRecord, AddressCoords } from "@/context/UserContext";
 import Navbar from "@/components/Navbar";
 import Seo from "@/components/Seo";
-import { BIRTHDAY_COUPON_CODE, BIRTHDAY_DISCOUNT_PERCENT } from "@/utils/birthday";
+import { BIRTHDAY_COUPON_CODE, BIRTHDAY_DISCOUNT_PERCENT, getBirthdayWeekBounds, formatBirthdayWeekRange } from "@/utils/birthday";
 import type { BirthdayEligibility } from "@/types/birthday";
 import type { DiscountCode } from "@/types/coupon";
 
@@ -505,31 +505,12 @@ export default function Checkout() {
   const couponCodeForOrder = appliedCoupon || birthdayCouponCode;
 
   const birthdayWeekRangeLabel = useMemo(() => {
-    if (!birthdayEligibility || !birthdayEligibility.birthday) return null;
-    const referenceWindow = birthdayEligibility.window ?? birthdayEligibility.nextWindow;
-    if (!referenceWindow) return null;
-    const referenceStart = new Date(referenceWindow.start);
-    if (Number.isNaN(referenceStart.getTime())) return null;
-    const parts = birthdayEligibility.birthday.split('-');
-    if (parts.length < 3) return null;
-    const monthIndex = Number.parseInt(parts[1] ?? '', 10) - 1;
-    const dayNumber = Number.parseInt(parts[2] ?? '', 10);
-    if (Number.isNaN(monthIndex) || Number.isNaN(dayNumber)) return null;
-    const year = referenceStart.getFullYear();
-    const birthdayDate = new Date(year, Math.max(0, Math.min(11, monthIndex)), dayNumber, 12, 0, 0, 0);
-    if (Number.isNaN(birthdayDate.getTime())) return null;
-    const dayOfWeek = birthdayDate.getDay();
-    const diffToMonday = (dayOfWeek + 6) % 7;
-    const monday = new Date(birthdayDate);
-    monday.setDate(birthdayDate.getDate() - diffToMonday);
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-    const formatRangePart = (date: Date) => {
-      const day = date.getDate().toString().padStart(2, '0');
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      return `${day}-${month}`;
-    };
-    return `Válido del ${formatRangePart(monday)} al ${formatRangePart(sunday)}`;
+    if (!birthdayEligibility) return null;
+    const bounds = getBirthdayWeekBounds(
+      birthdayEligibility.birthday,
+      birthdayEligibility.window ?? birthdayEligibility.nextWindow ?? null,
+    );
+    return bounds ? formatBirthdayWeekRange(bounds) : null;
   }, [birthdayEligibility]);
 
   const birthdayValidityReminder = birthdayWeekRangeLabel

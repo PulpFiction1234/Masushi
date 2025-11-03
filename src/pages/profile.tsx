@@ -11,7 +11,14 @@ import type { Producto } from "@/data/productos";
 import { getProductByCode, getProductName, getProductPrice, resolveProductImageUrl } from "@/utils/productLookup";
 import { useCart, type CartOpcion } from "@/context/CartContext";
 import { REPEAT_ORDER_META_KEY, type RepeatOrderMeta } from "@/utils/repeatOrder";
-import { BIRTHDAY_DISCOUNT_PERCENT, BIRTHDAY_WINDOW_DAYS, BIRTHDAY_MIN_MONTHS, BIRTHDAY_MIN_ORDERS } from "@/utils/birthday";
+import {
+  BIRTHDAY_DISCOUNT_PERCENT,
+  BIRTHDAY_WINDOW_DAYS,
+  BIRTHDAY_MIN_MONTHS,
+  BIRTHDAY_MIN_ORDERS,
+  getBirthdayWeekBounds,
+  formatBirthdayWeekRange,
+} from "@/utils/birthday";
 import type { BirthdayEligibility } from "@/types/birthday";
 
 const PLACEHOLDER_IMAGE =
@@ -227,16 +234,13 @@ export default function ProfilePage() {
   const birthdayMaxDate = useMemo(() => new Date().toISOString().split("T")[0], []);
 
   const birthdayWindowText = useMemo(() => {
-    const startIso = birthdayStatus?.window?.start;
-    const endIso = birthdayStatus?.window?.end;
-    if (!startIso || !endIso) return null;
-    const start = new Date(startIso);
-    const end = new Date(endIso);
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
-    const startLabel = start.toLocaleDateString("es-CL", { day: "numeric", month: "long" });
-    const endLabel = end.toLocaleDateString("es-CL", { day: "numeric", month: "long" });
-    return `${startLabel} – ${endLabel}`;
-  }, [birthdayStatus?.window]);
+    if (!birthdayStatus) return null;
+    const bounds = getBirthdayWeekBounds(
+      birthdayStatus.birthday,
+      birthdayStatus.window ?? birthdayStatus.nextWindow ?? null,
+    );
+    return bounds ? formatBirthdayWeekRange(bounds) : null;
+  }, [birthdayStatus]);
 
   const birthdayRequirements = useMemo(
     () => [

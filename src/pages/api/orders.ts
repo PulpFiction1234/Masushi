@@ -297,7 +297,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .trim();
       };
 
-      const formatLine = (parts: string[]) => parts.filter(Boolean).join(' | ');
+      const padLine = (text: string, width = 37, filler = '-') => {
+        const cleaned = text.trim();
+        if (cleaned.length >= width) return cleaned.slice(0, width);
+        return cleaned + filler.repeat(width - cleaned.length);
+      };
+
+      const formatLine = (parts: string[]) => padLine(parts.filter(Boolean).join(' | '));
 
       const localProductLines = Array.isArray(items)
         ? (items as unknown[])

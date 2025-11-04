@@ -445,21 +445,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 // Sin padding para evitar límite de 1024 caracteres de WhatsApp
                 return formatLine(parts);
 
-              } else if (observation) {
-                // Producto con observación - todo en una línea
-                const lineParts: string[] = [`*Cod:${code}*`, `x${quantity}`, `Obs:(${observation})`];
-                if (pricePart) lineParts.push(`Total:${pricePart}`);
-                
-                // Sin padding para evitar límite de 1024 caracteres
-                return formatLine(lineParts);
-
               } else {
-                // Producto simple - una línea
+                // Todos los productos (con o sin observación) usan formato uniforme
                 const lineParts: string[] = [`*Cod:${code}*`, `x${quantity}`];
+                
+                // SIEMPRE incluir campo Obs: (vacío si no hay observación)
+                lineParts.push(`Obs:(${observation || ''})`);
+                
                 if (pricePart) lineParts.push(`Total:${pricePart}`);
                 
-                // Sin padding para evitar límite de 1024 caracteres
-                return formatLine(lineParts);
+                // Con padding para completar líneas y separar productos visualmente
+                const fullLine = formatLine(lineParts);
+                return fullLine ? padLine(fullLine) : '';
               }
             })
             .filter(Boolean)
@@ -467,8 +464,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const detailSections: string[] = [];
       if (localProductLines.length) {
-        // Agregar separador " • " al final de cada línea para que visualmente se vea como una lista
-        detailSections.push(...localProductLines.map(line => line + ' •'));
+        // Los productos ya están formateados, no agregar separador adicional
+        detailSections.push(...localProductLines);
       } else {
         detailSections.push('Sin productos registrados');
       }

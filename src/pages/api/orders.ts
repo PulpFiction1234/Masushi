@@ -300,6 +300,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .trim();
       };
 
+      // Formatear precio para WhatsApp sin espacios (evita que se rompa la línea)
+      const fmtWhatsApp = (n: number): string => {
+        const formatted = fmt(n); // Usa el formato normal: "$ 19.800"
+        return formatted.replace(/\s+/g, ''); // Quita espacios: "$19.800"
+      };
+
       const extractBeverageFlavor = (nombre: string): string => {
         if (!nombre) return '';
         
@@ -368,7 +374,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         // Calcular cuántas líneas necesitamos
         const linesNeeded = Math.ceil(visualWeight / charsPerLine);
-        const targetWeight = charsPerLine * linesNeeded;
+        // Dejamos un pequeño margen (reducir 2-3 guiones) para que no se pase
+        const targetWeight = (charsPerLine * linesNeeded) - 2.5;
 
         // Rellenar con guiones hasta completar las líneas necesarias
         let result = normalized;
@@ -425,7 +432,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               const unitRaw = typeof entry.valor === 'number' ? entry.valor : Number(entry.valor);
               const unitPrice = Number.isFinite(unitRaw) ? unitRaw : 0;
               const lineTotal = unitPrice * quantity;
-              const pricePart = Number.isFinite(lineTotal) && lineTotal > 0 ? fmt(lineTotal) : '';
+              const pricePart = Number.isFinite(lineTotal) && lineTotal > 0 ? fmtWhatsApp(lineTotal) : '';
 
               const optionLabel = entry.opcion && typeof entry.opcion === 'object' && typeof (entry.opcion as any).label === 'string'
                 ? String((entry.opcion as any).label)

@@ -223,6 +223,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         whatsappResults.push({ warning });
       }
 
+      // TEMPORALMENTE DESHABILITADO: Envío de WhatsApp al cliente
+      /*
       if (phoneNormalized) {
         if (templateName) {
           const components: any[] = [];
@@ -254,6 +256,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       } else {
         whatsappResults.push({ warning: 'No customer phone provided or could not be normalized' });
       }
+      */
 
       const internalNumber = process.env.INTERNAL_WHATSAPP_NUMBER;
       if (internalNumber) {
@@ -315,11 +318,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         };
 
         let weight = chars.reduce((sum, ch) => sum + weightFor(ch), 0);
-        if (weight >= limit) return normalized;
+
+        // Si el texto es más largo que el límite, calculamos cuántas líneas necesita
+        const linesNeeded = Math.ceil(weight / limit);
+        const targetWeight = limit * linesNeeded;
 
         const fillerWeight = weightFor(filler);
         let result = normalized;
-        while (fillerWeight > 0 && weight + fillerWeight <= limit) {
+        while (fillerWeight > 0 && weight + fillerWeight <= targetWeight) {
           result += filler;
           weight += fillerWeight;
         }
@@ -381,7 +387,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 : false;
 
               const observation = !isArmalo ? normalizeObservation(optionLabel) : '';
-              const lineParts: string[] = [`Cod:${code}`, `x${quantity}`];
+              const lineParts: string[] = [`*Cod:${code}*`, `x${quantity}`];
               if (observation) lineParts.push(`Obs:(${observation})`);
 
               if (isArmalo) {
@@ -406,7 +412,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const detailSections: string[] = [];
       if (localProductLines.length) {
-        detailSections.push(...localProductLines);
+        // Agregar separador " • " al final de cada línea para que visualmente se vea como una lista
+        detailSections.push(...localProductLines.map(line => line + ' •'));
       } else {
         detailSections.push('Sin productos registrados');
       }

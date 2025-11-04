@@ -374,8 +374,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         // Calcular cuántas líneas necesitamos
         const linesNeeded = Math.ceil(visualWeight / charsPerLine);
-        // Dejamos un pequeño margen (reducir 2-3 guiones) para que no se pase
-        const targetWeight = (charsPerLine * linesNeeded) - 2.5;
+        // Dejamos margen para el separador • (reducir ~5 unidades)
+        const targetWeight = (charsPerLine * linesNeeded) - 5;
 
         // Rellenar con guiones hasta completar las líneas necesarias
         let result = normalized;
@@ -385,7 +385,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           visualWeight += fillerWeight;
         }
 
-        return result;
+        // Agregar separador pegado (sin espacio) para evitar saltos de línea
+        return result + '•';
       };
 
       const formatLine = (parts: string[]) => parts.filter(Boolean).join(' | ').replace(/\s{2,}/g, ' ').trim();

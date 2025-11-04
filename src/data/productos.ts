@@ -460,7 +460,7 @@ const _productos: Producto[] = [
       opciones: [
         { id: "2pollo",   label: "2 de pollo" },
         { id: "2camaron", label: "2 de camarón" },
-        { id: "1y1",      label: "1 de pollo y 1 de camarón" },
+        { id: "1y1",      label: "1 Pollo,1 Cama" },
       ],
     },
 

@@ -297,43 +297,56 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .trim();
       };
 
-      const LINE_WIDTH = 36;
+      const LINE_WEIGHT = 72;
 
-      const padLine = (text: string, width = LINE_WIDTH, filler = '-') => {
-        const cleaned = text.trim();
-        if (!cleaned) return filler.repeat(width);
+      const padLine = (text: string, limit = LINE_WEIGHT, filler = '-') => {
+        const charArray = (str: string) => Array.from(str);
+        const charWeight = (ch: string) => (/^[\p{L}\p{N}]$/u.test(ch) ? 2 : 1);
+        const computeWeight = (str: string) => charArray(str).reduce((sum, ch) => sum + charWeight(ch), 0);
 
-        const chunks: string[] = [];
-        let remaining = cleaned;
+        let remaining = text.replace(/\s+/g, ' ').trim();
+        if (!remaining) return filler.repeat(limit);
 
-        const pushChunk = (segment: string) => {
-          const clipped = segment.length > width ? segment.slice(0, width) : segment;
-          const padded = clipped + filler.repeat(Math.max(0, width - clipped.length));
-          chunks.push(padded);
-        };
+        const segments: string[] = [];
 
-        const takeChunk = () => {
-          if (remaining.length <= width) {
-            pushChunk(remaining);
-            remaining = '';
-            return;
+        while (remaining.length) {
+          const chars = charArray(remaining);
+          let weight = 0;
+          let idx = 0;
+          let lastSpaceIdx = -1;
+
+          while (idx < chars.length) {
+            const ch = chars[idx];
+            const w = charWeight(ch);
+            if (weight + w > limit) break;
+            weight += w;
+            if (ch === ' ') lastSpaceIdx = idx;
+            idx++;
           }
 
-          const window = remaining.slice(0, width + 1);
-          const breakIdx = window.lastIndexOf(' ');
-          if (breakIdx > 0 && breakIdx < width) {
-            pushChunk(remaining.slice(0, breakIdx));
-            remaining = remaining.slice(breakIdx + 1);
-            return;
+          let cutIdx = idx;
+          if (idx < chars.length) {
+            if (lastSpaceIdx >= 0) cutIdx = Math.max(1, lastSpaceIdx);
+            else cutIdx = Math.max(1, idx);
           }
 
-          pushChunk(remaining.slice(0, width));
-          remaining = remaining.slice(width);
-        };
+          const segmentChars = chars.slice(0, cutIdx);
+          let segment = segmentChars.join('').trimEnd();
+          let rest = chars.slice(cutIdx).join('');
+          remaining = rest.trimStart();
 
-        while (remaining) takeChunk();
+          if (!segment) continue;
 
-        return chunks.join('\n');
+          let segmentWeight = computeWeight(segment);
+          while (segmentWeight < limit) {
+            segment += filler;
+            segmentWeight += charWeight(filler);
+          }
+
+          segments.push(segment);
+        }
+
+        return segments.join('\n');
       };
 
       const formatLine = (parts: string[]) => padLine(parts.filter(Boolean).join(' | '));

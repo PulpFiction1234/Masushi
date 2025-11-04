@@ -442,24 +442,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                   parts.push(`Total:${pricePart}`);
                 }
                 
-                const fullLine = formatLine(parts);
-                return fullLine ? padLine(fullLine) : '';
+                // Sin padding para evitar límite de 1024 caracteres de WhatsApp
+                return formatLine(parts);
 
               } else if (observation) {
                 // Producto con observación - todo en una línea
                 const lineParts: string[] = [`*Cod:${code}*`, `x${quantity}`, `Obs:(${observation})`];
                 if (pricePart) lineParts.push(`Total:${pricePart}`);
                 
-                const fullLine = formatLine(lineParts);
-                return fullLine ? padLine(fullLine) : '';
+                // Sin padding para evitar límite de 1024 caracteres
+                return formatLine(lineParts);
 
               } else {
                 // Producto simple - una línea
                 const lineParts: string[] = [`*Cod:${code}*`, `x${quantity}`];
                 if (pricePart) lineParts.push(`Total:${pricePart}`);
                 
-                const line = formatLine(lineParts);
-                return line ? padLine(line) : '';
+                // Sin padding para evitar límite de 1024 caracteres
+                return formatLine(lineParts);
               }
             })
             .filter(Boolean)

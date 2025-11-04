@@ -297,11 +297,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .trim();
       };
 
-      const LINE_WEIGHT = 72;
+      const LINE_UNITS = 45;
+      const LETTER_UNITS = LINE_UNITS / 32; // Matches 32 letters per full line.
+      const HYPHEN_UNITS = 1; // Matches 45 hyphens per full line.
+      const SPACE_UNITS = HYPHEN_UNITS * 0.9;
 
-      const padLine = (text: string, limit = LINE_WEIGHT, filler = '-') => {
+      const padLine = (text: string, limit = LINE_UNITS, filler = '-') => {
         const charArray = (str: string) => Array.from(str);
-        const charWeight = (ch: string) => (/^[\p{L}\p{N}]$/u.test(ch) ? 2 : 1);
+        const charWeight = (ch: string) => {
+          if (ch === filler) return HYPHEN_UNITS;
+          if (ch === '-') return HYPHEN_UNITS;
+          if (ch === ' ') return SPACE_UNITS;
+          return /^[\p{L}\p{N}]$/u.test(ch) ? LETTER_UNITS : HYPHEN_UNITS;
+        };
         const computeWeight = (str: string) => charArray(str).reduce((sum, ch) => sum + charWeight(ch), 0);
 
         let remaining = text.replace(/\s+/g, ' ').trim();
@@ -338,9 +346,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           if (!segment) continue;
 
           let segmentWeight = computeWeight(segment);
-          while (segmentWeight < limit) {
+          let fillWeight = charWeight(filler);
+          while (segmentWeight + fillWeight <= limit) {
             segment += filler;
-            segmentWeight += charWeight(filler);
+            segmentWeight += fillWeight;
           }
 
           segments.push(segment);

@@ -24,7 +24,7 @@ const sanitize = (value: unknown) => {
     .replace(/\r/g, '\n')
     .replace(/\t+/g, ' ');
 
-  const separator = '\n';
+  const separator = ' • ';
   const flattened = normalized
     .split('\n')
     .map((line) => line.replace(/ {2,}/g, ' ').trim())

@@ -24,14 +24,14 @@ const sanitize = (value: unknown) => {
     .replace(/\r/g, '\n')
     .replace(/\t+/g, ' ');
 
-  const separator = ' • ';
-  const flattened = normalized
+  // Mantener los saltos de línea para que cada producto aparezca en su propia línea
+  const cleaned = normalized
     .split('\n')
     .map((line) => line.replace(/ {2,}/g, ' ').trim())
     .filter(Boolean)
-    .join(separator);
+    .join('\n');
 
-  return flattened.replace(/ {2,}/g, ' ').trim();
+  return cleaned.trim();
 };
 
 const sanitizedOrFallback = (value: unknown, fallback: string) => {

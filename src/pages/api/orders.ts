@@ -374,8 +374,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         // Calcular cuántas líneas necesitamos
         const linesNeeded = Math.ceil(visualWeight / charsPerLine);
-        // Dejamos margen para el separador • (reducir ~5 unidades)
-        const targetWeight = (charsPerLine * linesNeeded) - 5;
+        // Margen proporcional: 8-10% menos para evitar exceso de guiones
+        // Esto deja espacio para el • y evita que se pase
+        const targetWeight = (charsPerLine * linesNeeded) * 0.92;
 
         // Rellenar con guiones hasta completar las líneas necesarias
         let result = normalized;

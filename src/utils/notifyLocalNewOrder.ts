@@ -24,9 +24,9 @@ const sanitize = (value: unknown) => {
     .replace(/\r/g, '\n')
     .replace(/\t+/g, ' ');
 
-  // Convertir saltos de línea a separador visual para cumplir con requisitos de WhatsApp templates
-  // WhatsApp no permite \n ni \t en parámetros de template, así que usamos " • "
-  const separator = ' • ';
+  // Convertir saltos de línea a espacio simple
+  // Cada producto ya termina con •, así que solo necesitamos un espacio entre líneas
+  const separator = ' ';
   const flattened = normalized
     .split('\n')
     .map((line) => line.replace(/ {2,}/g, ' ').trim())

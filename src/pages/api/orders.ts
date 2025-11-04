@@ -298,72 +298,64 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       };
 
       const LINE_UNITS = 45;
-      const LETTER_UNITS = LINE_UNITS / 32; // Matches 32 letters per full line.
-      const HYPHEN_UNITS = 1; // Matches 45 hyphens per full line.
+      const LETTER_UNITS = LINE_UNITS / 32; // 32 letras llenan una línea completa
+      const HYPHEN_UNITS = 1; // 45 guiones llenan una línea
       const SPACE_UNITS = HYPHEN_UNITS * 0.9;
 
       const padLine = (text: string, limit = LINE_UNITS, filler = '-') => {
-        const charArray = (str: string) => Array.from(str);
-        const charWeight = (ch: string) => {
+        const normalized = text.replace(/\s+/g, ' ').trim();
+        if (!normalized) return filler.repeat(limit);
+
+        const chars = Array.from(normalized);
+        const weightFor = (ch: string) => {
           if (ch === filler) return HYPHEN_UNITS;
           if (ch === '-') return HYPHEN_UNITS;
           if (ch === ' ') return SPACE_UNITS;
           return /^[\p{L}\p{N}]$/u.test(ch) ? LETTER_UNITS : HYPHEN_UNITS;
         };
-        const computeWeight = (str: string) => charArray(str).reduce((sum, ch) => sum + charWeight(ch), 0);
 
-        let remaining = text.replace(/\s+/g, ' ').trim();
-        if (!remaining) return filler.repeat(limit);
+        let weight = chars.reduce((sum, ch) => sum + weightFor(ch), 0);
+        if (weight >= limit) return normalized;
 
-        const segments: string[] = [];
-
-        while (remaining.length) {
-          const chars = charArray(remaining);
-          let weight = 0;
-          let idx = 0;
-          let lastSpaceIdx = -1;
-
-          while (idx < chars.length) {
-            const ch = chars[idx];
-            const w = charWeight(ch);
-            if (weight + w > limit) break;
-            weight += w;
-            if (ch === ' ') lastSpaceIdx = idx;
-            idx++;
-          }
-
-          let cutIdx = idx;
-          if (idx < chars.length) {
-            if (lastSpaceIdx >= 0) cutIdx = Math.max(1, lastSpaceIdx);
-            else cutIdx = Math.max(1, idx);
-          }
-
-          const segmentChars = chars.slice(0, cutIdx);
-          let segment = segmentChars.join('').trimEnd();
-          let rest = chars.slice(cutIdx).join('');
-          remaining = rest.trimStart();
-
-          if (!segment) continue;
-
-          let segmentWeight = computeWeight(segment);
-          let fillWeight = charWeight(filler);
-          while (segmentWeight + fillWeight <= limit) {
-            segment += filler;
-            segmentWeight += fillWeight;
-          }
-
-          segments.push(segment);
+        const fillerWeight = weightFor(filler);
+        let result = normalized;
+        while (weight + fillerWeight <= limit) {
+          result += filler;
+          weight += fillerWeight;
         }
 
-        return segments.join('\n');
+        return result;
       };
 
-      const formatLine = (parts: string[]) => padLine(parts.filter(Boolean).join(' | '));
+      const formatLine = (parts: string[]) => parts.filter(Boolean).join(' | ').replace(/\s{2,}/g, ' ').trim();
+
+      const normalizeArmaloSegment = (segment: string) => {
+        const cleaned = segment.replace(/\s{2,}/g, ' ').trim();
+        if (!cleaned) return '';
+
+        const replacements: Array<{ regex: RegExp; label: string }> = [
+          { regex: /^P:\s*/i, label: 'Prot' },
+          { regex: /^A:\s*/i, label: 'Acomp' },
+          { regex: /^E:\s*/i, label: 'Env' },
+          { regex: /^Prot\b[:\s]*/i, label: 'Prot' },
+          { regex: /^Acomp\b[:\s]*/i, label: 'Acomp' },
+          { regex: /^Env\b[:\s]*/i, label: 'Env' },
+        ];
+
+        for (const { regex, label } of replacements) {
+          if (regex.test(cleaned)) {
+            const value = cleaned.replace(regex, '').replace(/^[:\s]+/, '').trim();
+            return value ? `${label}: ${value}` : `${label}: -`;
+          }
+        }
+
+        return cleaned;
+      };
 
       const localProductLines = Array.isArray(items)
         ? (items as unknown[])
-            .flatMap((raw: unknown) => {
-              if (!raw || typeof raw !== 'object') return [];
+            .map((raw: unknown) => {
+              if (!raw || typeof raw !== 'object') return '';
               const entry = raw as {
                 codigo?: unknown;
                 nombre?: unknown;
@@ -389,35 +381,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 : false;
 
               const observation = !isArmalo ? normalizeObservation(optionLabel) : '';
-              const obsSegment = observation ? `Obs:(${observation})` : '';
-
-              const baseLineParts = [
-                `Cod:${code}`,
-                `x${quantity}`,
-                obsSegment,
-                pricePart ? `Total:${pricePart}` : '',
-              ];
-
-              const lines: string[] = [formatLine(baseLineParts)];
+              const lineParts: string[] = [`Cod:${code}`, `x${quantity}`];
+              if (observation) lineParts.push(`Obs:(${observation})`);
 
               if (isArmalo) {
                 const label = typeof optionLabel === 'string' ? optionLabel : '';
                 const segments = label.split('·').map((seg) => seg.trim()).filter(Boolean);
-                if (segments.length === 0 && label.trim()) segments.push(label.trim());
-                segments.forEach((segment, idx) => {
-                  const cleaned = segment
-                    .replace(/^P:\s*/i, 'Prot: ')
-                    .replace(/^A:\s*/i, 'Acomp: ')
-                    .replace(/^Env:\s*/i, 'Env: ')
-                    .replace(/\s+/g, ' ')
-                    .trim();
-                  const prefix = idx === 0 ? '' : '    ';
-                  lines.push(formatLine([`${prefix}${cleaned}`]));
+                const normalizedSegments = segments.length ? segments : (label.trim() ? [label.trim()] : []);
+                normalizedSegments.forEach((segment) => {
+                  const formatted = normalizeArmaloSegment(segment);
+                  if (formatted) lineParts.push(formatted);
                 });
               }
 
-              return lines;
+              if (pricePart) lineParts.push(`Total:${pricePart}`);
+
+              const line = formatLine(lineParts);
+              if (!line) return '';
+
+              return pricePart ? padLine(line) : line;
             })
+            .filter(Boolean)
         : [];
 
       const detailSections: string[] = [];

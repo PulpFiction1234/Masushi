@@ -300,34 +300,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .trim();
       };
 
-      const LINE_UNITS = 45;
-      const LETTER_UNITS = LINE_UNITS / 32; // 32 letras llenan una línea completa
-      const HYPHEN_UNITS = 1; // 45 guiones llenan una línea
-      const SPACE_UNITS = HYPHEN_UNITS * 0.9;
-
-      const padLine = (text: string, limit = LINE_UNITS, filler = '-') => {
+      // Configuración para Redmi Note 11 (basado en pruebas reales)
+      // Pruebas confirmadas: 65 guiones, 35 letras minúsculas, 29 letras mayúsculas
+      const CHARS_PER_LINE = 65; // Línea base usando guiones
+      
+      const padLine = (text: string, charsPerLine = CHARS_PER_LINE, filler = '-') => {
         const normalized = text.replace(/\s+/g, ' ').trim();
-        if (!normalized) return filler.repeat(limit);
+        if (!normalized) return filler.repeat(charsPerLine);
 
-        const chars = Array.from(normalized);
-        const weightFor = (ch: string) => {
-          if (ch === filler) return HYPHEN_UNITS;
-          if (ch === '-') return HYPHEN_UNITS;
-          if (ch === ' ') return SPACE_UNITS;
-          return /^[\p{L}\p{N}]$/u.test(ch) ? LETTER_UNITS : HYPHEN_UNITS;
-        };
+        // Calcular el "peso" visual de cada carácter basado en pruebas reales
+        // 65 guiones = 1 línea → 1 guion = 1 unidad
+        // 35 minúsculas = 1 línea → 1 minúscula = 65/35 = 1.857 unidades
+        // 29 mayúsculas = 1 línea → 1 mayúscula = 65/29 = 2.241 unidades
+        let visualWeight = 0;
+        for (const char of normalized) {
+          if (char === '-' || char === '_') {
+            visualWeight += 1.0; // Guion = unidad base
+          } else if (char === ' ') {
+            visualWeight += 0.8; // Espacios un poco menos
+          } else if (/[*|:]/.test(char)) {
+            visualWeight += 1.0; // Símbolos delgados
+          } else if (/[a-z0-9ñáéíóúü]/.test(char)) {
+            visualWeight += 1.857; // Minúsculas (65/35)
+          } else if (/[A-ZÑÁÉÍÓÚÜ]/.test(char)) {
+            visualWeight += 2.241; // Mayúsculas (65/29)
+          } else if (/[(),.$]/.test(char)) {
+            visualWeight += 1.2; // Puntuación
+          } else {
+            visualWeight += 1.857; // Otros caracteres = minúsculas por defecto
+          }
+        }
 
-        let weight = chars.reduce((sum, ch) => sum + weightFor(ch), 0);
+        // Calcular cuántas líneas necesitamos
+        const linesNeeded = Math.ceil(visualWeight / charsPerLine);
+        const targetWeight = charsPerLine * linesNeeded;
 
-        // Si el texto es más largo que el límite, calculamos cuántas líneas necesita
-        const linesNeeded = Math.ceil(weight / limit);
-        const targetWeight = limit * linesNeeded;
-
-        const fillerWeight = weightFor(filler);
+        // Rellenar con guiones hasta completar las líneas necesarias
         let result = normalized;
-        while (fillerWeight > 0 && weight + fillerWeight <= targetWeight) {
+        const fillerWeight = 1.0; // Peso del guion
+        while (visualWeight + fillerWeight <= targetWeight) {
           result += filler;
-          weight += fillerWeight;
+          visualWeight += fillerWeight;
         }
 
         return result;
@@ -387,25 +400,67 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 : false;
 
               const observation = !isArmalo ? normalizeObservation(optionLabel) : '';
-              const lineParts: string[] = [`*Cod:${code}*`, `x${quantity}`];
-              if (observation) lineParts.push(`Obs:(${observation})`);
-
+              
+              // Construir líneas de forma inteligente según complejidad
               if (isArmalo) {
+                // Producto "Arma tu roll" - formato en una línea con separadores
                 const label = typeof optionLabel === 'string' ? optionLabel : '';
                 const segments = label.split('·').map((seg) => seg.trim()).filter(Boolean);
                 const normalizedSegments = segments.length ? segments : (label.trim() ? [label.trim()] : []);
+                
+                // Agrupar por tipo (Prot, Acomp, Env)
+                const prots: string[] = [];
+                const acomps: string[] = [];
+                const envs: string[] = [];
+                
                 normalizedSegments.forEach((segment) => {
                   const formatted = normalizeArmaloSegment(segment);
-                  if (formatted) lineParts.push(formatted);
+                  if (!formatted) return;
+                  
+                  if (formatted.startsWith('Prot:')) {
+                    prots.push(formatted.replace('Prot:', '').trim());
+                  } else if (formatted.startsWith('Acomp:')) {
+                    acomps.push(formatted.replace('Acomp:', '').trim());
+                  } else if (formatted.startsWith('Env:')) {
+                    envs.push(formatted.replace('Env:', '').trim());
+                  }
                 });
+
+                // Construir todo en UNA línea con separadores
+                const parts: string[] = [`*Cod:${code}*`, `x${quantity}`];
+                
+                if (prots.length > 0) {
+                  parts.push(`Prot: ${prots.join('+')}`);
+                }
+                if (acomps.length > 0) {
+                  parts.push(`Acomp: ${acomps.join('+')}`);
+                }
+                if (envs.length > 0) {
+                  parts.push(`Env: ${envs.join('+')}`);
+                }
+                if (pricePart) {
+                  parts.push(`Total:${pricePart}`);
+                }
+                
+                const fullLine = formatLine(parts);
+                return fullLine ? padLine(fullLine) : '';
+
+              } else if (observation) {
+                // Producto con observación - todo en una línea
+                const lineParts: string[] = [`*Cod:${code}*`, `x${quantity}`, `Obs:(${observation})`];
+                if (pricePart) lineParts.push(`Total:${pricePart}`);
+                
+                const fullLine = formatLine(lineParts);
+                return fullLine ? padLine(fullLine) : '';
+
+              } else {
+                // Producto simple - una línea
+                const lineParts: string[] = [`*Cod:${code}*`, `x${quantity}`];
+                if (pricePart) lineParts.push(`Total:${pricePart}`);
+                
+                const line = formatLine(lineParts);
+                return line ? padLine(line) : '';
               }
-
-              if (pricePart) lineParts.push(`Total:${pricePart}`);
-
-              const line = formatLine(lineParts);
-              if (!line) return '';
-
-              return pricePart ? padLine(line) : line;
             })
             .filter(Boolean)
         : [];

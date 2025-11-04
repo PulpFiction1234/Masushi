@@ -24,14 +24,16 @@ const sanitize = (value: unknown) => {
     .replace(/\r/g, '\n')
     .replace(/\t+/g, ' ');
 
-  // Mantener los saltos de línea para que cada producto aparezca en su propia línea
-  const cleaned = normalized
+  // Convertir saltos de línea a separador visual para cumplir con requisitos de WhatsApp templates
+  // WhatsApp no permite \n ni \t en parámetros de template, así que usamos " • "
+  const separator = ' • ';
+  const flattened = normalized
     .split('\n')
     .map((line) => line.replace(/ {2,}/g, ' ').trim())
     .filter(Boolean)
-    .join('\n');
+    .join(separator);
 
-  return cleaned.trim();
+  return flattened.replace(/ {4,}/g, '   ').trim(); // Máximo 3 espacios consecutivos
 };
 
 const sanitizedOrFallback = (value: unknown, fallback: string) => {

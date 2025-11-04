@@ -300,6 +300,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .trim();
       };
 
+      const extractBeverageFlavor = (nombre: string): string => {
+        if (!nombre) return '';
+        
+        const lower = nombre.toLowerCase();
+        
+        // Mapeo de sabores/variantes comunes
+        if (lower.includes('zero')) return 'Zero';
+        if (lower.includes('original')) return 'Original';
+        if (lower.includes('mango')) return 'Mango';
+        if (lower.includes('piña') || lower.includes('pina')) {
+          if (lower.includes('coco')) return 'Piña-Coco';
+          return 'Piña';
+        }
+        if (lower.includes('sandía') || lower.includes('sandia')) return 'Sandía';
+        if (lower.includes('uva')) return 'Uva';
+        if (lower.includes('sprite')) return 'Sprite';
+        if (lower.includes('verde')) return 'Verde';
+        if (lower.includes('1.5') || lower.includes('litro')) return '1.5L';
+        
+        // Si no encuentra un sabor específico, intentar extraer la primera palabra relevante
+        const palabras = nombre.split(' ');
+        if (palabras.length >= 2) {
+          // Buscar la palabra que no sea "Coca", "Cola", "Arizona", "Jumex", "Monster", "lata", "botella"
+          const ignore = ['coca', 'cola', 'arizona', 'jumex', 'monster', 'lata', 'botella', 'ml', 'nectar', 'bebida', 'jugo'];
+          for (const palabra of palabras) {
+            const p = palabra.toLowerCase();
+            if (!ignore.includes(p) && p.length > 2) {
+              return palabra;
+            }
+          }
+        }
+        
+        return '';
+      };
+
       // Configuración para Redmi Note 11 (basado en pruebas reales)
       // Pruebas confirmadas: 65 guiones, 35 letras minúsculas, 29 letras mayúsculas
       const CHARS_PER_LINE = 65; // Línea base usando guiones
@@ -384,6 +419,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               };
 
               const code = cleanCode(entry.codigo);
+              const nombre = typeof entry.nombre === 'string' ? entry.nombre : '';
               const quantityRaw = typeof entry.cantidad === 'number' ? entry.cantidad : Number(entry.cantidad);
               const quantity = Number.isFinite(quantityRaw) && quantityRaw > 0 ? quantityRaw : 1;
               const unitRaw = typeof entry.valor === 'number' ? entry.valor : Number(entry.valor);
@@ -399,7 +435,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 ? String((entry.opcion as any).id).startsWith('armalo:')
                 : false;
 
-              const observation = !isArmalo ? normalizeObservation(optionLabel) : '';
+              // Para bebidas/jugos (códigos 83-89), extraer solo el sabor del nombre
+              const isBeverage = code && /^8[3-9]$/.test(code); // Códigos 83-89
+              const observation = !isArmalo 
+                ? (isBeverage ? extractBeverageFlavor(nombre) : normalizeObservation(optionLabel)) 
+                : '';
               
               // Construir líneas de forma inteligente según complejidad
               if (isArmalo) {

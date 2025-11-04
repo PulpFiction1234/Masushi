@@ -526,7 +526,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const localDetailText = detailSections.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 
       let extrasText = '';
-      if (typeof req.body?.extras === 'string') {
+      // Priorizar el formato detallado si está disponible
+      if (req.body?.extrasDetalle) {
+        const det = req.body.extrasDetalle;
+        const lines: string[] = [];
+        
+        // Salsas
+        if (det.soya > 0 || det.teriyaki > 0) {
+          if (det.soya > 0) lines.push(`Soya: ${det.soya}`);
+          if (det.teriyaki > 0) lines.push(`Teriyaki: ${det.teriyaki}`);
+        } else {
+          lines.push('Sin Soya/Teriyaki');
+        }
+        
+        // Jengibre/Wasabi (máximo 1 de cada uno gratis)
+        if (det.jengibreGratis > 0 || det.wasabiGratis > 0) {
+          if (det.jengibreGratis > 0) lines.push(`Jengibre: Sí`);
+          if (det.wasabiGratis > 0) lines.push(`Wasabi: Sí`);
+        } else {
+          lines.push('Jengibre: No | Wasabi: No');
+        }
+        
+        // Palitos
+        if (det.palitosGratis > 0) lines.push(`Palitos: ${det.palitosGratis}`);
+        if (det.palitosExtra > 0) lines.push(`Palitos extra: ${det.palitosExtra}`);
+        if (det.ayudaPalitos > 0) lines.push(`Ayuda palitos: ${det.ayudaPalitos}`);
+        
+        extrasText = lines.join(' | ');
+      } else if (typeof req.body?.extras === 'string') {
         extrasText = req.body.extras;
       } else if (Array.isArray(req.body?.extras)) {
         extrasText = req.body.extras

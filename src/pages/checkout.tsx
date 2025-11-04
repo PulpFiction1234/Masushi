@@ -223,8 +223,8 @@ export default function Checkout() {
     [cartTyped]
   );
 
-  // Pool gratis J/W fijo en 2
-  const POOL_JW = 2;
+  // Pool gratis J/W fijo en 1 de cada uno
+  const POOL_JW = 1;
 
   // Tope de palitos gratis desde catálogo
   const maxPalitosGratis = useMemo(
@@ -683,7 +683,7 @@ export default function Checkout() {
               .join("\n");
 
         // ========= Salsas/Palitos =========
-        const POOL_JW = 2;
+        const POOL_JW = 1;
         const nSoya = Number(soya || 0);
         const nTeri = Number(teriyaki || 0);
         const nJenGratis = Number(jengibre || 0);
@@ -697,12 +697,12 @@ export default function Checkout() {
         // Solo salsas gratis - las extras ahora son productos normales
         if (nSoya > 0) lineasSalsas.push(`Soya (gratis): ${nSoya}`);
         if (nTeri > 0) lineasSalsas.push(`Teriyaki (gratis): ${nTeri}`);
-        if (nJenGratis > 0) lineasSalsas.push(`Jengibre (gratis): ${nJenGratis}/${POOL_JW}`);
-        if (nWasGratis > 0) lineasSalsas.push(`Wasabi (gratis): ${nWasGratis}/${POOL_JW}`);
+        if (nJenGratis > 0) lineasSalsas.push(`Jengibre: Sí`);
+        if (nWasGratis > 0) lineasSalsas.push(`Wasabi: Sí`);
         
         // Agregar líneas para "sin salsas" si corresponde
         if (nSoya === 0 && nTeri === 0) lineasSalsas.push("Sin salsas Soya/Teriyaki");
-        if (nJenGratis === 0 && nWasGratis === 0) lineasSalsas.push("Sin Jengibre/Wasabi");
+        if (nJenGratis === 0 && nWasGratis === 0) lineasSalsas.push("Jengibre: No | Wasabi: No");
 
         const lineasPalitos: string[] = [];
         if (nPalitosGratis > 0) lineasPalitos.push(`Palitos (gratis): ${nPalitosGratis}`);
@@ -785,6 +785,18 @@ export default function Checkout() {
                 },
                 // include coupon if user aplicó uno o si aplica el automático de cumpleaños
                 ...(couponCodeForOrder ? { coupon_code: couponCodeForOrder } : {}),
+                // Agregar extras
+                extras: bloqueSalsasPalitos.trim(),
+                // Incluir también los valores individuales para formateo personalizado
+                extrasDetalle: {
+                  soya: nSoya,
+                  teriyaki: nTeri,
+                  jengibreGratis: nJenGratis,
+                  wasabiGratis: nWasGratis,
+                  palitosGratis: nPalitosGratis,
+                  palitosExtra: nPalitosExtra,
+                  ayudaPalitos: nAyudaPalitos,
+                },
               }),
             });
 

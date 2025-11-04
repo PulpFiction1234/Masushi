@@ -319,16 +319,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         const fillerWeight = weightFor(filler);
         let result = normalized;
-        let added = 0;
         while (fillerWeight > 0 && weight + fillerWeight <= limit) {
           result += filler;
           weight += fillerWeight;
-          added++;
-        }
-
-        if (added > 0) {
-          const removeCount = Math.min(2, added);
-          result = result.slice(0, result.length - filler.length * removeCount);
         }
 
         return result;

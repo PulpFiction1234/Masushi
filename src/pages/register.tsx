@@ -38,7 +38,7 @@ export default function RegisterPage() {
     }
 
     if (password.length !== 4) {
-      setErrorMessage("La contraseña debe tener exactamente 4 dígitos.");
+      setErrorMessage("El pin debe tener exactamente 4 dígitos.");
       return;
     }
 
@@ -218,7 +218,7 @@ export default function RegisterPage() {
           <input
             type="password"
             inputMode="numeric"
-            placeholder="Contraseña (4 dígitos)"
+            placeholder="Pin (4 dígitos)"
             value={password}
             onChange={(e) => {
               const value = e.target.value.replace(/\D/g, '');

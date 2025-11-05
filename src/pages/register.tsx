@@ -32,8 +32,13 @@ export default function RegisterPage() {
       return;
     }
 
-    if (password.length < 6) {
-      setErrorMessage("La contraseña debe tener al menos 6 caracteres.");
+    if (phone.length !== 8) {
+      setErrorMessage("El teléfono debe tener exactamente 8 dígitos.");
+      return;
+    }
+
+    if (password.length !== 4) {
+      setErrorMessage("La contraseña debe tener exactamente 4 dígitos.");
       return;
     }
 
@@ -212,9 +217,16 @@ export default function RegisterPage() {
 
           <input
             type="password"
-            placeholder="Contraseña (mín. 6 caracteres)"
+            inputMode="numeric"
+            placeholder="Contraseña (4 dígitos)"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value.replace(/\D/g, '');
+              if (value.length <= 4) {
+                setPassword(value);
+              }
+            }}
+            maxLength={4}
             className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
           />
 

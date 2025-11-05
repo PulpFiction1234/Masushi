@@ -59,9 +59,16 @@ export default function LoginPage() {
           />
           <input
             type="password"
+            inputMode="numeric"
             placeholder="PIN de 4 dígitos"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value.replace(/\D/g, '');
+              if (value.length <= 4) {
+                setPassword(value);
+              }
+            }}
+            maxLength={4}
             className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
           />
           {errorMessage && (

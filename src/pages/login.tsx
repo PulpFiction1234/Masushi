@@ -59,7 +59,7 @@ export default function LoginPage() {
           />
           <input
             type="password"
-            placeholder="Contraseña"
+            placeholder="PIN de 4 dígitos"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"

@@ -40,10 +40,13 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
+      // Agregar prefijo +56 9 al teléfono
+      const fullPhone = phone.trim() ? `+569${phone.trim()}` : '';
+      
       const resp = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name, phone }),
+        body: JSON.stringify({ email, password, name, phone: fullPhone }),
       });
       const json = await resp.json().catch(() => null);
 
@@ -189,13 +192,23 @@ export default function RegisterPage() {
             className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
           />
 
-          <input
-            type="tel"
-            placeholder="Teléfono (ej. +521XXXXXXXXXX)"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
-          />
+          <div className="relative w-full">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 font-medium pointer-events-none">
+              +56 9
+            </div>
+            <input
+              type="tel"
+              placeholder="XXXX XXXX"
+              value={phone}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '');
+                if (value.length <= 8) {
+                  setPhone(value);
+                }
+              }}
+              className="w-full pl-[70px] pr-3 py-2 rounded bg-gray-800 placeholder-gray-400"
+            />
+          </div>
 
           <input
             type="password"

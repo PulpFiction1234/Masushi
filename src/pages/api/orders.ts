@@ -223,8 +223,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         whatsappResults.push({ warning });
       }
 
-      // TEMPORALMENTE DESHABILITADO: Envío de WhatsApp al cliente
-      /*
+      // Envío de WhatsApp al cliente (sin detalle de productos)
       if (phoneNormalized) {
         if (templateName) {
           const components: any[] = [];
@@ -240,8 +239,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               { type: 'text', text: sanitizeParam(`${data.id}`) },
               { type: 'text', text: sanitizeParam(estimatedText) },
               { type: 'text', text: sanitizeParam(direccionResolved) },
-              { type: 'text', text: sanitizeParam(detalle) },
-              { type: 'text', text: sanitizeParam(`${totalResolved}`) },
             ],
           });
 
@@ -249,14 +246,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           whatsappResults.push({ target: phoneNormalized, type: 'template', result: sent });
         } else {
           const etaText = estimatedText;
-          const templateUser = `¡Hola! ${customerName}, tu orden #${data.id} ya está en cocina.\n\nHora de entrega estimada: ${etaText}\nDirección: ${direccionResolved}\n\nDetalle:\n${detalle}\n\nTotal: ${totalText}\n\nGracias por preferirnos 🍣🥢`;
+          const templateUser = `¡Hola! ${customerName}, tu orden #${data.id} ya está en cocina.\n\nHora de entrega estimada: ${etaText}\nDirección: ${direccionResolved}\n\nGracias por preferirnos 🍣🥢`;
           const sent = await sendWhatsAppMessage(phoneNormalized, templateUser);
           whatsappResults.push({ target: phoneNormalized, type: 'text', result: sent });
         }
       } else {
         whatsappResults.push({ warning: 'No customer phone provided or could not be normalized' });
       }
-      */
 
       const internalNumber = process.env.INTERNAL_WHATSAPP_NUMBER;
       if (internalNumber) {
@@ -287,7 +283,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (typeof raw !== 'string') return '---';
         const trimmed = raw.trim();
         if (!trimmed) return '---';
-        const match = trimmed.match(/\d{2,3}/);
+        
+        // Caso especial: Promo handrolls mantiene 4 dígitos
+        if (trimmed === '0057') return '0057';
+        
+        // Por defecto, extraer 3 dígitos (ej: 041, 052)
+        const match = trimmed.match(/\d{3}/);
         return match ? match[0] : trimmed.replace(/\|/g, '').trim() || '---';
       };
 
@@ -417,6 +418,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const localProductLines = Array.isArray(items)
         ? (items as unknown[])
+            // Ordenar: productos normales primero, "Ármalo a tu gusto" al final
+            .sort((a, b) => {
+              const aIsArmalo = a && typeof a === 'object' && (
+                // Buscar por opcion.id que empiece con 'armalo:'
+                ((a as any).opcion && typeof (a as any).opcion === 'object' && typeof (a as any).opcion.id === 'string' && String((a as any).opcion.id).startsWith('armalo:')) ||
+                // O buscar por nombre del producto
+                (typeof (a as any).nombre === 'string' && String((a as any).nombre).toLowerCase().includes('ármalo a tu gusto'))
+              );
+              const bIsArmalo = b && typeof b === 'object' && (
+                // Buscar por opcion.id que empiece con 'armalo:'
+                ((b as any).opcion && typeof (b as any).opcion === 'object' && typeof (b as any).opcion.id === 'string' && String((b as any).opcion.id).startsWith('armalo:')) ||
+                // O buscar por nombre del producto
+                (typeof (b as any).nombre === 'string' && String((b as any).nombre).toLowerCase().includes('ármalo a tu gusto'))
+              );
+              
+              // Si a es "Ármalo a tu gusto" y b no, a va después (return 1)
+              if (aIsArmalo && !bIsArmalo) return 1;
+              // Si b es "Ármalo a tu gusto" y a no, a va antes (return -1)
+              if (!aIsArmalo && bIsArmalo) return -1;
+              // Si ambos son del mismo tipo, mantener orden original
+              return 0;
+            })
             .map((raw: unknown) => {
               if (!raw || typeof raw !== 'object') return '';
               const entry = raw as {

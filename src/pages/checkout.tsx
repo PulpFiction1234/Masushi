@@ -1073,11 +1073,6 @@ export default function Checkout() {
               )}
 
               <div className="mt-6 space-y-4">
-                <a
-                  href="#"
-                  className="text-sm underline"
-                  onClick={(e) => { e.preventDefault(); setCouponModalOpen(true); }}
-                >¿Tienes un cupón?</a>
                 {birthdayStatusLoading ? (
                   <p className="text-xs text-neutral-400">Verificando descuento de cumpleaños…</p>
                 ) : birthdayCouponEligible ? (

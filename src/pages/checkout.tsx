@@ -223,9 +223,6 @@ export default function Checkout() {
     [cartTyped]
   );
 
-  // Pool gratis J/W fijo en 1 de cada uno
-  const POOL_JW = 1;
-
   // Tope de palitos gratis desde catálogo
   const maxPalitosGratis = useMemo(
     () => maxPalitosGratisFromCart(cartTyped, byId as Map<number, ProductoMinPalitos>),
@@ -683,7 +680,6 @@ export default function Checkout() {
               .join("\n");
 
         // ========= Salsas/Palitos =========
-        const POOL_JW = 1;
         const nSoya = Number(soya || 0);
         const nTeri = Number(teriyaki || 0);
         const nJenGratis = Number(jengibre || 0);
@@ -797,6 +793,8 @@ export default function Checkout() {
                   palitosExtra: nPalitosExtra,
                   ayudaPalitos: nAyudaPalitos,
                 },
+                // Agregar observaciones
+                observaciones: observacion && observacion.trim() ? observacion.trim() : null,
               }),
             });
 
@@ -1235,7 +1233,6 @@ export default function Checkout() {
                       deliveryType={deliveryType}
                       deliveryFee={deliveryFee}
                       maxGratisBasicas={gratisBasicas}
-                      maxGratisJWas={POOL_JW}
                       maxPalitosGratis={maxPalitosGratis}
                       onValidationChange={setSalsasValidas} // 👈 callback de validación
                       includedMap={includedMap}

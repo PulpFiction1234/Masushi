@@ -581,6 +581,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         customer?.note
       );
 
+      // Debug: verificar observaciones
+      console.log('[DEBUG orders.ts] observationsText:', observationsText);
+      console.log('[DEBUG orders.ts] req.body.observaciones:', req.body?.observaciones);
+
       const localNotify = await notifyLocalNewOrder({
         orderId: data.id,
         customerName,

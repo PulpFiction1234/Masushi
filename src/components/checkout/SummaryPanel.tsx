@@ -21,7 +21,6 @@ interface Props {
   deliveryType: "retiro" | "delivery";
   deliveryFee: number;
   maxGratisBasicas: number; // pool soya/teriyaki
-  maxGratisJWas?: number; // pool jengibre/wasabi
   maxPalitosGratis?: number; // 👈 nuevo
   onValidationChange?: (isValid: boolean) => void; // callback de validación
   // Controlled inclusion map: which cart keys are included in the order
@@ -37,7 +36,6 @@ export default function SummaryPanel({
   deliveryType,
   deliveryFee,
   maxGratisBasicas,
-  maxGratisJWas = 2,
   maxPalitosGratis = 0,
   onValidationChange,
   includedMap,
@@ -119,7 +117,6 @@ export default function SummaryPanel({
             state={state}
             dispatch={dispatch}
             maxGratisBasicas={maxGratisBasicas}
-            maxGratisJWas={maxGratisJWas}
             maxPalitosGratis={maxPalitosGratis}
             onValidationChange={onValidationChange}
           />

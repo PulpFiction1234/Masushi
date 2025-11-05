@@ -16,8 +16,6 @@ interface Props {
   dispatch: React.Dispatch<CheckoutAction>;
   /** total gratis disponibles SOLO para soya/teriyaki */
   maxGratisBasicas: number;
-  /** pool gratis jengibre/wasabi (default 2) */
-  maxGratisJWas?: number;
   /** tope de palitos gratis calculado desde el carrito */
   maxPalitosGratis?: number;
   /** callback para validación de salsas */
@@ -28,7 +26,6 @@ export default function ExtrasSelector({
   state,
   dispatch,
   maxGratisBasicas,
-  maxGratisJWas = 2,
   maxPalitosGratis = 0,
   onValidationChange,
 }: Props) {
@@ -91,32 +88,18 @@ export default function ExtrasSelector({
     dispatch({ type: "SET_FIELD", field: "teriyaki", value: raw === "" ? "" : next });
   };
 
-  // ===== Pool GRATIS: Jengibre/Wasabi (máx 2 entre ambos) =====
+  // ===== Jengibre/Wasabi independientes (1 de cada uno gratis) =====
   const jengibreSelected = Number(state.jengibre || 0) > 0;
   const wasabiSelected = Number(state.wasabi || 0) > 0;
 
   const handleToggleJengibre = (checked: boolean) => {
-    if (checked) {
-      if (!jengibreSelected) {
-        const otherSelected = wasabiSelected ? 1 : 0;
-        if (otherSelected + 1 > maxGratisJWas) return;
-      }
-      dispatch({ type: "SET_FIELD", field: "jengibre", value: 1 });
-    } else {
-      dispatch({ type: "SET_FIELD", field: "jengibre", value: 0 });
-    }
+    // Jengibre es independiente, simplemente toggle on/off
+    dispatch({ type: "SET_FIELD", field: "jengibre", value: checked ? 1 : 0 });
   };
 
   const handleToggleWasabi = (checked: boolean) => {
-    if (checked) {
-      if (!wasabiSelected) {
-        const otherSelected = jengibreSelected ? 1 : 0;
-        if (otherSelected + 1 > maxGratisJWas) return;
-      }
-      dispatch({ type: "SET_FIELD", field: "wasabi", value: 1 });
-    } else {
-      dispatch({ type: "SET_FIELD", field: "wasabi", value: 0 });
-    }
+    // Wasabi es independiente, simplemente toggle on/off
+    dispatch({ type: "SET_FIELD", field: "wasabi", value: checked ? 1 : 0 });
   };
 
   // ===== Palitos (gratis) con tope por carrito =====
@@ -203,8 +186,7 @@ export default function ExtrasSelector({
           {/* Derecha: Jengibre/Wasabi */}
           <div>
             <p className="text-xs text-neutral-400 mb-1">
-              Jengibre/Wasabi:{" "}
-              <span className="font-semibold text-neutral-200">{maxGratisJWas}</span>
+              1 de cada uno (gratis)
             </p>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -212,7 +194,6 @@ export default function ExtrasSelector({
                 <Toggle
                   ariaLabel="Incluir Jengibre"
                   checked={jengibreSelected}
-                  disabled={!jengibreSelected && wasabiSelected && maxGratisJWas <= 1}
                   onChange={handleToggleJengibre}
                 />
               </div>
@@ -221,7 +202,6 @@ export default function ExtrasSelector({
                 <Toggle
                   ariaLabel="Incluir Wasabi"
                   checked={wasabiSelected}
-                  disabled={!wasabiSelected && jengibreSelected && maxGratisJWas <= 1}
                   onChange={handleToggleWasabi}
                 />
               </div>

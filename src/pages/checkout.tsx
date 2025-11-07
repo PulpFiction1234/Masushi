@@ -1288,27 +1288,27 @@ export default function Checkout() {
       </div>
       {showOrderModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full text-neutral-900 shadow-2xl">
+          <div className="bg-neutral-900 rounded-lg p-6 max-w-md w-full shadow-2xl border border-neutral-800">
             <div className="text-center mb-4">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-3">
-                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-900/30 mb-3">
+                <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold text-red-600 mb-2">¡Pedido Recibido! 🍣</h3>
+              <h3 className="text-2xl font-bold text-red-500 mb-2">¡Pedido Recibido! 🍣</h3>
               {lastOrderId && (
-                <p className="text-sm text-neutral-600 mb-3">Orden #{lastOrderId}</p>
+                <p className="text-sm text-neutral-400 mb-3">Orden #{lastOrderId}</p>
               )}
             </div>
             
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-              <p className="text-neutral-800 text-center">
-                <span className="font-semibold">Te llegará un mensaje automático de WhatsApp</span><br />
+            <div className="bg-red-950/50 border border-red-900/50 rounded-lg p-4 mb-4">
+              <p className="text-neutral-200 text-center">
+                <span className="font-semibold text-white">Te llegará un mensaje automático de WhatsApp</span><br />
                 con toda la información de tu pedido y el tiempo estimado de entrega.
               </p>
             </div>
 
-            <div className="text-center text-sm text-neutral-600 mb-4">
+            <div className="text-center text-sm text-neutral-400 mb-4">
               Gracias por preferirnos 🥢
             </div>
 

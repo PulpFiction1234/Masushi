@@ -1288,20 +1288,20 @@ export default function Checkout() {
       </div>
       {showOrderModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full text-neutral-900">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full text-neutral-900 shadow-2xl">
             <div className="text-center mb-4">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-3">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-3">
+                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold text-green-600 mb-2">¡Pedido Recibido! 🍣</h3>
+              <h3 className="text-2xl font-bold text-red-600 mb-2">¡Pedido Recibido! 🍣</h3>
               {lastOrderId && (
                 <p className="text-sm text-neutral-600 mb-3">Orden #{lastOrderId}</p>
               )}
             </div>
             
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
               <p className="text-neutral-800 text-center">
                 <span className="font-semibold">Te llegará un mensaje automático de WhatsApp</span><br />
                 con toda la información de tu pedido y el tiempo estimado de entrega.
@@ -1315,7 +1315,7 @@ export default function Checkout() {
             <div className="flex justify-center">
               <button 
                 onClick={() => setShowOrderModal(false)} 
-                className="px-6 py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium transition-colors"
+                className="px-6 py-3 rounded-full font-medium text-white bg-red-700 hover:bg-red-600 shadow-lg transition-colors"
               >
                 Entendido
               </button>

@@ -116,7 +116,7 @@ const Navbar: React.FC = () => {
                   </Link>
 
                   <a
-                    href="https://wa.me/56912345678"
+                    href="https://wa.me/56940873865"
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setShowProfileMenu(false)}

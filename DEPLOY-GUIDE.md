@@ -54,7 +54,7 @@ WHATSAPP_API_URL=https://graph.facebook.com/v16.0/860006433861553/messages
 WHATSAPP_TOKEN=EAAZApZAYHKmFIBPZCDu9KIlxQu5n9eZCtYz6mnyJXAX10o50mElIuTa4kUlNtgnyMPd4x5uFq0fIZB8ks3Mgl5UFibYhFbAzw3ZCOf4WWwXzaWTdX7a4yvF8u7E21ETloK50ZBOMTb6DaqoBOegOOshQOPovKuaz9kgaiVZAKzpFFjyPbLLxB2ZBMivflD2oWcQZDZD
 WHATSAPP_TEMPLATE_NAME=confirmacion_cliente
 WHATSAPP_TEMPLATE_LANG=es_CL
-WHATSAPP_TEMPLATE_HEADER_LINK=https://masushi-app.vercel.app/images/FotoMensajeWsp.png
+WHATSAPP_TEMPLATE_HEADER_LINK=https://www.masushi.cl/images/FotoMensajeWsp.png
 WHATSAPP_WEBHOOK_VERIFY_TOKEN=masushi-verify-2025
 LOCAL_WHATSAPP_TEMPLATE=nuevo_pedido_local
 LOCAL_WHATSAPP_NUMBER=56951869402
@@ -140,7 +140,7 @@ Dirección: {{4}}
 - **Categoría**: UTILITY (o la que aplique)
 - **Idioma**: Spanish (es_CL)
 - **Header** (opcional): Imagen
-  - URL: `https://masushi-app.vercel.app/images/FotoMensajeWsp.png`
+  - URL: `https://www.masushi.cl/images/FotoMensajeWsp.png`
 
 ### **Enviar a Aprobación:**
 1. Click en **Submit for Review**
@@ -149,7 +149,76 @@ Dirección: {{4}}
 
 ---
 
-## 🧪 Paso 4: Testing Post-Deployment
+## 📡 Paso 4: Configurar Webhook de WhatsApp
+
+### **¿Qué es el Webhook?**
+El webhook permite que tu aplicación reciba notificaciones en tiempo real cuando:
+- Un cliente envía un mensaje
+- Un mensaje cambia de estado (enviado, entregado, leído)
+
+### **Configurar en Meta for Developers:**
+
+1. **Ir a Meta for Developers**
+   - [https://developers.facebook.com](https://developers.facebook.com)
+   - Selecciona tu App de WhatsApp Business
+
+2. **Ir a WhatsApp → Configuration**
+   - En el menú lateral, click en **WhatsApp**
+   - Click en **Configuration**
+
+3. **Editar Webhook**
+   - En la sección **Webhook**, click en **Edit**
+
+4. **Configurar URL y Token:**
+
+   **Callback URL:**
+   ```
+   https://www.masushi.cl/api/webhooks/whatsapp
+   ```
+
+   **Verify Token:**
+   ```
+   masushi-verify-2025
+   ```
+   ⚠️ Este token debe coincidir exactamente con `WHATSAPP_WEBHOOK_VERIFY_TOKEN` en Vercel
+
+5. **Click en "Verify and Save"**
+   - Meta enviará una petición GET a tu endpoint
+   - Si todo está correcto, dirá "Success"
+
+6. **Suscribirse a Eventos (Webhook Fields):**
+   
+   Marca estas opciones:
+   - ✅ **messages** - Mensajes entrantes
+   - ✅ **message_status** - Estados de mensajes (opcional pero recomendado)
+
+7. **Guardar Cambios**
+
+### **Verificar que Funciona:**
+
+Puedes probar el webhook manualmente:
+
+```powershell
+# Test desde PowerShell (reemplaza TU_VERIFY_TOKEN)
+Invoke-WebRequest -Uri "https://www.masushi.cl/api/webhooks/whatsapp?hub.mode=subscribe&hub.verify_token=masushi-verify-2025&hub.challenge=TEST123"
+```
+
+Debería devolver: `TEST123`
+
+### **Troubleshooting Webhook:**
+
+**Error: "Callback verification failed"**
+- Verifica que `WHATSAPP_WEBHOOK_VERIFY_TOKEN` esté configurado en Vercel
+- Verifica que la URL sea exactamente: `https://www.masushi.cl/api/webhooks/whatsapp`
+- Verifica que el token coincida exactamente (case-sensitive)
+
+**Error: "URL timed out"**
+- Verifica que tu app esté deployed y funcionando
+- Prueba abrir `https://www.masushi.cl` en el navegador
+
+---
+
+## 🧪 Paso 5: Testing Post-Deployment
 
 ### **1. Verificar Deployment en Vercel**
 1. Ve a [https://vercel.com](https://vercel.com)

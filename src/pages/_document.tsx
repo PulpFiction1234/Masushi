@@ -11,6 +11,11 @@ export default function Document() {
           name="google-site-verification"
           content="AgtxuuLvLTb5rm_EHTSHUCoB4sLrXfzGsAID9NW1cUs"
         />
+        {/* 👇 meta de verificación para Meta / Facebook - reemplaza el content por el token exacto que te dio Meta */}
+        <meta
+          name="facebook-domain-verification"
+          content="nnnl291z7l0emfmf1kz7bzdqgy9n6b"
+        />
         {/* favicons opcionales... */}
       </Head>
       <body className="bg-neutral-950 antialiased">

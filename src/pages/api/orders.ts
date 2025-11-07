@@ -227,6 +227,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Template: ¡Hola {{1}}! Tu pedido #{{2}} ha sido recibido exitosamente y ya está en preparación. 🍣
       // Hora estimada de entrega: {{3}}
       // Dirección: {{4}}
+      // Los tiempos de espera son estimados.
       if (phoneNormalized) {
         if (templateName) {
           const components: any[] = [];
@@ -240,7 +241,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             parameters: [
               { type: 'text', text: sanitizeParam(customerName) },           // {{1}} - nombre del cliente
               { type: 'text', text: sanitizeParam(`${data.id}`) },           // {{2}} - número de pedido
-              { type: 'text', text: sanitizeParam(estimatedText) },          // {{3}} - hora estimada
+              { type: 'text', text: sanitizeParam(estimatedText) },          // {{3}} - rango de hora estimada (ej: "19:00 - 19:40")
               { type: 'text', text: sanitizeParam(direccionResolved) },      // {{4}} - dirección
             ],
           });
@@ -249,7 +250,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           whatsappResults.push({ target: phoneNormalized, type: 'template', result: sent });
         } else {
           const etaText = estimatedText;
-          const templateUser = `¡Hola ${customerName}! Tu pedido #${data.id} ha sido recibido exitosamente y ya está en preparación. 🍣\n\nHora estimada de entrega: ${etaText}\nDirección: ${direccionResolved}`;
+          const templateUser = `¡Hola ${customerName}! Tu pedido #${data.id} ha sido recibido exitosamente y ya está en preparación. 🍣\n\nHora estimada de entrega: ${etaText}\nDirección: ${direccionResolved}\n\n_Los tiempos de espera son estimados._`;
           const sent = await sendWhatsAppMessage(phoneNormalized, templateUser);
           whatsappResults.push({ target: phoneNormalized, type: 'text', result: sent });
         }

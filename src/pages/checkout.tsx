@@ -1304,7 +1304,7 @@ export default function Checkout() {
             <div className="bg-green-950/50 border border-green-900/50 rounded-lg p-4 mb-4">
               <p className="text-neutral-200 text-center">
                 <span className="font-semibold text-white">Te llegará un mensaje automático de WhatsApp</span><br />
-                con toda la información de tu pedido y el tiempo estimado de entrega.
+                con el tiempo estimado de entrega.
               </p>
             </div>
 

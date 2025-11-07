@@ -42,12 +42,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   components.push({
     type: 'body',
     parameters: [
-      { type: 'text', text: sanitizeParam(customerName || '') },
-      { type: 'text', text: sanitizeParam(orderId ?? '') },
-      { type: 'text', text: sanitizeParam(eta ?? '') },
-      { type: 'text', text: sanitizeParam(address ?? '') },
-      { type: 'text', text: sanitizeParam(detail ?? '') },
-      { type: 'text', text: sanitizeParam(total ?? '') },
+      { type: 'text', text: sanitizeParam(customerName || '') },  // {{1}} - nombre
+      { type: 'text', text: sanitizeParam(orderId ?? '') },       // {{2}} - pedido
+      { type: 'text', text: sanitizeParam(eta ?? '') },           // {{3}} - hora estimada
+      { type: 'text', text: sanitizeParam(address ?? '') },       // {{4}} - dirección
     ],
   });
 

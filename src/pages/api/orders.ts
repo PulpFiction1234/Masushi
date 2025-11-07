@@ -215,15 +215,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const totalResolved = typeof data.total === 'number' ? data.total : finalTotal;
   const totalText = fmt(totalResolved);
 
-      // Use provided template name or fallback to approved `confirmacion_orden`
-      const templateName = process.env.WHATSAPP_TEMPLATE_NAME || 'confirmacion_orden';
+      // Use provided template name or fallback to approved `confirmacion_cliente`
+      const templateName = process.env.WHATSAPP_TEMPLATE_NAME || 'confirmacion_cliente';
       if (templateName && (!process.env.WHATSAPP_API_URL || !process.env.WHATSAPP_TOKEN)) {
         const warning = 'WHATSAPP_TEMPLATE_NAME is set but WHATSAPP_API_URL or WHATSAPP_TOKEN is missing. Templates will not be sent.';
         console.warn(warning);
         whatsappResults.push({ warning });
       }
 
-      // Envío de WhatsApp al cliente (sin detalle de productos)
+      // Envío de WhatsApp al cliente
+      // Template: ¡Hola {{1}}! Tu pedido #{{2}} ha sido recibido exitosamente y ya está en preparación. 🍣
+      // Hora estimada de entrega: {{3}}
+      // Dirección: {{4}}
       if (phoneNormalized) {
         if (templateName) {
           const components: any[] = [];
@@ -235,10 +238,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           components.push({
             type: 'body',
             parameters: [
-              { type: 'text', text: sanitizeParam(customerName) },
-              { type: 'text', text: sanitizeParam(`${data.id}`) },
-              { type: 'text', text: sanitizeParam(estimatedText) },
-              { type: 'text', text: sanitizeParam(direccionResolved) },
+              { type: 'text', text: sanitizeParam(customerName) },           // {{1}} - nombre del cliente
+              { type: 'text', text: sanitizeParam(`${data.id}`) },           // {{2}} - número de pedido
+              { type: 'text', text: sanitizeParam(estimatedText) },          // {{3}} - hora estimada
+              { type: 'text', text: sanitizeParam(direccionResolved) },      // {{4}} - dirección
             ],
           });
 
@@ -246,7 +249,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           whatsappResults.push({ target: phoneNormalized, type: 'template', result: sent });
         } else {
           const etaText = estimatedText;
-          const templateUser = `¡Hola! ${customerName}, tu orden #${data.id} ya está en cocina.\n\nHora de entrega estimada: ${etaText}\nDirección: ${direccionResolved}\n\nGracias por preferirnos 🍣🥢`;
+          const templateUser = `¡Hola ${customerName}! Tu pedido #${data.id} ha sido recibido exitosamente y ya está en preparación. 🍣\n\nHora estimada de entrega: ${etaText}\nDirección: ${direccionResolved}`;
           const sent = await sendWhatsAppMessage(phoneNormalized, templateUser);
           whatsappResults.push({ target: phoneNormalized, type: 'text', result: sent });
         }

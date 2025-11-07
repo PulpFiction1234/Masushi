@@ -55,12 +55,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       components.push({
         type: 'body',
         parameters: [
-          { type: 'text', text: sanitizeParam(name || 'Cliente') },
-          { type: 'text', text: sanitizeParam(String(example_order_id || 'TEST')) },
-          { type: 'text', text: sanitizeParam(eta || 'Tiempo de entrega') },
-          { type: 'text', text: sanitizeParam(address || 'Dirección') },
-          { type: 'text', text: sanitizeParam(detail || 'Detalle de prueba') },
-          { type: 'text', text: sanitizeParam(total ? String(total) : '$ 0') },
+          { type: 'text', text: sanitizeParam(name || 'Cliente') },              // {{1}} - nombre
+          { type: 'text', text: sanitizeParam(String(example_order_id || 'TEST')) }, // {{2}} - pedido
+          { type: 'text', text: sanitizeParam(eta || 'Tiempo de entrega') },     // {{3}} - hora estimada
+          { type: 'text', text: sanitizeParam(address || 'Dirección') },         // {{4}} - dirección
         ],
       });
 
@@ -69,7 +67,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Fallback: plain text
-    const msg = `¡Hola! ${name || 'Cliente'}, tu orden #${example_order_id || 'TEST'} ya está en cocina.\n\nHora de entrega estimada: ${eta || 'Tiempo de entrega'}\nDirección: ${address || 'Dirección'}\n\nDetalle:\n${detail || 'Detalle de prueba'}\n\nTotal: ${total || '$ 0'}\n\nGracias por preferirnos 🍣🥢`;
+    const msg = `¡Hola ${name || 'Cliente'}! Tu pedido #${example_order_id || 'TEST'} ha sido recibido exitosamente y ya está en preparación. 🍣\n\nHora estimada de entrega: ${eta || 'Tiempo de entrega'}\nDirección: ${address || 'Dirección'}`;
     const sent = await sendWhatsAppMessage(toDigits, msg);
     return res.status(200).json({ ok: true, method: 'text', to: toDigits, result: sent });
   } catch (e) {

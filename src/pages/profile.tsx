@@ -245,7 +245,12 @@ export default function ProfilePage() {
 
   const formattedBirthday = useMemo(() => {
     if (!profile?.birthday) return null;
-    const date = new Date(profile.birthday);
+    // Parse YYYY-MM-DD sin conversión de zona horaria
+    const match = profile.birthday.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) return null;
+    const [, year, month, day] = match;
+    // Crear fecha en zona horaria local para evitar desfase
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
     if (Number.isNaN(date.getTime())) return null;
     return date.toLocaleDateString("es-CL", { day: "2-digit", month: "long" });
   }, [profile?.birthday]);
@@ -333,7 +338,20 @@ export default function ProfilePage() {
       return;
     }
 
-    const selected = new Date(trimmed);
+    // Validar formato YYYY-MM-DD
+    const dateMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!dateMatch) {
+      setBirthdayError("La fecha seleccionada no es válida.");
+      return;
+    }
+
+    // Crear fecha en zona horaria local para validación
+    const [, yearStr, monthStr, dayStr] = dateMatch;
+    const year = parseInt(yearStr);
+    const month = parseInt(monthStr) - 1;
+    const day = parseInt(dayStr);
+    const selected = new Date(year, month, day);
+    
     if (Number.isNaN(selected.getTime())) {
       setBirthdayError("La fecha seleccionada no es válida.");
       return;

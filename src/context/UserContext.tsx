@@ -231,6 +231,12 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const normalized = dateIso.trim();
     if (!normalized) return { success: false, error: 'Fecha inválida' };
 
+    // Validar formato YYYY-MM-DD
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(normalized)) {
+      return { success: false, error: 'Formato de fecha inválido' };
+    }
+
     try {
       const { data, error } = await supabase
         .from('profiles')

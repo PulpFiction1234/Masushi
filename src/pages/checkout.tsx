@@ -1,6 +1,6 @@
 "use client";
 import React, { useMemo, useReducer, useEffect, useState, useCallback } from "react";
-import { FaBirthdayCake, FaGift } from "react-icons/fa";
+import { FaBirthdayCake } from "react-icons/fa";
 import dynamic from "next/dynamic";
 import useSWR from "swr";
 import { useCart } from "@/context/CartContext";
@@ -11,7 +11,6 @@ import Navbar from "@/components/Navbar";
 import Seo from "@/components/Seo";
 import { BIRTHDAY_COUPON_CODE, BIRTHDAY_DISCOUNT_PERCENT, getBirthdayWeekBounds, formatBirthdayWeekRange } from "@/utils/birthday";
 import type { BirthdayEligibility } from "@/types/birthday";
-import type { DiscountCode } from "@/types/coupon";
 
 // THEME
 const ACCENT_FROM = "from-emerald-500";
@@ -466,27 +465,18 @@ export default function Checkout() {
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [lastOrderId, setLastOrderId] = useState<number | null>(null);
   const [lastOrderWhatsApp, setLastOrderWhatsApp] = useState<any>(null);
-  const [couponModalOpen, setCouponModalOpen] = useState(false);
-  const [couponInput, setCouponInput] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [birthdayEligibility, setBirthdayEligibility] = useState<BirthdayEligibility | null>(null);
   const [birthdayStatusLoading, setBirthdayStatusLoading] = useState(false);
-  const [availableCoupons, setAvailableCoupons] = useState<DiscountCode[]>([]);
-  const [loadingCoupons, setLoadingCoupons] = useState(false);
   const [skipBirthdayCoupon, setSkipBirthdayCoupon] = useState(false);
 
   const birthdayCouponEligible = birthdayEligibility?.eligibleNow ?? false;
 
-  const birthdayCouponAppliedCode = (appliedCoupon || "").toUpperCase() === BIRTHDAY_COUPON_CODE;
-
   const birthdayCouponActive = useMemo(
-    () => birthdayCouponEligible && !skipBirthdayCoupon && !appliedCoupon,
-    [birthdayCouponEligible, skipBirthdayCoupon, appliedCoupon],
+    () => birthdayCouponEligible && !skipBirthdayCoupon,
+    [birthdayCouponEligible, skipBirthdayCoupon],
   );
 
-  const birthdayCouponApplied = birthdayCouponActive || birthdayCouponAppliedCode;
-
-  const hasOtherCoupon = Boolean(appliedCoupon && !birthdayCouponAppliedCode);
+  const birthdayCouponApplied = birthdayCouponActive;
 
   const birthdayDiscountPercent = birthdayEligibility?.discountPercent ?? BIRTHDAY_DISCOUNT_PERCENT;
 
@@ -501,7 +491,6 @@ export default function Checkout() {
   );
 
   const birthdayCouponCode = birthdayCouponActive ? BIRTHDAY_COUPON_CODE : null;
-  const couponCodeForOrder = appliedCoupon || birthdayCouponCode;
 
   const birthdayWeekRangeLabel = useMemo(() => {
     if (!birthdayEligibility) return null;
@@ -518,30 +507,19 @@ export default function Checkout() {
 
   const birthdayCardTitle = birthdayCouponApplied
     ? "Descuento de cumpleaños activo"
-    : skipBirthdayCoupon
-    ? "Descuento de cumpleaños guardado"
-    : "Descuento de cumpleaños disponible";
+    : "Descuento de cumpleaños guardado";
 
   const birthdayCardBody = birthdayCouponApplied
     ? `${birthdayDiscountPercent}% · código ${BIRTHDAY_COUPON_CODE}. Se aplicará automáticamente en este pedido y es válido una sola vez durante tu semana de cumpleaños.`
-    : skipBirthdayCoupon
-    ? `Lo guardaste para usarlo en otra compra de esta semana. Cuando quieras activarlo, presiona "Usar en este pedido". ${birthdayValidityReminder}`
-    : `${birthdayDiscountPercent}% · código ${BIRTHDAY_COUPON_CODE}. Puedes activarlo en esta compra o guardarlo para más tarde durante la semana de tu cumpleaños.`;
+    : `Lo guardaste para usarlo en otra compra de esta semana. Cuando quieras activarlo, presiona "Usar en este pedido". ${birthdayValidityReminder}`;
 
   const handleDeferBirthdayCoupon = useCallback(() => {
     setSkipBirthdayCoupon(true);
-    if (birthdayCouponAppliedCode) {
-      setAppliedCoupon(null);
-    }
-  }, [birthdayCouponAppliedCode]);
+  }, []);
 
   const handleActivateBirthdayCoupon = useCallback(() => {
-    if (hasOtherCoupon || birthdayCouponAppliedCode) {
-      setAppliedCoupon(null);
-    }
     setSkipBirthdayCoupon(false);
-    setCouponModalOpen(false);
-  }, [hasOtherCoupon, birthdayCouponAppliedCode]);
+  }, []);
 
   const fetchBirthdayEligibility = useCallback(async () => {
     if (!user) {
@@ -566,30 +544,6 @@ export default function Checkout() {
     }
   }, [user]);
 
-  const fetchAvailableCoupons = useCallback(async () => {
-    if (!user) {
-      setAvailableCoupons([]);
-      setLoadingCoupons(false);
-      return;
-    }
-    setLoadingCoupons(true);
-    try {
-      const response = await fetch("/api/coupons");
-      if (!response.ok) {
-        setAvailableCoupons([]);
-        return;
-      }
-      const data = await response.json();
-      const rows = Array.isArray(data?.coupons) ? data.coupons as DiscountCode[] : [];
-      setAvailableCoupons(rows);
-    } catch (error) {
-      console.error("Error fetching coupons:", error);
-      setAvailableCoupons([]);
-    } finally {
-      setLoadingCoupons(false);
-    }
-  }, [user]);
-
   useEffect(() => {
     if (!user) {
       setBirthdayEligibility(null);
@@ -598,15 +552,6 @@ export default function Checkout() {
     }
     fetchBirthdayEligibility();
   }, [user, fetchBirthdayEligibility]);
-
-  useEffect(() => {
-    if (!user) {
-      setAvailableCoupons([]);
-      setLoadingCoupons(false);
-      return;
-    }
-    fetchAvailableCoupons();
-  }, [user, fetchAvailableCoupons]);
 
   useEffect(() => {
     if (!user) {
@@ -748,8 +693,8 @@ export default function Checkout() {
                   name: `${name} ${lastName}`,
                   phone,
                 },
-                // include coupon if user aplicó uno o si aplica el automático de cumpleaños
-                ...(couponCodeForOrder ? { coupon_code: couponCodeForOrder } : {}),
+                // include coupon if birthday discount is active
+                ...(birthdayCouponCode ? { coupon_code: birthdayCouponCode } : {}),
                 // Agregar extras
                 extras: bloqueSalsasPalitos.trim(),
                 // Incluir también los valores individuales para formateo personalizado
@@ -775,7 +720,6 @@ export default function Checkout() {
               setLastOrderWhatsApp(json?.whatsapp ?? null);
               setShowOrderModal(true);
               fetchBirthdayEligibility();
-              fetchAvailableCoupons();
               // Optionally clear cart here if you want: (not doing automatically)
             } else {
               console.error('Error saving order:', json);
@@ -1056,11 +1000,6 @@ export default function Checkout() {
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-green-200">{birthdayCardTitle}</p>
                         <p className="mt-1 leading-relaxed">{birthdayCardBody}</p>
-                        {hasOtherCoupon ? (
-                          <p className="mt-2 text-xs text-green-200">
-                            Usaremos este descuento y quitaremos el cupón {appliedCoupon} cuando lo actives.
-                          </p>
-                        ) : null}
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-3 text-xs text-green-100">
@@ -1082,109 +1021,6 @@ export default function Checkout() {
                   </div>
                 ) : null}
               </div>
-
-              {loadingCoupons ? (
-                <p className="mt-3 text-xs text-neutral-400">Buscando cupones disponibles…</p>
-              ) : availableCoupons.length > 0 ? (
-                <div className="mt-3 space-y-4">
-                  {availableCoupons.map((coupon) => {
-                    const percent = typeof coupon.percent === "number" ? coupon.percent : null;
-                    const amount = typeof coupon.amount === "number" ? coupon.amount : null;
-                    const codeUpper = (coupon.code || "").trim().toUpperCase();
-                    const benefitLabel = percent
-                      ? `Descuento ${percent}%`
-                      : amount
-                      ? `Descuento ${fmt(amount)}`
-                      : "Cupón disponible";
-                    const expiresLabel = coupon.expires_at
-                      ? new Date(coupon.expires_at).toLocaleDateString("es-CL", {
-                          day: "numeric",
-                          month: "long",
-                          year: "numeric",
-                        })
-                      : null;
-                    const isApplied = (appliedCoupon || "").toUpperCase() === codeUpper;
-                    return (
-                      <div
-                        key={coupon.id}
-                        className="overflow-hidden rounded-2xl border border-green-400/40 bg-gradient-to-br from-green-500/15 via-green-500/5 to-green-500/20 p-4 text-sm text-green-50 shadow-[0_10px_25px_rgba(16,185,129,0.25)]"
-                      >
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="flex flex-1 items-start gap-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500/30 text-2xl">
-                              <FaGift aria-hidden="true" />
-                            </div>
-                            <div>
-                              <p className="text-lg font-semibold tracking-wide text-white">{codeUpper}</p>
-                              <p className="text-xs uppercase tracking-[0.2em] text-green-200">{benefitLabel}</p>
-                              <div className="mt-2 space-y-1 text-xs text-green-100">
-                                {coupon.single_use ? <p>Uso único</p> : null}
-                                {expiresLabel ? <p>Vence {expiresLabel}</p> : null}
-                              </div>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const normalized = codeUpper;
-                              setAppliedCoupon(normalized);
-                              setCouponInput(normalized);
-                              setCouponModalOpen(false);
-                            }}
-                            disabled={isApplied}
-                            className={`min-w-[120px] rounded-full px-5 py-2 text-xs font-semibold transition-all duration-150 ${
-                              isApplied
-                                ? "bg-green-700/40 text-green-200 cursor-default"
-                                : "bg-green-600 text-white hover:bg-green-500 shadow-lg shadow-green-500/40"
-                            }`}
-                          >
-                            {isApplied ? "Aplicado" : "Aplicar cupón"}
-                          </button>
-                        </div>
-                        {coupon.description ? (
-                          <p className="mt-3 rounded-lg bg-green-500/15 px-3 py-2 text-xs text-green-100">
-                            {coupon.description}
-                          </p>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : null}
-
-              {couponModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                  <div className="bg-white rounded-lg p-6 max-w-md w-full text-neutral-900">
-                    <h3 className="text-lg font-bold mb-2">Ingresa tu cupón</h3>
-                    <p className="text-sm text-neutral-600 mb-4">Introduce el código de descuento vinculado a tu cuenta.</p>
-                    <input
-                      value={couponInput}
-                      onChange={(e) => setCouponInput(e.target.value)}
-                      placeholder="Código del cupón"
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 mb-4"
-                    />
-                    <div className="flex justify-end gap-2">
-                      <button onClick={() => { setCouponModalOpen(false); setCouponInput(''); }} className="px-4 py-2 rounded bg-gray-200">Cancelar</button>
-                      <button
-                        onClick={() => {
-                          const code = (couponInput || '').trim();
-                          if (!code) return alert('Ingresa un código válido');
-                          setAppliedCoupon(code.toUpperCase());
-                          setCouponModalOpen(false);
-                        }}
-                        className="px-4 py-2 rounded bg-green-600 text-white"
-                      >Aplicar</button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {appliedCoupon && (
-                <div className="mt-2 text-sm text-green-300">
-                  Cupón aplicado: <span className="font-medium text-white">{appliedCoupon}</span>
-                  <button onClick={() => setAppliedCoupon(null)} className="ml-3 text-xs underline">Quitar</button>
-                </div>
-              )}
             </div>
 
             {/* Columna derecha: Detalles del pedido (productos, salsas, carrito) */}
@@ -1215,10 +1051,10 @@ export default function Checkout() {
                     <div className="text-sm text-neutral-400">Subtotal</div>
                     <div className="text-sm font-semibold">{fmt(totalProductos)}</div>
                   </div>
-                    {couponCodeForOrder && (
+                    {birthdayCouponCode && (
                       <div className="flex items-center justify-between mb-2">
                         <div className="text-sm text-neutral-400">Cupón</div>
-                        <div className="text-sm font-semibold text-green-300">{couponCodeForOrder}</div>
+                        <div className="text-sm font-semibold text-green-300">{birthdayCouponCode}</div>
                       </div>
                     )}
                     {birthdayDiscountAmount > 0 && (

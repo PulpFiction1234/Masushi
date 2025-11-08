@@ -184,6 +184,7 @@ export default function Checkout() {
     ayudaPalitos,
     observacion,
     paymentMethod,
+    pagarCon,
   } = state;
 
   // Estado de apertura desde /api/status (refresca cada 60s)
@@ -742,6 +743,7 @@ export default function Checkout() {
                 delivery_type: deliveryType,
                 address: deliveryType === "delivery" ? shortAddress : null,
                 payment_method: deliveryType === "delivery" ? paymentMethod : null,
+                pagar_con: deliveryType === "delivery" && paymentMethod === "efectivo" && pagarCon ? pagarCon : null,
                 customer: {
                   name: `${name} ${lastName}`,
                   phone,
@@ -843,7 +845,12 @@ export default function Checkout() {
               {deliveryType === "delivery" && (
                 <>
                   <div className="mt-4">
-                    <PaymentSelector paymentMethod={paymentMethod} dispatch={dispatch} />
+                    <PaymentSelector 
+                      paymentMethod={paymentMethod} 
+                      pagarCon={pagarCon}
+                      totalAPagar={totalAfterDiscount}
+                      dispatch={dispatch} 
+                    />
                   </div>
 
                   <div className="mt-4">

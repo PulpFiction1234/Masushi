@@ -139,6 +139,7 @@ export interface CheckoutState {
 
   observacion: string;
   paymentMethod: PaymentMethod;
+  pagarCon: number | ""; // Monto con el que pagará en efectivo
 }
 
 export type CheckoutAction =
@@ -176,6 +177,7 @@ export const initialCheckoutState: CheckoutState = {
 
   observacion: "",
   paymentMethod: "",
+  pagarCon: "",
 };
 
 export function checkoutReducer(

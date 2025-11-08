@@ -45,7 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'POST') {
     // Crear nuevo pedido
-    const { items, total, delivery_type, address, customer, coupon_code, payment_method } = req.body;
+    const { items, total, delivery_type, address, customer, coupon_code, payment_method, pagar_con } = req.body;
 
     if (!items || !total || !delivery_type) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -164,7 +164,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let direccionResolved = (address && String(address).trim()) || (mode === 'delivery' ? deliveryFallback : pickupLabel);
     if (mode === 'delivery' && payment_method) {
       const metodoPagoLabel = paymentLabel(payment_method);
-      direccionResolved = `${direccionResolved} *(_${metodoPagoLabel}_)*`;
+      let pagoInfo = metodoPagoLabel;
+      
+      // Si es efectivo y tiene monto con el que paga, agregar esa información
+      if (payment_method === 'efectivo' && pagar_con) {
+        const montoPago = typeof pagar_con === 'number' ? pagar_con : Number(pagar_con);
+        if (!isNaN(montoPago) && montoPago > 0) {
+          pagoInfo = `${metodoPagoLabel} - Paga con: ${fmt(montoPago)}`;
+        }
+      }
+      
+      direccionResolved = `${direccionResolved} *(_${pagoInfo}_)*`;
     }
 
     // Build template variables and send WhatsApp notifications (awaited, return results)

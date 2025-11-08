@@ -142,7 +142,7 @@ export default function MenuPage() {
           id="mobile-categorias"
           className={`fixed left-0 top-14 h-[calc(100dvh-56px)] w-64 bg-gray-900 text-white rounded-r-2xl shadow-lg transform transition-transform duration-300 z-40 flex flex-col ${
             menuAbierto ? "translate-x-0" : "-translate-x-full"
-          } md:translate-x-0 md:top-14 md:left-0 md:fixed md:w-56 md:h-[calc(100vh-56px)]`}
+          } md:translate-x-0 md:top-19 md:left-0 md:fixed md:w-56 md:h-[calc(100vh-56px)]`}
           role="dialog"
           aria-modal="true"
         >

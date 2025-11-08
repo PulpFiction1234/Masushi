@@ -4,11 +4,13 @@ import supabaseAdmin from '@/server/supabase';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { email, password, name, phone } = req.body as {
+  const { email, password, name, phone, apellidoPaterno, apellidoMaterno } = req.body as {
     email?: string;
     password?: string;
     name?: string;
     phone?: string;
+    apellidoPaterno?: string;
+    apellidoMaterno?: string;
   };
 
   const normalizedEmail = (email || '').trim().toLowerCase();
@@ -48,6 +50,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         user_metadata: {
           full_name: name || existingUser?.user_metadata?.full_name || 'Usuario',
           phone: phone || existingUser?.user_metadata?.phone || '',
+          apellido_paterno: apellidoPaterno || existingUser?.user_metadata?.apellido_paterno || '',
+          apellido_materno: apellidoMaterno || existingUser?.user_metadata?.apellido_materno || '',
         },
       });
 
@@ -66,6 +70,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       user_metadata: {
         full_name: name || 'Usuario',
         phone: phone || '',
+        apellido_paterno: apellidoPaterno || '',
+        apellido_materno: apellidoMaterno || '',
       },
     });
 

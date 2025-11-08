@@ -37,7 +37,7 @@ interface UserContextType {
   removeFavorite: (productCode: string) => Promise<void>;
   isFavorite: (productCode: string) => boolean;
   refreshProfile: () => Promise<void>;
-  updateProfile: (data: { full_name: string; phone: string }) => Promise<void>;
+  updateProfile: (data: { full_name: string; phone: string; apellido_paterno?: string; apellido_materno?: string }) => Promise<void>;
   fetchAddresses: () => Promise<void>;
   addAddress: (params: AddAddressParams) => Promise<AddressRecord | null>;
   deleteAddress: (id: number) => Promise<boolean>;
@@ -119,6 +119,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
             id: effectiveUser.id,
             full_name: metadata.full_name || 'Usuario',
             phone: metadata.phone || '',
+            apellido_paterno: metadata.apellido_paterno || null,
+            apellido_materno: metadata.apellido_materno || null,
           })
           .select()
           .single();
@@ -207,7 +209,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await loadUserData();
   }, [loadUserData]);
 
-  const updateProfile = useCallback(async (data: { full_name: string; phone: string }) => {
+  const updateProfile = useCallback(async (data: { full_name: string; phone: string; apellido_paterno?: string; apellido_materno?: string }) => {
     if (!user) return;
 
     try {

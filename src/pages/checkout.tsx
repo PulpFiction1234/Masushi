@@ -711,44 +711,10 @@ export default function Checkout() {
             : "";
         // ========= FIN =========
 
-        const NL = "\r\n";
-        const productosTextoCRLF = productosTexto.replace(/\r?\n/g, NL);
-
-        // salto en blanco ANTES del bloque de salsas/palitos (si existe)
-        const bloqueSalsasPalitosRaw = bloqueSalsasPalitos ? `\n${bloqueSalsasPalitos}` : "";
-        const bloqueSalsasPalitosCRLF = bloqueSalsasPalitosRaw.replace(/\r?\n/g, NL);
-
-        // bloque de Observaciones separado y con encabezado
-        const bloqueObsCRLF =
-          observacion && observacion.trim()
-            ? `${NL}--- Observaciones ---${NL}${observacion.replace(/\r?\n/g, NL)}${NL}`
-            : "";
-
         // Construir dirección corta e incluir número/departamento si el usuario los puso
         const pieces = [toShortCLAddress(address)];
-  if (numeroCasa && numeroCasa.trim()) pieces.push(`N° ${numeroCasa.trim()}`);
+        if (numeroCasa && numeroCasa.trim()) pieces.push(`N° ${numeroCasa.trim()}`);
         const shortAddress = pieces.filter(Boolean).join(", ");
-        const lineaDelivery =
-          deliveryType === "delivery" ? `Delivery: ${fmt(deliveryFee)}${NL}` : "";
-
-        const cuerpoAntesDeTotal =
-          `Tipo: ${deliveryType}${NL}` +
-          (deliveryType === "delivery" ? `Dirección: ${shortAddress}${NL}` : "") +
-          `Nombre: ${name} ${lastName}${NL}` +
-          `Teléfono: ${phone}${NL}` +
-          (deliveryType === "delivery" ? `Método de pago: ${paymentLabel(paymentMethod)}${NL}` : "") +
-          `${NL}--- Productos ---${NL}${productosTextoCRLF}${NL}` +
-          bloqueSalsasPalitosCRLF +
-          lineaDelivery +
-          bloqueObsCRLF;
-
-        const discountInfo = birthdayCouponActive && birthdayDiscountAmount > 0
-          ? `${NL}Descuento cumpleaños (${birthdayDiscountPercent}%): -${fmt(birthdayDiscountAmount)}`
-          : "";
-        const couponInfo = couponCodeForOrder ? `${NL}Cupón aplicado: ${couponCodeForOrder}` : "";
-        const msg = `${cuerpoAntesDeTotal.replace(/(\r?\n)+$/, "")}${couponInfo}${discountInfo}${NL}${NL}Total: ${fmt(totalAfterDiscount)}`;
-
-        const mensaje = encodeURIComponent(msg);
         
         // Guardar pedido en BD si el usuario está logueado
         if (user) {
@@ -775,6 +741,7 @@ export default function Checkout() {
                 total: totalFinal,
                 delivery_type: deliveryType,
                 address: deliveryType === "delivery" ? shortAddress : null,
+                payment_method: deliveryType === "delivery" ? paymentMethod : null,
                 customer: {
                   name: `${name} ${lastName}`,
                   phone,

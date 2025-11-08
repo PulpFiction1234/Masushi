@@ -130,7 +130,7 @@ export default function MenuPage() {
           aria-expanded={menuAbierto}
           aria-controls="mobile-categorias"
           onClick={() => setMenuAbierto(true)}
-          className="fixed left-2 top-21 z-50 md:hidden bg-gray-800 text-white px-3 py-2 rounded-r-2xl rounded-l shadow-lg active:scale-95 transition"
+          className="fixed left-2 top-16 z-50 md:hidden bg-gray-800 text-white px-3 py-2 rounded-r-2xl rounded-l shadow-lg active:scale-95 transition"
         >
           ☰
         </button>
@@ -140,9 +140,9 @@ export default function MenuPage() {
         {/* Sidebar */}
         <aside
           id="mobile-categorias"
-          className={`fixed left-0 top-19 h-[calc(100dvh-56px)] w-64 bg-gray-900 text-white rounded-r-2xl shadow-lg transform transition-transform duration-300 z-40 flex flex-col ${
+          className={`fixed left-0 top-14 h-[calc(100dvh-56px)] w-64 bg-gray-900 text-white rounded-r-2xl shadow-lg transform transition-transform duration-300 z-40 flex flex-col ${
             menuAbierto ? "translate-x-0" : "-translate-x-full"
-          } md:translate-x-0 md:top-19 md:left-0 md:fixed md:w-56 md:h-[calc(100vh-56px)]`}
+          } md:translate-x-0 md:top-14 md:left-0 md:fixed md:w-56 md:h-[calc(100vh-56px)]`}
           role="dialog"
           aria-modal="true"
         >

@@ -11,6 +11,8 @@ export default function RegisterPage() {
   const supabase = useSupabaseClient();
 
   const [name, setName] = useState("");
+  const [apellidoPaterno, setApellidoPaterno] = useState("");
+  const [apellidoMaterno, setApellidoMaterno] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +29,7 @@ export default function RegisterPage() {
     setErrorMessage("");
     setSuccessMessage("");
 
-    if (!name.trim() || !email.trim() || !phone.trim() || !password) {
+    if (!name.trim() || !apellidoPaterno.trim() || !apellidoMaterno.trim() || !email.trim() || !phone.trim() || !password) {
       setErrorMessage("Por favor completa todos los campos.");
       return;
     }
@@ -51,7 +53,14 @@ export default function RegisterPage() {
       const resp = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name, phone: fullPhone }),
+        body: JSON.stringify({ 
+          email, 
+          password, 
+          name, 
+          apellidoPaterno, 
+          apellidoMaterno, 
+          phone: fullPhone 
+        }),
       });
       const json = await resp.json().catch(() => null);
 
@@ -183,9 +192,25 @@ export default function RegisterPage() {
 
           <input
             type="text"
-            placeholder="Nombre completo"
+            placeholder="Nombre"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
+          />
+
+          <input
+            type="text"
+            placeholder="Apellido paterno"
+            value={apellidoPaterno}
+            onChange={(e) => setApellidoPaterno(e.target.value)}
+            className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
+          />
+
+          <input
+            type="text"
+            placeholder="Apellido materno"
+            value={apellidoMaterno}
+            onChange={(e) => setApellidoMaterno(e.target.value)}
             className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
           />
 

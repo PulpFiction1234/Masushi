@@ -153,6 +153,8 @@ export default function ProfilePage() {
 
   const [editing, setEditing] = useState(false);
   const [fullName, setFullName] = useState("");
+  const [apellidoPaterno, setApellidoPaterno] = useState("");
+  const [apellidoMaterno, setApellidoMaterno] = useState("");
   const [phone, setPhone] = useState("");
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -213,6 +215,8 @@ export default function ProfilePage() {
     if (profile) {
       setFullName(profile.full_name);
       setPhone(profile.phone);
+      setApellidoPaterno(profile.apellido_paterno || "");
+      setApellidoMaterno(profile.apellido_materno || "");
     }
   }, [user, profile, router, profileLoading]);
 
@@ -316,7 +320,12 @@ export default function ProfilePage() {
 
     setSaving(true);
     try {
-      await updateProfile({ full_name: fullName, phone });
+      await updateProfile({ 
+        full_name: fullName, 
+        phone,
+        apellido_paterno: apellidoPaterno.trim() || undefined,
+        apellido_materno: apellidoMaterno.trim() || undefined,
+      });
       setEditing(false);
       await refreshProfile();
     } catch {
@@ -472,11 +481,31 @@ export default function ProfilePage() {
           {editing ? (
             <form onSubmit={handleSave} className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Nombre completo</label>
+                <label className="block text-sm text-gray-400 mb-1">Nombre</label>
                 <input
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
+                  className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Apellido paterno</label>
+                <input
+                  type="text"
+                  value={apellidoPaterno}
+                  onChange={(e) => setApellidoPaterno(e.target.value)}
+                  className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Apellido materno</label>
+                <input
+                  type="text"
+                  value={apellidoMaterno}
+                  onChange={(e) => setApellidoMaterno(e.target.value)}
                   className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
                 />
               </div>
@@ -509,6 +538,8 @@ export default function ProfilePage() {
                     setEditing(false);
                     setFullName(profile.full_name);
                     setPhone(profile.phone);
+                    setApellidoPaterno(profile.apellido_paterno || "");
+                    setApellidoMaterno(profile.apellido_materno || "");
                     setErrorMessage("");
                   }}
                   className="px-4 py-2 rounded bg-gray-700 hover:bg-gray-600 transition-colors"
@@ -520,8 +551,8 @@ export default function ProfilePage() {
           ) : (
             <div className="space-y-3">
               <div>
-                <p className="text-sm text-gray-400">Nombre</p>
-                <p className="text-lg">{profile.full_name}</p>
+                <p className="text-sm text-gray-400">Nombre completo</p>
+                <p className="text-lg">{profile.full_name} {profile.apellido_paterno || ""} {profile.apellido_materno || ""}</p>
               </div>
 
               <div>

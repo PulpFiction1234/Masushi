@@ -6,7 +6,7 @@ import sendEmail from '@/utils/sendEmail';
 import supabaseAdmin from '@/server/supabase';
 import { normalizePhone } from '@/utils/phone';
 import { getEstimateRange, formatEstimate, getEstimateWindow, formatWindow } from '@/utils/estimateTimes';
-import { fmt } from '@/utils/checkout';
+import { fmt, paymentLabel } from '@/utils/checkout';
 import { computeBirthdayEligibility, BIRTHDAY_COUPON_CODE } from '@/server/birthdayEligibility';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -45,7 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'POST') {
     // Crear nuevo pedido
-    const { items, total, delivery_type, address, customer, coupon_code } = req.body;
+    const { items, total, delivery_type, address, customer, coupon_code, payment_method } = req.body;
 
     if (!items || !total || !delivery_type) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -159,7 +159,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       || (rangeForEta ? formatEstimate(rangeForEta) : (mode === 'delivery' ? 'Tiempo estimado de entrega' : 'Tiempo estimado de retiro'));
     const pickupLabel = process.env.STORE_PICKUP_LABEL || 'Retiro en local Masushi';
     const deliveryFallback = process.env.STORE_DELIVERY_FALLBACK || 'Dirección de entrega';
-    const direccionResolved = (address && String(address).trim()) || (mode === 'delivery' ? deliveryFallback : pickupLabel);
+    
+    // Construir dirección con método de pago en negrita y entre paréntesis si es delivery
+    let direccionResolved = (address && String(address).trim()) || (mode === 'delivery' ? deliveryFallback : pickupLabel);
+    if (mode === 'delivery' && payment_method) {
+      const metodoPagoLabel = paymentLabel(payment_method);
+      direccionResolved = `${direccionResolved} *(_${metodoPagoLabel}_)*`;
+    }
 
     // Build template variables and send WhatsApp notifications (awaited, return results)
   const whatsappResults: Array<{ target?: string; type?: 'template' | 'text' | 'template-local'; result?: unknown } | { warning: string }> = [];
@@ -170,12 +176,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       try {
         const { data: profileData, error: profileErr } = await supabaseAdmin
           .from('profiles')
-          .select('full_name, phone')
+          .select('full_name, phone, apellido_paterno, apellido_materno')
           .eq('id', userId)
           .single();
 
         if (!profileErr && profileData) {
-          customerName = (profileData as any).full_name || '';
+          const fullName = (profileData as any).full_name || '';
+          const apellidoPaterno = (profileData as any).apellido_paterno || '';
+          const apellidoMaterno = (profileData as any).apellido_materno || '';
+          // Construir nombre completo con apellidos
+          customerName = [fullName, apellidoPaterno, apellidoMaterno]
+            .filter(Boolean)
+            .join(' ')
+            .trim();
           customerPhoneRaw = (profileData as any).phone || '';
         }
       } catch (e) {

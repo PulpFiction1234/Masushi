@@ -636,7 +636,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const localNotify = await notifyLocalNewOrder({
         orderId: data.id,
-        customerName,
+        customerName: `*${customerName}*`, // Nombre en negrita
         customerPhone: phoneNormalized || customerPhoneRaw || '',
         address: direccionResolved,
         detail: localDetailText || detalle,

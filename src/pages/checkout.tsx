@@ -392,6 +392,13 @@ export default function Checkout() {
     return () => { mounted = false; };
   }, [user]);
 
+  // Auto-seleccionar primera dirección cuando se cambia a delivery y hay direcciones guardadas
+  useEffect(() => {
+    if (deliveryType === 'delivery' && savedAddresses.length > 0 && selectedAddressId === null) {
+      setSelectedAddressId(savedAddresses[0].id);
+    }
+  }, [deliveryType, savedAddresses, selectedAddressId]);
+
   // Cálculos monetarios/totales
   const {
     totalProductos,

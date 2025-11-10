@@ -44,11 +44,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(409).json({ error: 'El correo ya está registrado y verificado' });
       }
 
+      // Construir nombre completo: nombre + apellido paterno + apellido materno
+      const nombreCompleto = [
+        name?.trim() || '',
+        apellidoPaterno?.trim() || '',
+        apellidoMaterno?.trim() || ''
+      ].filter(Boolean).join(' ') || 'Usuario';
+
       const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
         password,
         email_confirm: false,
         user_metadata: {
-          full_name: name || existingUser?.user_metadata?.full_name || 'Usuario',
+          full_name: nombreCompleto,
           phone: phone || existingUser?.user_metadata?.phone || '',
           apellido_paterno: apellidoPaterno || existingUser?.user_metadata?.apellido_paterno || '',
           apellido_materno: apellidoMaterno || existingUser?.user_metadata?.apellido_materno || '',
@@ -63,12 +70,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({ ok: true, userId: existingUser.id, status: 'existing' });
     }
 
+    // Construir nombre completo: nombre + apellido paterno + apellido materno
+    const nombreCompleto = [
+      name?.trim() || '',
+      apellidoPaterno?.trim() || '',
+      apellidoMaterno?.trim() || ''
+    ].filter(Boolean).join(' ') || 'Usuario';
+
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email: normalizedEmail,
       password,
       email_confirm: false,
       user_metadata: {
-        full_name: name || 'Usuario',
+        full_name: nombreCompleto,
         phone: phone || '',
         apellido_paterno: apellidoPaterno || '',
         apellido_materno: apellidoMaterno || '',

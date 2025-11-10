@@ -27,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { data: profiles, error: profilesError } = await supabaseAdmin
       .from('profiles')
-      .select('id, full_name, phone, role, created_at')
+      .select('id, full_name, phone, role, created_at, apellido_paterno, apellido_materno')
       .in('id', userIds);
 
     if (profilesError) {
@@ -39,11 +39,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
     
     const clientes = users.map(user => {
-      const profile = profilesMap.get(user.id);
+      const profile = profilesMap.get(user.id) as any;
+      
+      // Construir nombre completo con apellidos si están disponibles
+      let nombreCompleto = profile?.full_name || user.user_metadata?.full_name || '';
+      const apellidoPaterno = profile?.apellido_paterno || user.user_metadata?.apellido_paterno || '';
+      const apellidoMaterno = profile?.apellido_materno || user.user_metadata?.apellido_materno || '';
+      
+      // Si full_name ya contiene los apellidos (usuarios nuevos), usar solo ese
+      // Si no, construir concatenando (usuarios legacy)
+      if (nombreCompleto && !apellidoPaterno && !apellidoMaterno) {
+        // full_name ya tiene todo
+      } else if (apellidoPaterno || apellidoMaterno) {
+        // Concatenar nombre + apellidos
+        nombreCompleto = [nombreCompleto, apellidoPaterno, apellidoMaterno]
+          .map(s => String(s || '').trim())
+          .filter(Boolean)
+          .join(' ');
+      }
+      
       return {
         id: user.id,
         email: user.email || '',
-        full_name: profile?.full_name || user.user_metadata?.full_name || '',
+        full_name: nombreCompleto,
         phone: profile?.phone || user.user_metadata?.phone || '',
         role: profile?.role || 'user',
         created_at: profile?.created_at || user.created_at,

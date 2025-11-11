@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import supabaseAdmin from '@/server/supabase';
+import { buildFullName } from '@/utils/name';
 
 // Protected admin endpoint to list all registered users (clients).
 // Returns: id, email, full_name, phone, created_at, role
@@ -41,22 +42,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const clientes = users.map(user => {
       const profile = profilesMap.get(user.id) as any;
       
-      // Construir nombre completo con apellidos si están disponibles
-      let nombreCompleto = profile?.full_name || user.user_metadata?.full_name || '';
+      // Construir nombre completo de forma segura evitando duplicados
       const apellidoPaterno = profile?.apellido_paterno || user.user_metadata?.apellido_paterno || '';
       const apellidoMaterno = profile?.apellido_materno || user.user_metadata?.apellido_materno || '';
-      
-      // Si full_name ya contiene los apellidos (usuarios nuevos), usar solo ese
-      // Si no, construir concatenando (usuarios legacy)
-      if (nombreCompleto && !apellidoPaterno && !apellidoMaterno) {
-        // full_name ya tiene todo
-      } else if (apellidoPaterno || apellidoMaterno) {
-        // Concatenar nombre + apellidos
-        nombreCompleto = [nombreCompleto, apellidoPaterno, apellidoMaterno]
-          .map(s => String(s || '').trim())
-          .filter(Boolean)
-          .join(' ');
-      }
+      const nombreCompleto = buildFullName(profile?.full_name || user.user_metadata?.full_name || '', apellidoPaterno, apellidoMaterno);
       
       return {
         id: user.id,

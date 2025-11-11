@@ -4,6 +4,7 @@ import { sendWhatsAppMessage, sendWhatsAppTemplate } from '@/utils/sendWhatsapp'
 import { notifyLocalNewOrder } from '@/utils/notifyLocalNewOrder';
 import sendEmail from '@/utils/sendEmail';
 import supabaseAdmin from '@/server/supabase';
+import { buildFullName } from '@/utils/name';
 import { normalizePhone } from '@/utils/phone';
 import { getEstimateRange, formatEstimate, getEstimateWindow, formatWindow } from '@/utils/estimateTimes';
 import { fmt, paymentLabel } from '@/utils/checkout';
@@ -194,18 +195,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           const fullName = (profileData as any).full_name || '';
           const apellidoPaterno = (profileData as any).apellido_paterno || '';
           const apellidoMaterno = (profileData as any).apellido_materno || '';
-          
-          // Si full_name ya contiene los apellidos (usuarios nuevos), usar solo ese
-          // Si no, construir concatenando nombre + apellidos (usuarios legacy)
-          if (fullName && !apellidoPaterno && !apellidoMaterno) {
-            customerName = fullName.trim();
-          } else {
-            // Construir nombre completo: si full_name tiene solo el nombre, agregar apellidos
-            customerName = [fullName, apellidoPaterno, apellidoMaterno]
-              .map(s => String(s || '').trim())
-              .filter(Boolean)
-              .join(' ');
-          }
+
+          customerName = buildFullName(fullName, apellidoPaterno, apellidoMaterno);
           
           customerPhoneRaw = (profileData as any).phone || '';
         }

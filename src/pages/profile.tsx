@@ -14,6 +14,7 @@ import Footer from "@/components/Footer";
 import { useUser, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useUserProfile } from "@/context/UserContext";
 import Seo from "@/components/Seo";
+import { buildFullName } from '@/utils/name';
 import type { Order } from "@/types/user";
 import { fmtMiles } from "@/utils/format";
 import type { Producto } from "@/data/productos";
@@ -552,7 +553,7 @@ export default function ProfilePage() {
             <div className="space-y-3">
               <div>
                 <p className="text-sm text-gray-400">Nombre completo</p>
-                <p className="text-lg">{profile.full_name} {profile.apellido_paterno || ""} {profile.apellido_materno || ""}</p>
+                <p className="text-lg">{buildFullName(profile.full_name, profile.apellido_paterno, profile.apellido_materno)}</p>
               </div>
 
               <div>

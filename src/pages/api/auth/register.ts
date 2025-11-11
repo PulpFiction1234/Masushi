@@ -1,5 +1,41 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import supabaseAdmin from '@/server/supabase';
+import sendEmail from '@/utils/sendEmail';
+
+// Helper to create and send a verification code (15 minutes expiry)
+async function createAndSendVerification(targetUserId: string, targetEmail: string) {
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = new Date();
+  expiresAt.setMinutes(expiresAt.getMinutes() + 15);
+
+  const { data: inserted, error: insertErr } = await supabaseAdmin
+    .from('email_verifications')
+    .insert({ user_id: targetUserId, code, expires_at: expiresAt.toISOString() })
+    .select()
+    .single();
+
+  if (insertErr) {
+    console.error('[register] insert verification error', insertErr);
+    return { ok: false, details: insertErr.message || insertErr };
+  }
+
+  // send email with code
+  const subject = 'Código de verificación — Masushi';
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width:600px;margin:0 auto;padding:20px;background:#fff;">
+      <h2 style="color:#1f2937">Código de verificación</h2>
+      <div style="font-family:monospace;font-size:28px;color:#ef4444;margin:20px 0;">${code}</div>
+      <p>Este código expira en 15 minutos.</p>
+    </div>`;
+
+  try {
+    await sendEmail(targetEmail, subject, html, `Tu código: ${code}`);
+  } catch (e) {
+    console.warn('[register] could not send verification email', e);
+  }
+
+  return { ok: true, codeInsertedId: (inserted as any)?.id };
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -67,6 +103,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(500).json({ error: 'No pudimos actualizar el usuario existente' });
       }
 
+      // create and send verification code for existing user (best-effort)
+      try {
+        const emailTo = existingUser.email || normalizedEmail;
+        if (emailTo) await createAndSendVerification(existingUser.id, String(emailTo));
+      } catch (e) {
+        console.warn('[register] could not create/send verification for existing user', e);
+      }
+
       return res.status(200).json({ ok: true, userId: existingUser.id, status: 'existing' });
     }
 
@@ -97,6 +141,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const userId = (created as any)?.user?.id || (created as any)?.id || null;
     if (!userId) {
       return res.status(500).json({ error: 'No pudimos crear tu usuario' });
+    }
+
+    // create and send verification code for newly created user
+    try {
+      const emailTo = normalizedEmail;
+      if (emailTo) await createAndSendVerification(userId, emailTo);
+    } catch (e) {
+      console.warn('[register] could not create/send verification for new user', e);
     }
 
     return res.status(200).json({ ok: true, userId, status: 'created' });

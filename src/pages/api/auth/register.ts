@@ -1,6 +1,25 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import supabaseAdmin from '@/server/supabase';
+import createAndSendCustomVerification from '@/server/customVerification';
 import { buildFullName } from '@/utils/name';
+
+const attemptVerificationSend = async (userId: string, email: string) => {
+  const normalized = email.trim().toLowerCase();
+  try {
+    const { error: resendErr } = await supabaseAdmin.auth.resend({ type: 'signup', email: normalized });
+    if (!resendErr) {
+      console.log('[register] Supabase resend succeeded', { userId });
+      return { method: 'supabase' as const };
+    }
+    console.warn('[register] Supabase resend reported error, using fallback', resendErr);
+  } catch (resendCatch) {
+    console.warn('[register] Supabase resend threw, using fallback', resendCatch);
+  }
+
+  const fallback = await createAndSendCustomVerification(userId, normalized);
+  console.log('[register] custom verification dispatched', { userId, expires_at: fallback.expiresAt.toISOString() });
+  return { method: 'custom' as const, expires_at: fallback.expiresAt.toISOString() };
+};
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -64,23 +83,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(500).json({ error: 'No pudimos actualizar el usuario existente' });
       }
 
-      // Try to have Supabase send its OTP email (preferred). If that fails,
-      // fall back to our custom verification generation and SMTP send.
-      try {
-        const emailTo = existingUser.email || normalizedEmail;
-        if (emailTo) {
-          const { error: resendErr } = await supabaseAdmin.auth.resend({ type: 'signup', email: String(emailTo).toLowerCase() });
-          if (!resendErr) {
-            console.log('[register] Supabase resend succeeded for existing user', existingUser.id);
-          } else {
-            console.warn('[register] Supabase resend reported error for existing user (no fallback)', resendErr);
-          }
-        }
-      } catch (e) {
-        console.warn('[register] could not request supabase resend for existing user (no fallback)', e);
-      }
+      const verification = await attemptVerificationSend(existingUser.id, existingUser.email || normalizedEmail);
 
-      return res.status(200).json({ ok: true, userId: existingUser.id, status: 'existing' });
+      return res.status(200).json({ ok: true, userId: existingUser.id, status: 'existing', verification });
     }
 
     // Construir nombre completo de forma segura evitando duplicados
@@ -108,22 +113,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ error: 'No pudimos crear tu usuario' });
     }
 
-    // Ask Supabase to send its OTP email (preferred). If it fails, fall back
-    // to our custom code+SMTP path.
-    try {
-      if (normalizedEmail) {
-        const { error: resendErr } = await supabaseAdmin.auth.resend({ type: 'signup', email: normalizedEmail });
-        if (!resendErr) {
-          console.log('[register] Supabase resend succeeded for new user', userId);
-        } else {
-          console.warn('[register] Supabase resend reported error for new user (no fallback)', resendErr);
-        }
-      }
-    } catch (e) {
-      console.warn('[register] could not request supabase resend for new user (no fallback)', e);
-    }
+    const verification = await attemptVerificationSend(userId, normalizedEmail);
 
-    return res.status(200).json({ ok: true, userId, status: 'created' });
+    return res.status(200).json({ ok: true, userId, status: 'created', verification });
   } catch (err: any) {
     console.error('[register] unexpected error', err);
     return res.status(500).json({ error: err?.message || 'Error registrando usuario' });

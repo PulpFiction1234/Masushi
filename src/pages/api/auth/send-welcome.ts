@@ -21,16 +21,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       targetUserId = user.id;
     }
 
-    // Fetch user to ensure email is confirmed
-    const { data: userDataObj, error: getUserErr } = await supabaseAdmin.auth.admin.getUserById(targetUserId as string);
-    if (getUserErr) throw getUserErr;
-    const fetchedUser = (userDataObj as any)?.user ?? userDataObj ?? {};
-    const emailConfirmed = !!(fetchedUser?.email_confirmed_at || fetchedUser?.email_confirmed);
-    if (!emailConfirmed) return res.status(400).json({ error: 'User email not confirmed' });
+    // Try to fetch user metadata for display name; but don't require
+    // Supabase's email_confirmed flag — the client calls this endpoint right
+    // after a successful verification flow, and sometimes the admin flag may
+    // not be immediately visible. Send the welcome email regardless.
+    let fetchedUser: any = {};
+    try {
+      const { data: userDataObj, error: getUserErr } = await supabaseAdmin.auth.admin.getUserById(targetUserId as string);
+      if (!getUserErr) fetchedUser = (userDataObj as any)?.user ?? userDataObj ?? {};
+    } catch (e) {
+      console.warn('[send-welcome] could not fetch user by id for metadata', e);
+    }
 
     if (!targetEmail && fetchedUser?.email) targetEmail = fetchedUser.email;
 
-    // Build display name
+    // Build display name (best-effort)
     let displayName = (fetchedUser?.user_metadata && fetchedUser.user_metadata.full_name) || fetchedUser?.user_metadata?.fullName || fetchedUser?.email || '';
     try {
       const { data: profileData } = await supabaseAdmin.from('profiles').select('full_name').eq('id', targetUserId).single();

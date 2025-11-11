@@ -1,41 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import supabaseAdmin from '@/server/supabase';
-import sendEmail from '@/utils/sendEmail';
-
-// Helper to create and send a verification code (15 minutes expiry)
-async function createAndSendVerification(targetUserId: string, targetEmail: string) {
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiresAt = new Date();
-  expiresAt.setMinutes(expiresAt.getMinutes() + 15);
-
-  const { data: inserted, error: insertErr } = await supabaseAdmin
-    .from('email_verifications')
-    .insert({ user_id: targetUserId, code, expires_at: expiresAt.toISOString() })
-    .select()
-    .single();
-
-  if (insertErr) {
-    console.error('[register] insert verification error', insertErr);
-    return { ok: false, details: insertErr.message || insertErr };
-  }
-
-  // send email with code
-  const subject = 'Código de verificación — Masushi';
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width:600px;margin:0 auto;padding:20px;background:#fff;">
-      <h2 style="color:#1f2937">Código de verificación</h2>
-      <div style="font-family:monospace;font-size:28px;color:#ef4444;margin:20px 0;">${code}</div>
-      <p>Este código expira en 15 minutos.</p>
-    </div>`;
-
-  try {
-    await sendEmail(targetEmail, subject, html, `Tu código: ${code}`);
-  } catch (e) {
-    console.warn('[register] could not send verification email', e);
-  }
-
-  return { ok: true, codeInsertedId: (inserted as any)?.id };
-}
+import { buildFullName } from '@/utils/name';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -80,12 +45,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(409).json({ error: 'El correo ya está registrado y verificado' });
       }
 
-      // Construir nombre completo: nombre + apellido paterno + apellido materno
-      const nombreCompleto = [
-        name?.trim() || '',
-        apellidoPaterno?.trim() || '',
-        apellidoMaterno?.trim() || ''
-      ].filter(Boolean).join(' ') || 'Usuario';
+      // Construir nombre completo de forma segura evitando duplicados
+      const nombreCompleto = buildFullName(name?.trim() || '', apellidoPaterno?.trim() || '', apellidoMaterno?.trim() || '') || 'Usuario';
 
       const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
         password,
@@ -103,23 +64,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(500).json({ error: 'No pudimos actualizar el usuario existente' });
       }
 
-      // create and send verification code for existing user (best-effort)
+      // Try to have Supabase send its OTP email (preferred). If that fails,
+      // fall back to our custom verification generation and SMTP send.
       try {
         const emailTo = existingUser.email || normalizedEmail;
-        if (emailTo) await createAndSendVerification(existingUser.id, String(emailTo));
+        if (emailTo) {
+          const { error: resendErr } = await supabaseAdmin.auth.resend({ type: 'signup', email: String(emailTo).toLowerCase() });
+          if (!resendErr) {
+            console.log('[register] Supabase resend succeeded for existing user', existingUser.id);
+          } else {
+            console.warn('[register] Supabase resend reported error for existing user (no fallback)', resendErr);
+          }
+        }
       } catch (e) {
-        console.warn('[register] could not create/send verification for existing user', e);
+        console.warn('[register] could not request supabase resend for existing user (no fallback)', e);
       }
 
       return res.status(200).json({ ok: true, userId: existingUser.id, status: 'existing' });
     }
 
-    // Construir nombre completo: nombre + apellido paterno + apellido materno
-    const nombreCompleto = [
-      name?.trim() || '',
-      apellidoPaterno?.trim() || '',
-      apellidoMaterno?.trim() || ''
-    ].filter(Boolean).join(' ') || 'Usuario';
+    // Construir nombre completo de forma segura evitando duplicados
+    const nombreCompleto = buildFullName(name?.trim() || '', apellidoPaterno?.trim() || '', apellidoMaterno?.trim() || '') || 'Usuario';
 
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email: normalizedEmail,
@@ -143,12 +108,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ error: 'No pudimos crear tu usuario' });
     }
 
-    // create and send verification code for newly created user
+    // Ask Supabase to send its OTP email (preferred). If it fails, fall back
+    // to our custom code+SMTP path.
     try {
-      const emailTo = normalizedEmail;
-      if (emailTo) await createAndSendVerification(userId, emailTo);
+      if (normalizedEmail) {
+        const { error: resendErr } = await supabaseAdmin.auth.resend({ type: 'signup', email: normalizedEmail });
+        if (!resendErr) {
+          console.log('[register] Supabase resend succeeded for new user', userId);
+        } else {
+          console.warn('[register] Supabase resend reported error for new user (no fallback)', resendErr);
+        }
+      }
     } catch (e) {
-      console.warn('[register] could not create/send verification for new user', e);
+      console.warn('[register] could not request supabase resend for new user (no fallback)', e);
     }
 
     return res.status(200).json({ ok: true, userId, status: 'created' });

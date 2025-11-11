@@ -31,47 +31,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log('[send-verification-code] targetUserId=', targetUserId);
 
-    // try to leverage Supabase's own email OTP if available
+    // Use Supabase's own email OTP flow only. We do NOT send a second custom
+    // email from our SMTP to avoid users receiving two codes. If Supabase
+    // fails to resend, we return a 500 so callers know the resend did not
+    // succeed (no fallback custom email will be sent).
     try {
       const { error: resendErr } = await supabaseAdmin.auth.resend({ type: 'signup', email: targetEmail });
       if (!resendErr) {
         console.log('[send-verification-code] OTP email sent via Supabase');
         return res.status(200).json({ ok: true, method: 'supabase' });
       }
-      console.warn('[send-verification-code] Supabase resend error, falling back to custom email', resendErr);
+      console.error('[send-verification-code] Supabase resend error (no fallback):', resendErr);
+      return res.status(500).json({ error: 'Supabase resend failed' });
     } catch (resendCatch) {
-      console.warn('[send-verification-code] Supabase resend threw, falling back to custom email', resendCatch);
+      console.error('[send-verification-code] Supabase resend threw (no fallback):', resendCatch);
+      return res.status(500).json({ error: 'Supabase resend threw' });
     }
-
-    // fallback: generate 6-digit code and send custom email
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 15);
-
-    const { data: inserted, error: insertErr } = await supabaseAdmin
-      .from('email_verifications')
-      .insert({ user_id: targetUserId, code, expires_at: expiresAt.toISOString() })
-      .select()
-      .single();
-
-    if (insertErr) {
-      console.error('[send-verification-code] insert error', insertErr);
-      return res.status(500).json({ error: 'Error inserting verification code', details: insertErr.message || insertErr });
-    }
-
-    console.log('[send-verification-code] inserted record id=', (inserted as any)?.id);
-
-    // send email with code
-    const subject = 'Código de verificación — Masushi';
-    const html = `<p>Tu código de verificación es: <strong style="font-family:monospace;font-size:20px">${code}</strong></p><p>Este código expira en 15 minutos.</p>`;
-    try {
-      await sendEmail(targetEmail, subject, html, `Tu código: ${code}`);
-    } catch (e) {
-      console.error('[send-verification-code] error sending verification email', e);
-      // do not fail the whole operation -- code is stored
-    }
-
-    return res.status(200).json({ ok: true, method: 'custom' });
   } catch (e: any) {
     console.error('send-verification-code error', e);
     return res.status(500).json({ error: e?.message || String(e) });

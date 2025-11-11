@@ -23,6 +23,74 @@ export default function RegisterPage() {
   const [verificationCode, setVerificationCode] = useState('');
   const [verifying, setVerifying] = useState(false);
   const [createdUserId, setCreatedUserId] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
+  const [welcomeEmailSent, setWelcomeEmailSent] = useState(false);
+
+  const handleResendCode = async () => {
+    setResendMessage(null);
+    if (!email) {
+      setResendMessage('No se encontró el correo del registro.');
+      return;
+    }
+
+    setResending(true);
+    try {
+      const resp = await fetch('/api/auth/send-verification-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, userId: createdUserId }),
+      });
+      const json = await resp.json().catch(() => null);
+
+      if (resp.ok) {
+        if (json?.method === 'custom') {
+          setResendMessage('Código reenviado desde nuestro respaldo. Revisa tu correo.');
+        } else {
+          setResendMessage('Código reenviado. Revisa tu correo.');
+        }
+        return;
+      }
+
+      if (resp.status === 429) {
+        const retry = json?.retry_after;
+        if (retry && Number.isFinite(retry)) {
+          setResendMessage(`Por seguridad puedes volver a solicitar el código en ${retry} segundos.`);
+        } else if (json?.message) {
+          setResendMessage(json.message);
+        } else {
+          setResendMessage('Has solicitado el código muy seguido. Intenta de nuevo más tarde.');
+        }
+        return;
+      }
+
+      setResendMessage(json?.error || 'No se pudo reenviar el código');
+    } catch (err) {
+      setResendMessage('Error de conexión al reenviar el código');
+    } finally {
+      setResending(false);
+    }
+  };
+
+  const triggerWelcomeEmail = async (targetEmail: string, targetUserId: string | null) => {
+    if (!targetEmail || welcomeEmailSent) return;
+    try {
+      const resp = await fetch('/api/auth/send-welcome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: targetEmail, userId: targetUserId }),
+      });
+      if (!resp.ok) {
+        const json = await resp.json().catch(() => null);
+        console.warn('send-welcome returned non-OK', resp.status, json);
+        return;
+      }
+      setWelcomeEmailSent(true);
+      console.log('send-welcome triggered successfully');
+    } catch (e) {
+      console.warn('Could not trigger welcome email after verification', e);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,19 +141,18 @@ export default function RegisterPage() {
       const createdId = json?.userId || null;
       if (createdId) setCreatedUserId(createdId);
 
-      setSuccessMessage("Cuenta creada. Revisa tu email para el código de verificación.");
-      setLoading(false);
-
-      try {
-        await fetch('/api/auth/send-verification-code', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, userId: createdId }),
-        });
-      } catch (e) {
-        console.error('Error requesting verification code', e);
+      const verificationInfo = json?.verification;
+      if (verificationInfo?.method === 'custom') {
+        setResendMessage('Código enviado desde nuestro respaldo. Revisa tu correo.');
+      } else if (verificationInfo?.method === 'supabase') {
+        setResendMessage('Código enviado. Revisa tu correo.');
+      } else {
+        setResendMessage(null);
       }
 
+      setWelcomeEmailSent(false);
+      setSuccessMessage("Cuenta creada. Revisa tu email para el código de verificación.");
+      setLoading(false);
       setShowVerificationModal(true);
     } catch (err: unknown) {
       const msg = typeof err === 'object' && err !== null && 'message' in err ? String((err as { message?: unknown }).message ?? '') : String(err);
@@ -110,55 +177,90 @@ export default function RegisterPage() {
 
     setVerifying(true);
     try {
-      let verifiedWith: 'supabase' | 'custom' | null = null;
+      let verificationMethod: 'supabase' | 'custom' | null = null;
+      let verificationUserId: string | null = createdUserId;
+      let lastErrorMessage: string | undefined;
 
-      try {
-        const otpResult = await supabase.auth.verifyOtp({
-          email,
-          token: normalizedCode,
-          type: 'signup',
-        });
+      const otpResult = await supabase.auth.verifyOtp({
+        email,
+        token: normalizedCode,
+        type: 'signup',
+      });
 
-        if (!otpResult.error) {
-          verifiedWith = 'supabase';
-          if (!otpResult.data?.session && password) {
-            const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-            if (signInError) {
-              console.warn('Auto sign-in after verifyOtp failed', signInError);
-            }
-          }
-        } else {
-          console.warn('verifyOtp error', otpResult.error);
-        }
-      } catch (err) {
-        console.warn('verifyOtp threw', err);
-      }
+      if (!otpResult.error) {
+        verificationMethod = 'supabase';
+        verificationUserId = otpResult.data?.user?.id || createdUserId;
 
-      if (!verifiedWith) {
-        const resp = await fetch('/api/auth/verify-code', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, userId: createdUserId, code: normalizedCode }),
-        });
-        const json = await resp.json().catch(() => null);
-        if (!resp.ok) {
-          throw new Error(json?.error || 'Código inválido o expirado');
-        }
-        verifiedWith = 'custom';
-        if (password) {
+        if (!otpResult.data?.session && password) {
           const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
           if (signInError) {
-            console.warn('Auto sign-in after custom verification failed', signInError);
+            console.warn('Auto sign-in after verifyOtp failed', signInError);
           }
+        }
+      } else {
+        lastErrorMessage = otpResult.error.message || 'Código inválido o expirado';
+        console.warn('Supabase verifyOtp failed, trying custom verification', otpResult.error);
+      }
+
+      if (!verificationMethod) {
+        try {
+          const resp = await fetch('/api/auth/verify-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, userId: createdUserId, code: normalizedCode }),
+          });
+          const json = await resp.json().catch(() => null);
+          if (!resp.ok) {
+            throw new Error(json?.error || lastErrorMessage || 'Código inválido o expirado');
+          }
+          verificationMethod = 'custom';
+          verificationUserId = json?.userId || verificationUserId || createdUserId;
+
+          if (password) {
+            const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+            if (signInError) {
+              console.warn('Auto sign-in after custom verification failed', signInError);
+            }
+          }
+        } catch (customErr) {
+          lastErrorMessage = customErr instanceof Error ? customErr.message : String(customErr);
+          throw new Error(lastErrorMessage);
         }
       }
 
-      if (!verifiedWith) {
-        throw new Error('Código inválido');
+      if (!verificationMethod) {
+        throw new Error(lastErrorMessage || 'Código inválido');
+      }
+
+      try {
+        if (verificationUserId) {
+          const fullName = `${name.trim()} ${apellidoPaterno.trim()} ${apellidoMaterno.trim()}`;
+          const fullPhone = phone.trim() ? `+569${phone.trim()}` : '';
+
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .upsert({
+              id: verificationUserId,
+              full_name: fullName,
+              apellido_paterno: apellidoPaterno.trim(),
+              apellido_materno: apellidoMaterno.trim(),
+              phone: fullPhone,
+              updated_at: new Date().toISOString(),
+            });
+
+          if (profileError) {
+            console.error('Error creating profile:', profileError);
+          }
+        }
+      } catch (profileErr) {
+        console.error('Error in profile creation:', profileErr);
       }
 
       setShowVerificationModal(false);
       setSuccessMessage('Correo verificado. Serás redirigido.');
+
+      await triggerWelcomeEmail(email, verificationUserId);
+
       setTimeout(() => {
         try {
           const next = sessionStorage.getItem('post_auth_next');
@@ -280,7 +382,7 @@ export default function RegisterPage() {
         </form>
       </main>
       {showVerificationModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="bg-white rounded-lg p-6 max-w-sm w-full text-neutral-900">
             <h3 className="text-lg font-bold mb-2">Código de verificación</h3>
             <p className="text-sm text-neutral-600 mb-4">Revisa tu correo y escribe el código que te enviamos.</p>
@@ -290,14 +392,27 @@ export default function RegisterPage() {
               placeholder="Código (ej.: 123456)"
               className="w-full rounded-md border border-gray-300 px-3 py-2 mb-4"
             />
-            <div className="flex justify-end gap-2">
-              <button onClick={() => { setShowVerificationModal(false); }} className="px-4 py-2 rounded bg-gray-200">Cerrar</button>
+            {resendMessage && (
+              <p className={`text-sm mb-3 ${resendMessage.includes('Código enviado') || resendMessage.includes('Código reenviado') ? 'text-green-600' : 'text-red-600'}`}>{resendMessage}</p>
+            )}
+            <div className="flex flex-col gap-2">
               <button
                 type="button"
                 onClick={handleVerifyCodeClick}
-                className="px-4 py-2 rounded bg-green-600 text-white"
+                className="w-full px-4 py-2 rounded bg-green-600 hover:bg-green-700 text-white font-medium transition-colors disabled:opacity-60"
                 disabled={verifying}
-              >{verifying ? 'Verificando...' : 'Verificar'}</button>
+              >{verifying ? 'Verificando...' : 'Verificar código'}</button>
+              <button
+                type="button"
+                onClick={handleResendCode}
+                className="w-full px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors disabled:opacity-60"
+                disabled={resending}
+              >{resending ? 'Reenviando...' : 'Reenviar código'}</button>
+              <button
+                type="button"
+                onClick={() => { setShowVerificationModal(false); }}
+                className="w-full px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-neutral-900 font-medium transition-colors"
+              >Cerrar</button>
             </div>
           </div>
         </div>

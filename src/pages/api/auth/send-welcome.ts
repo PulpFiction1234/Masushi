@@ -8,6 +8,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!email && !userId) return res.status(400).json({ error: 'email or userId required' });
 
   try {
+    console.log('[send-welcome] request body=', { email, userId });
     let targetUserId = userId as string | undefined;
     let targetEmail = typeof email === 'string' ? email.trim().toLowerCase() : undefined;
 
@@ -38,7 +39,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // ignore
     }
 
-    if (!targetEmail) return res.status(400).json({ error: 'No email available for user' });
+    if (!targetEmail) {
+      console.warn('[send-welcome] no targetEmail after lookup for userId=', targetUserId);
+      return res.status(400).json({ error: 'No email available for user' });
+    }
 
     const namePart = displayName && String(displayName).trim() ? String(displayName).trim() : String((targetEmail || '')).split('@')[0];
 
@@ -86,11 +90,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const text = `Hola ${namePart}! Tu cuenta ha sido verificada correctamente. Bienvenido a Masushi.`;
 
     try {
+      console.log('[send-welcome] sending welcome email to', targetEmail);
       await sendEmail(String(targetEmail), 'Bienvenido a Masushi 🍣', html, text);
+      console.log('[send-welcome] sent welcome email to', targetEmail);
       return res.status(200).json({ ok: true });
     } catch (e) {
       console.error('[send-welcome] error sending email', e);
-      return res.status(500).json({ error: 'Could not send welcome email' });
+      return res.status(500).json({ error: 'Could not send welcome email', details: String(e) });
     }
   } catch (e: any) {
     console.error('[send-welcome] error', e);

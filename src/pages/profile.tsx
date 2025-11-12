@@ -151,6 +151,7 @@ export default function ProfilePage() {
   const supabase = useSupabaseClient();
   const { profile, updateProfile, refreshProfile, loading: profileLoading, setBirthday } = useUserProfile();
   const { addToCart, clearCart, updateQuantity, ready } = useCart();
+  const openBirthdayQuery = router.query.openBirthday;
 
   const [editing, setEditing] = useState(false);
   const [fullName, setFullName] = useState("");
@@ -224,6 +225,28 @@ export default function ProfilePage() {
   useEffect(() => {
     fetchBirthdayStatus();
   }, [fetchBirthdayStatus]);
+
+  useEffect(() => {
+    if (profileLoading) return;
+    if (!openBirthdayQuery) return;
+
+    const queryValue = Array.isArray(openBirthdayQuery) ? openBirthdayQuery[0] : openBirthdayQuery;
+    if (!queryValue) return;
+
+    const shouldOpen = queryValue === "1" || queryValue.toLowerCase() === "true";
+    const nextQuery = { ...router.query } as Record<string, string | string[]>;
+    delete nextQuery.openBirthday;
+
+    if (!shouldOpen || profile?.birthday) {
+      void router.replace({ pathname: router.pathname, query: nextQuery }, undefined, { shallow: true });
+      return;
+    }
+
+    setBirthdayError("");
+    setBirthdayInput("");
+    setShowBirthdayModal(true);
+    void router.replace({ pathname: router.pathname, query: nextQuery }, undefined, { shallow: true });
+  }, [openBirthdayQuery, profile?.birthday, profileLoading, router]);
 
   useEffect(() => {
     const loadOrders = async () => {
@@ -765,15 +788,43 @@ export default function ProfilePage() {
       </main>
 
       {showBirthdayModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 text-gray-900 shadow-xl">
-            <h2 className="text-lg font-semibold">Registra tu cumpleaños</h2>
-            <p className="mt-1 text-sm text-gray-600">
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8">
+          <div
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => {
+              if (!birthdaySaving) {
+                setShowBirthdayModal(false);
+                setBirthdayInput("");
+              }
+            }}
+            aria-hidden="true"
+          />
+          <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-gray-900/95 p-6 text-white shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-green-300">Cupón de cumpleaños</p>
+                <h2 className="mt-2 text-xl font-semibold">Registra tu cumpleaños</h2>
+              </div>
+              <button
+                type="button"
+                aria-label="Cerrar"
+                onClick={() => {
+                  if (!birthdaySaving) {
+                    setShowBirthdayModal(false);
+                    setBirthdayInput("");
+                  }
+                }}
+                className="rounded-full p-1 text-gray-400 transition hover:bg-white/10 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="mt-4 text-sm text-gray-300">
               Esta fecha se usará para activar automáticamente un descuento del {BIRTHDAY_DISCOUNT_PERCENT}% válido por una compra durante la semana de tu cumpleaños.
             </p>
-            <form onSubmit={handleBirthdaySubmit} className="mt-4 space-y-4">
+            <form onSubmit={handleBirthdaySubmit} className="mt-5 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700" htmlFor="birthday-input">
+                <label className="block text-sm font-medium text-gray-200" htmlFor="birthday-input">
                   Fecha de nacimiento
                 </label>
                 <input
@@ -783,11 +834,11 @@ export default function ProfilePage() {
                   onChange={(e) => setBirthdayInput(e.target.value)}
                   max={birthdayMaxDate}
                   required
-                  className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/40"
+                  className="mt-2 w-full rounded-xl border border-white/10 bg-gray-800/80 px-3 py-2 text-sm text-white shadow-inner focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-500/40"
                 />
               </div>
-              {birthdayError && <p className="text-sm text-red-500">{birthdayError}</p>}
-              <div className="flex justify-end gap-2">
+              {birthdayError ? <p className="text-sm text-red-400">{birthdayError}</p> : null}
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={() => {
@@ -796,7 +847,7 @@ export default function ProfilePage() {
                       setBirthdayInput("");
                     }
                   }}
-                  className="rounded-lg px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className="rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-gray-300 transition hover:bg-white/10 disabled:opacity-60"
                   disabled={birthdaySaving}
                 >
                   Cancelar
@@ -804,7 +855,7 @@ export default function ProfilePage() {
                 <button
                   type="submit"
                   disabled={birthdaySaving}
-                  className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-500 disabled:opacity-60"
+                  className="rounded-xl bg-green-500 px-4 py-2 text-sm font-semibold text-gray-900 transition hover:bg-green-400 disabled:opacity-60"
                 >
                   {birthdaySaving ? "Guardando..." : "Guardar"}
                 </button>

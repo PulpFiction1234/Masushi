@@ -10,6 +10,8 @@ import ProductSection from "@/components/ProductSection";
 import ProductSectionPromo from "@/components/ProductSectionPromo";
 import Seo from "@/components/Seo";
 import LocalBusinessJsonLd, { AggregateRatingSchema } from "@/components/LocalBusinessJsonLd";
+import BirthdayReminderModal from "@/components/BirthdayReminderModal";
+import { useBirthdayReminder } from "@/hooks/useBirthdayReminder";
 
 // Importa tus datos de horarios y la función de conversión
 import { getOpeningHoursSchema } from "@/utils/getOpeningHoursSchema";
@@ -44,6 +46,12 @@ const myAggregateRating: AggregateRatingSchema = {
 
 export default function Home() {
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const {
+    isOpen: birthdayReminderOpen,
+    profile: birthdayProfile,
+    dismissForSession: dismissBirthdayReminder,
+    dismissForever: dismissBirthdayReminderForever,
+  } = useBirthdayReminder();
 
   return (
     <div className="bg-gray-950 text-white">
@@ -119,6 +127,12 @@ export default function Home() {
       )}
 
       <Navbar />
+      <BirthdayReminderModal
+        open={birthdayReminderOpen}
+        onClose={dismissBirthdayReminder}
+        onNeverShow={dismissBirthdayReminderForever}
+        profileName={birthdayProfile?.full_name}
+      />
       <HeroCarousel intervalMs={9000} />
 
       {/* H1 visible: Es vital para el SEO y está perfecto */}

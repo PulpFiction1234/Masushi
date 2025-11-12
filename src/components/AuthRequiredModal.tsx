@@ -17,22 +17,41 @@ export default function AuthRequiredModal({ open, onClose }: Props) {
       sessionStorage.setItem('post_auth_next', '/checkout');
     } catch {}
     onClose();
-  router.push(path);
+    router.push(path);
   };
 
   return (
-    <div className="fixed inset-0 z-60 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="bg-neutral-900 border border-white/10 rounded-lg p-6 z-70 w-full max-w-md text-white shadow-lg">
-        <div className="flex justify-between items-start">
-          <h3 className="text-lg font-semibold">Necesitas una cuenta</h3>
-          <button onClick={onClose} className="text-neutral-400 hover:text-white">✖</button>
+    <div className="fixed inset-0 z-[70] flex items-center justify-center px-4 py-8">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-gray-900/95 p-6 text-white shadow-2xl">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-green-300">¡Hola!</p>
+            <h3 className="mt-2 text-xl font-semibold">Necesitas una cuenta</h3>
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="rounded-full p-1 text-neutral-400 transition hover:bg-white/10 hover:text-white"
+          >
+            ✕
+          </button>
         </div>
-        <p className="mt-3 text-sm text-neutral-300">Inicia sesión o regístrate para poder completar tu pedido.</p>
+        <p className="mt-4 text-sm text-neutral-300">Inicia sesión o regístrate para poder completar tu pedido.</p>
 
-        <div className="mt-5 flex gap-3">
-          <button onClick={() => goTo('/login')} className="flex-1 bg-white text-neutral-900 py-2 rounded hover:opacity-95">Iniciar sesión</button>
-          <button onClick={() => goTo('/register')} className="flex-1 border border-white/10 text-white py-2 rounded hover:bg-white/5">Registrarme</button>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <button
+            onClick={() => goTo('/login')}
+            className="flex-1 rounded-xl bg-green-500 px-4 py-2 text-gray-900 transition hover:bg-green-400"
+          >
+            Iniciar sesión
+          </button>
+          <button
+            onClick={() => goTo('/register')}
+            className="flex-1 rounded-xl border border-white/10 px-4 py-2 text-white transition hover:bg-white/10"
+          >
+            Registrarme
+          </button>
         </div>
       </div>
     </div>

@@ -8,6 +8,8 @@ import ListaProductos from "@/components/ListaProductos";
 import Navbar from "@/components/Navbar";
 import Seo from "@/components/Seo";
 import { useUser } from "@supabase/auth-helpers-react";
+import BirthdayReminderModal from "@/components/BirthdayReminderModal";
+import { useBirthdayReminder } from "@/hooks/useBirthdayReminder";
 
 import { getMenuSchema } from "@/utils/menu-schema";
 
@@ -32,6 +34,12 @@ export default function MenuPage() {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const busquedaDeferida = useDeferredValue(busqueda);
+  const {
+    isOpen: birthdayReminderOpen,
+    profile: birthdayProfile,
+    dismissForSession: dismissBirthdayReminder,
+    dismissForever: dismissBirthdayReminderForever,
+  } = useBirthdayReminder();
 
   const router = useRouter();
   
@@ -109,6 +117,12 @@ export default function MenuPage() {
       )}
 
       <Navbar />
+      <BirthdayReminderModal
+        open={birthdayReminderOpen}
+        onClose={dismissBirthdayReminder}
+        onNeverShow={dismissBirthdayReminderForever}
+        profileName={birthdayProfile?.full_name}
+      />
 
       {/* H1 + descripción (mismo texto que el <title>) */}
       <div className="bg-gray-950 flex justify-center md:ml-56">

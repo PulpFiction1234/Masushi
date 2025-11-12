@@ -382,37 +382,65 @@ export default function RegisterPage() {
         </form>
       </main>
       {showVerificationModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full text-neutral-900">
-            <h3 className="text-lg font-bold mb-2">Código de verificación</h3>
-            <p className="text-sm text-neutral-600 mb-4">Revisa tu correo y escribe el código que te enviamos.</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8">
+          <div
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => setShowVerificationModal(false)}
+            aria-hidden="true"
+          />
+          <div className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-white/10 bg-gray-900/95 p-6 text-white shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-green-300">Verificación</p>
+                <h3 className="mt-2 text-xl font-semibold">Código de verificación</h3>
+              </div>
+              <button
+                type="button"
+                aria-label="Cerrar"
+                onClick={() => setShowVerificationModal(false)}
+                className="rounded-full p-1 text-gray-400 transition hover:bg-white/10 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="mt-4 text-sm text-gray-300">Revisa tu correo y escribe el código que te enviamos.</p>
             <input
               value={verificationCode}
               onChange={(e) => setVerificationCode(e.target.value)}
               placeholder="Código (ej.: 123456)"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 mb-4"
+              className="mt-4 w-full rounded-xl border border-white/10 bg-gray-800/80 px-3 py-2 text-sm text-white shadow-inner focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-500/40"
             />
-            {resendMessage && (
-              <p className={`text-sm mb-3 ${resendMessage.includes('Código enviado') || resendMessage.includes('Código reenviado') ? 'text-green-600' : 'text-red-600'}`}>{resendMessage}</p>
-            )}
-            <div className="flex flex-col gap-2">
+            {resendMessage ? (
+              <p
+                className={`mt-3 text-sm ${resendMessage.includes('Código enviado') || resendMessage.includes('Código reenviado') ? 'text-green-300' : 'text-red-400'}`}
+              >
+                {resendMessage}
+              </p>
+            ) : null}
+            <div className="mt-5 flex flex-col gap-2">
               <button
                 type="button"
                 onClick={handleVerifyCodeClick}
-                className="w-full px-4 py-2 rounded bg-green-600 hover:bg-green-700 text-white font-medium transition-colors disabled:opacity-60"
+                className="w-full rounded-xl bg-green-500 px-4 py-2 text-sm font-semibold text-gray-900 transition hover:bg-green-400 disabled:opacity-60"
                 disabled={verifying}
-              >{verifying ? 'Verificando...' : 'Verificar código'}</button>
+              >
+                {verifying ? "Verificando..." : "Verificar código"}
+              </button>
               <button
                 type="button"
                 onClick={handleResendCode}
-                className="w-full px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors disabled:opacity-60"
+                className="w-full rounded-xl border border-blue-400/40 bg-blue-500/20 px-4 py-2 text-sm font-semibold text-blue-100 transition hover:bg-blue-500/30 disabled:opacity-60"
                 disabled={resending}
-              >{resending ? 'Reenviando...' : 'Reenviar código'}</button>
+              >
+                {resending ? "Reenviando..." : "Reenviar código"}
+              </button>
               <button
                 type="button"
-                onClick={() => { setShowVerificationModal(false); }}
-                className="w-full px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-neutral-900 font-medium transition-colors"
-              >Cerrar</button>
+                onClick={() => setShowVerificationModal(false)}
+                className="w-full rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-gray-300 transition hover:bg-white/10"
+              >
+                Cerrar
+              </button>
             </div>
           </div>
         </div>

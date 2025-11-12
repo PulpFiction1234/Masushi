@@ -1,6 +1,7 @@
 import { PaymentMethod, CheckoutAction } from "@/utils/checkout";
 import React from "react";
 import { fmt } from "@/utils/checkout";
+import { FaExclamationTriangle, FaMoneyBillWave } from "react-icons/fa";
 
 const inputBase =
   "w-full rounded-xl border border-white/10 bg-neutral-800/80 px-3 py-2 text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent";
@@ -76,13 +77,17 @@ export default function PaymentSelector({ paymentMethod, pagarCon, totalAPagar, 
               Total a pagar: <span className="font-semibold text-white">{fmt(totalAPagar)}</span>
             </p>
             {pagoInsuficiente && (
-              <p className="text-sm text-red-400">
-                ⚠️ El monto ingresado es menor al total
+              <p className="flex items-center gap-2 text-sm text-red-400">
+                <FaExclamationTriangle className="h-4 w-4" aria-hidden="true" />
+                <span>El monto ingresado es menor al total</span>
               </p>
             )}
             {mostrarVuelto && (
-              <p className="text-sm text-green-400">
-                💵 Vuelto: <span className="font-semibold">{fmt(vuelto)}</span>
+              <p className="flex items-center gap-2 text-sm text-green-400">
+                <FaMoneyBillWave className="h-4 w-4" aria-hidden="true" />
+                <span>
+                  Vuelto: <span className="font-semibold">{fmt(vuelto)}</span>
+                </span>
               </p>
             )}
           </div>

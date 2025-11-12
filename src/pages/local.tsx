@@ -4,7 +4,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import { PhoneCall, MessageCircle, MapPin } from "lucide-react";
+import { FaPhoneAlt, FaWhatsapp, FaMapMarkedAlt } from "react-icons/fa";
 
 import Seo from "@/components/Seo"; // 👈 metadatos (no visible)
 import LocalBusinessJsonLd from "@/components/LocalBusinessJsonLd"; // 👈 JSON-LD (no visible)
@@ -110,7 +110,7 @@ export default function LocalPage() {
                   href={`tel:${LOCAL.telefonoPlain}`}
                   className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 transition px-3 py-2 rounded-lg text-sm"
                 >
-                  <PhoneCall className="h-4 w-4" aria-hidden="true" />
+                  <FaPhoneAlt className="text-base" aria-hidden="true" />
                   <span>Llamar</span>
                 </a>
                 <a
@@ -119,7 +119,7 @@ export default function LocalPage() {
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 bg-green-600 hover:bg-green-700 transition px-3 py-2 rounded-lg text-sm"
                 >
-                  <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                  <FaWhatsapp className="text-base" aria-hidden="true" />
                   <span>WhatsApp</span>
                 </a>
                 <a
@@ -128,7 +128,7 @@ export default function LocalPage() {
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 transition px-3 py-2 rounded-lg text-sm"
                 >
-                  <MapPin className="h-4 w-4" aria-hidden="true" />
+                  <FaMapMarkedAlt className="text-base" aria-hidden="true" />
                   <span>Cómo llegar</span>
                 </a>
               </div>

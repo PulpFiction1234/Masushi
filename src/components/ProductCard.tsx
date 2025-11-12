@@ -7,7 +7,7 @@ import { fmtMiles } from "@/utils/format";
 import { WIDE_THRESHOLD, type FitMode } from "@/utils/constants";
 import { useUserProfile } from "@/context/UserContext";
 import { useUser } from "@supabase/auth-helpers-react";
-import { Heart } from "lucide-react";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
 import useProductOverrides from '@/hooks/useProductOverrides';
 
 function parseArmalo(encoded?: string) {
@@ -122,12 +122,11 @@ const ProductCard: React.FC<Props> = ({
             className="absolute top-2 left-2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 backdrop-blur-sm"
             aria-label={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
           >
-            <Heart
-              className={`h-5 w-5 ${isFav ? "text-red-500" : "text-white"}`}
-              aria-hidden="true"
-              strokeWidth={isFav ? 0 : 2}
-              fill={isFav ? "currentColor" : "none"}
-            />
+            {isFav ? (
+              <FaHeart className="text-red-500 text-xl" aria-hidden="true" />
+            ) : (
+              <FaRegHeart className="text-white text-xl" aria-hidden="true" />
+            )}
           </button>
         )}
       </div>

@@ -3,7 +3,7 @@ import type { AppProps } from "next/app";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { ShoppingBag } from "lucide-react";
+import { FaShoppingBag } from "react-icons/fa";
 import { Inclusive_Sans } from "next/font/google";
 
 import { CartProvider, useCart } from "@/context/CartContext";
@@ -40,7 +40,7 @@ function FloatingCartButton({ onClick }: { onClick: () => void }) {
       suppressHydrationWarning
     >
       <div className="relative flex items-center justify-center">
-  <ShoppingBag className="h-8 w-8" aria-hidden="true" />
+  <FaShoppingBag className="text-[32px] leading-none" aria-hidden="true" />
         {mounted && safeCount > 0 && (
           <span className="absolute -top-2 -right-2 bg-gray-900 text-white text-xs font-bold rounded-full px-2 py-0.5 shadow-lg">
             {safeCount}

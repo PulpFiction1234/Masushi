@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import type { LucideIcon } from "lucide-react";
-import { Cake, CalendarCheck, Store, IdCard, ShoppingBag, Truck, ChevronDown } from "lucide-react";
+import type { IconType } from "react-icons";
+import { FaBirthdayCake, FaCalendarCheck, FaStore, FaIdCard, FaShoppingBag, FaTruck, FaChevronDown } from "react-icons/fa";
 import { useRouter } from "next/router";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -164,12 +164,12 @@ export default function ProfilePage() {
   const [birthdaySaving, setBirthdaySaving] = useState(false);
   const [birthdayDetailsOpen, setBirthdayDetailsOpen] = useState(false);
   const birthdayWindowLength = BIRTHDAY_WEEK_LENGTH_DAYS;
-  const requirementIcons = useMemo<Record<string, LucideIcon>>(
+  const requirementIcons = useMemo<Record<string, IconType>>(
     () => ({
-      birthday: Cake,
-      accountAge: IdCard,
-      orders: ShoppingBag,
-      window: CalendarCheck,
+      birthday: FaBirthdayCake,
+      accountAge: FaIdCard,
+      orders: FaShoppingBag,
+      window: FaCalendarCheck,
     }),
     [],
   );
@@ -602,7 +602,7 @@ export default function ProfilePage() {
               aria-controls="birthday-discount-details"
             >
               <div className="flex items-start gap-3">
-                <Cake className="mt-1 h-6 w-6 text-green-300" aria-hidden="true" />
+                <FaBirthdayCake className="mt-1 h-6 w-6 text-green-300" aria-hidden="true" />
                 <div>
                   <h2 className="text-xl font-bold">Descuento de cumpleaños</h2>
                   <p className="mt-1 text-sm text-gray-400">
@@ -610,7 +610,7 @@ export default function ProfilePage() {
                   </p>
                 </div>
               </div>
-              <ChevronDown
+              <FaChevronDown
                 className={`mt-1 h-5 w-5 flex-shrink-0 text-gray-400 transition-transform ${birthdayDetailsOpen ? "-rotate-180" : ""}`}
                 aria-hidden="true"
               />
@@ -693,7 +693,7 @@ export default function ProfilePage() {
         {/* Últimos pedidos */}
         <div className="bg-gray-900 p-6 rounded-xl shadow space-y-4 mt-6">
           <h2 className="flex items-center gap-2 text-xl font-bold">
-            <Store className="h-5 w-5 text-green-300" aria-hidden="true" />
+            <FaStore className="h-5 w-5 text-green-300" aria-hidden="true" />
             <span>Mis últimos pedidos</span>
           </h2>
 
@@ -720,10 +720,10 @@ export default function ProfilePage() {
                         const deliveryType = resolveDeliveryTypeValue(order.delivery_type);
                         const deliveryMeta = (() => {
                           if (deliveryType === "delivery") {
-                            return { Icon: Truck, text: "Delivery" };
+                            return { Icon: FaTruck, text: "Delivery" };
                           }
                           if (deliveryType === "retiro") {
-                            return { Icon: Store, text: "Retiro" };
+                            return { Icon: FaStore, text: "Retiro" };
                           }
                           return { Icon: null, text: "Tipo de entrega desconocido" };
                         })();

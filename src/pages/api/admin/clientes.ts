@@ -2,6 +2,14 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import supabaseAdmin from '@/server/supabase';
 import { buildFullName } from '@/utils/name';
 
+type VerificationRow = {
+  user_id: string;
+  code: string | null;
+  used: boolean | null;
+  expires_at: string | null;
+  created_at: string | null;
+};
+
 // Protected admin endpoint to list all registered users (clients).
 // Returns: id, email, full_name, phone, created_at, role
 
@@ -36,11 +44,43 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Continue without profiles data
     }
 
+    // Fetch latest verification codes (if any) for these users
+    const { data: verifications, error: verificationError } = await supabaseAdmin
+      .from('email_verifications')
+      .select('user_id, code, used, expires_at, created_at')
+      .in('user_id', userIds)
+      .order('created_at', { ascending: false });
+
+    if (verificationError) {
+      console.error('[admin:clientes] error fetching verifications', verificationError);
+    }
+
+    const verificationMap = new Map<string, VerificationRow>();
+    if (Array.isArray(verifications)) {
+      for (const row of verifications as VerificationRow[]) {
+        if (!verificationMap.has(row.user_id)) {
+          verificationMap.set(row.user_id, row);
+        }
+      }
+    }
+
     // Merge auth users with profile data
     const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
     
     const clientes = users.map(user => {
       const profile = profilesMap.get(user.id) as any;
+      const verificationRow = verificationMap.get(user.id);
+      const nowTs = Date.now();
+      let pendingCode: string | null = null;
+      let pendingExpiresAt: string | null = null;
+
+      if (verificationRow && !verificationRow.used && verificationRow.code) {
+        const expiresAtTs = verificationRow.expires_at ? new Date(verificationRow.expires_at).getTime() : null;
+        if (!expiresAtTs || expiresAtTs >= nowTs) {
+          pendingCode = verificationRow.code;
+          pendingExpiresAt = verificationRow.expires_at;
+        }
+      }
       
       // Construir nombre completo de forma segura evitando duplicados
       const apellidoPaterno = profile?.apellido_paterno || user.user_metadata?.apellido_paterno || '';
@@ -54,6 +94,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         phone: profile?.phone || user.user_metadata?.phone || '',
         role: profile?.role || 'user',
         created_at: profile?.created_at || user.created_at,
+        verification: {
+          verified: Boolean(user.email_confirmed_at),
+          confirmed_at: user.email_confirmed_at || null,
+          pending_code: pendingCode,
+          pending_expires_at: pendingExpiresAt,
+        },
       };
     });
 

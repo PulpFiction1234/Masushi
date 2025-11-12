@@ -10,6 +10,12 @@ interface Cliente {
   phone: string;
   role: string;
   created_at: string;
+  verification?: {
+    verified: boolean;
+    confirmed_at: string | null;
+    pending_code: string | null;
+    pending_expires_at: string | null;
+  };
 }
 
 export default function ClientesAdminPanel() {
@@ -66,6 +72,56 @@ export default function ClientesAdminPanel() {
     }
   };
 
+  const formatExpires = (dateStr: string | null) => {
+    if (!dateStr) return null;
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleString('es-CL', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const renderVerification = (cliente: Cliente): React.ReactNode => {
+    const verified = cliente.verification?.verified;
+    const pendingCode = cliente.verification?.pending_code;
+    const expiresAt = formatExpires(cliente.verification?.pending_expires_at ?? null);
+
+    if (verified) {
+      return (
+        <div className="flex flex-col gap-1 text-xs">
+          <span className="inline-flex items-center gap-1 self-start rounded-full bg-emerald-700/80 px-2 py-1 font-semibold text-white">
+            ✓ Verificada
+          </span>
+          {cliente.verification?.confirmed_at && (
+            <span className="text-gray-400">{formatDate(cliente.verification.confirmed_at)}</span>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col gap-1 text-xs">
+        <span className="inline-flex items-center gap-1 self-start rounded-full bg-amber-600/80 px-2 py-1 font-semibold text-white">
+          Pendiente
+        </span>
+        {pendingCode ? (
+          <>
+            <span className="font-mono text-sm text-gray-200">Código: {pendingCode}</span>
+            {expiresAt && <span className="text-gray-400">Expira: {expiresAt}</span>}
+          </>
+        ) : (
+          <span className="text-gray-400">Sin código activo</span>
+        )}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="text-center py-8">
@@ -110,6 +166,7 @@ export default function ClientesAdminPanel() {
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Correo</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Teléfono</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Rol</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Verificación</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Registrado</th>
                 </tr>
               </thead>
@@ -131,6 +188,9 @@ export default function ClientesAdminPanel() {
                       }`}>
                         {cliente.role}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-200">
+                      {renderVerification(cliente)}
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-400">{formatDate(cliente.created_at)}</td>
                   </tr>
@@ -164,6 +224,10 @@ export default function ClientesAdminPanel() {
                     <span className="text-gray-300">
                       {cliente.phone || <span className="text-gray-500 italic">Sin teléfono</span>}
                     </span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="mt-0.5 text-gray-500">✅</span>
+                    <div className="flex-1 text-gray-300">{renderVerification(cliente)}</div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-gray-500">📅</span>

@@ -382,7 +382,10 @@ export default function Checkout() {
         if (!mounted) return;
         const fetched = ((d?.addresses ?? []) as SavedAddress[]).slice(0, MAX_SAVED_ADDRESSES);
         setSavedAddresses(fetched);
-        if (fetched.length > 0) setSelectedAddressId(fetched[0].id);
+        setSelectedAddressId((prev) => {
+          if (prev === null) return null;
+          return fetched.some((addr) => addr.id === prev) ? prev : null;
+        });
         setAddressLabelInput("");
         setSaveAddressError(null);
       })
@@ -391,13 +394,6 @@ export default function Checkout() {
       });
     return () => { mounted = false; };
   }, [user]);
-
-  // Auto-seleccionar primera dirección cuando se cambia a delivery y hay direcciones guardadas
-  useEffect(() => {
-    if (deliveryType === 'delivery' && savedAddresses.length > 0 && selectedAddressId === null) {
-      setSelectedAddressId(savedAddresses[0].id);
-    }
-  }, [deliveryType, savedAddresses, selectedAddressId]);
 
   // Cálculos monetarios/totales
   const {

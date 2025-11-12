@@ -149,7 +149,7 @@ export const initialCheckoutState: CheckoutState = {
   name: "",
   lastName: "",
   phone: "",
-  deliveryType: "retiro",
+  deliveryType: "delivery",
   address: "",
   numeroCasa: "",
   coords: null,

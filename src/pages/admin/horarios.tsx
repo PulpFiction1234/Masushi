@@ -18,7 +18,7 @@ export default function AdminHorariosPage() {
     }
   };
 
-  const buttonClass = (active: boolean) => `w-56 text-left px-6 py-4 rounded ${active ? 'bg-emerald-700 text-white' : 'bg-gray-800 text-gray-200'} border border-gray-700`;
+  const buttonClass = (active: boolean) => `w-full sm:w-56 text-left px-6 py-4 rounded ${active ? 'bg-emerald-700 text-white' : 'bg-gray-800 text-gray-200'} border border-gray-700`;
 
   return (
     <div>
@@ -32,7 +32,7 @@ export default function AdminHorariosPage() {
             </div>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
             <button disabled={saving || loading} onClick={() => changeMode('normal')} className={buttonClass(mode === 'normal')}>
               <div className="text-lg font-semibold">Normal</div>
               <div className="text-xs text-gray-300">Respeta horario</div>

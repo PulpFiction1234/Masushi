@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { FiAlertCircle, FiCalendar, FiCheckCircle, FiPhone } from "react-icons/fi";
 import { normalize } from "@/utils/strings";
 
 interface Cliente {
@@ -87,39 +88,45 @@ export default function ClientesAdminPanel() {
     }
   };
 
-  const renderVerification = (cliente: Cliente): React.ReactNode => {
+  const getVerificationInfo = (cliente: Cliente) => {
     const verified = cliente.verification?.verified;
     const pendingCode = cliente.verification?.pending_code;
     const expiresAt = formatExpires(cliente.verification?.pending_expires_at ?? null);
 
     if (verified) {
-      return (
-        <div className="flex flex-col gap-1 text-xs">
+      return {
+  icon: <FiCheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" aria-hidden />,
+        content: (
+          <div className="flex flex-col gap-1 text-xs text-gray-200">
           <span className="inline-flex items-center gap-1 self-start rounded-full bg-emerald-700/80 px-2 py-1 font-semibold text-white">
             ✓ Verificada
           </span>
           {cliente.verification?.confirmed_at && (
             <span className="text-gray-400">{formatDate(cliente.verification.confirmed_at)}</span>
           )}
-        </div>
-      );
+          </div>
+        ),
+      };
     }
 
-    return (
-      <div className="flex flex-col gap-1 text-xs">
-        <span className="inline-flex items-center gap-1 self-start rounded-full bg-amber-600/80 px-2 py-1 font-semibold text-white">
-          Pendiente
-        </span>
-        {pendingCode ? (
-          <>
-            <span className="font-mono text-sm text-gray-200">Código: {pendingCode}</span>
-            {expiresAt && <span className="text-gray-400">Expira: {expiresAt}</span>}
-          </>
-        ) : (
-          <span className="text-gray-400">Sin código activo</span>
-        )}
-      </div>
-    );
+    return {
+  icon: <FiAlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" aria-hidden />,
+      content: (
+        <div className="flex flex-col gap-1 text-xs text-gray-200">
+          <span className="inline-flex items-center gap-1 self-start rounded-full bg-amber-600/80 px-2 py-1 font-semibold text-white">
+            Pendiente
+          </span>
+          {pendingCode ? (
+            <>
+              <span className="font-mono text-sm text-gray-200">Código: {pendingCode}</span>
+              {expiresAt && <span className="text-gray-400">Expira: {expiresAt}</span>}
+            </>
+          ) : (
+            <span className="text-gray-400">Sin código activo</span>
+          )}
+        </div>
+      ),
+    };
   };
 
   if (loading) {
@@ -171,8 +178,10 @@ export default function ClientesAdminPanel() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-700">
-                {filtered.map((cliente) => (
-                  <tr key={cliente.id} className="hover:bg-gray-750">
+                {filtered.map((cliente) => {
+                  const verification = getVerificationInfo(cliente);
+                  return (
+                    <tr key={cliente.id} className="hover:bg-gray-750">
                     <td className="px-4 py-3 text-sm text-white">
                       {cliente.full_name || <span className="text-gray-500 italic">Sin nombre</span>}
                     </td>
@@ -190,19 +199,22 @@ export default function ClientesAdminPanel() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-200">
-                      {renderVerification(cliente)}
+                        {verification.content}
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-400">{formatDate(cliente.created_at)}</td>
-                  </tr>
-                ))}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
           {/* Vista de tarjetas para móviles */}
           <div className="md:hidden grid gap-3">
-            {filtered.map((cliente) => (
-              <div key={cliente.id} className="bg-gray-800 p-4 rounded-lg">
+            {filtered.map((cliente) => {
+              const verification = getVerificationInfo(cliente);
+              return (
+                <div key={cliente.id} className="bg-gray-800 p-4 rounded-lg">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">
                     <div className="font-semibold text-sm text-white mb-1">
@@ -220,22 +232,23 @@ export default function ClientesAdminPanel() {
                 </div>
                 <div className="space-y-1 text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-500">📱</span>
+                    <FiPhone className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
                     <span className="text-gray-300">
                       {cliente.phone || <span className="text-gray-500 italic">Sin teléfono</span>}
                     </span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <span className="mt-0.5 text-gray-500">✅</span>
-                    <div className="flex-1 text-gray-300">{renderVerification(cliente)}</div>
+                    {verification.icon}
+                    <div className="flex-1 text-gray-300">{verification.content}</div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-500">📅</span>
+                    <FiCalendar className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
                     <span className="text-gray-400">{formatDate(cliente.created_at)}</span>
                   </div>
                 </div>
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

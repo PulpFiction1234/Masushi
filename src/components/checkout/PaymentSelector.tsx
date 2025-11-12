@@ -1,6 +1,7 @@
 import { PaymentMethod, CheckoutAction } from "@/utils/checkout";
 import React from "react";
 import { fmt } from "@/utils/checkout";
+import { AlertTriangle, Wallet } from "lucide-react";
 
 const inputBase =
   "w-full rounded-xl border border-white/10 bg-neutral-800/80 px-3 py-2 text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent";
@@ -33,7 +34,7 @@ export default function PaymentSelector({ paymentMethod, pagarCon, totalAPagar, 
     <div className="space-y-3">
       <div>
         <label htmlFor="paymethod" className="block font-medium mb-1 text-neutral-200">
-          Método de pago (en local)
+          Método de pago (Informativo)
         </label>
         <select
           id="paymethod"
@@ -76,14 +77,18 @@ export default function PaymentSelector({ paymentMethod, pagarCon, totalAPagar, 
               Total a pagar: <span className="font-semibold text-white">{fmt(totalAPagar)}</span>
             </p>
             {pagoInsuficiente && (
-              <p className="text-sm text-red-400">
-                ⚠️ El monto ingresado es menor al total
-              </p>
+              <div className="flex items-center gap-2 text-sm text-red-400">
+                <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+                <span>El monto ingresado es menor al total</span>
+              </div>
             )}
             {mostrarVuelto && (
-              <p className="text-sm text-green-400">
-                💵 Vuelto: <span className="font-semibold">{fmt(vuelto)}</span>
-              </p>
+              <div className="flex items-center gap-2 text-sm text-green-400">
+                <Wallet className="h-4 w-4" aria-hidden="true" />
+                <span>
+                  Vuelto: <span className="font-semibold">{fmt(vuelto)}</span>
+                </span>
+              </div>
             )}
           </div>
         </div>

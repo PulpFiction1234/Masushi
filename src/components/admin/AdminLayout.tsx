@@ -1,23 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import type { IconType } from 'react-icons';
-import { FiClock, FiLayout, FiMenu, FiPackage, FiTrendingUp, FiUsers, FiX } from 'react-icons/fi';
+import type { LucideIcon } from 'lucide-react';
+import { Clock, LayoutDashboard, Menu, Package, TrendingUp, Users, X } from 'lucide-react';
 import { useUserProfile } from '@/context/UserContext';
 
 type NavItem = {
   href: string;
   label: string;
-  icon: IconType;
+  icon: LucideIcon;
   exact?: boolean;
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: FiLayout, exact: true },
-  { href: '/admin/horarios', label: 'Horarios', icon: FiClock },
-  { href: '/admin/productos', label: 'Productos', icon: FiPackage },
-  { href: '/admin/clientes', label: 'Clientes', icon: FiUsers },
-  { href: '/admin/finanzas', label: 'Finanzas', icon: FiTrendingUp },
+  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+  { href: '/admin/horarios', label: 'Horarios', icon: Clock },
+  { href: '/admin/productos', label: 'Productos', icon: Package },
+  { href: '/admin/clientes', label: 'Clientes', icon: Users },
+  { href: '/admin/finanzas', label: 'Finanzas', icon: TrendingUp },
 ];
 
 export default function AdminLayout({ children, title }: { children: React.ReactNode; title?: string }) {
@@ -122,7 +122,7 @@ export default function AdminLayout({ children, title }: { children: React.React
               onClick={() => setMobileMenuOpen(prev => !prev)}
               className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-white md:hidden"
             >
-              {mobileMenuOpen ? <FiX className="h-5 w-5" /> : <FiMenu className="h-5 w-5" />}
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>

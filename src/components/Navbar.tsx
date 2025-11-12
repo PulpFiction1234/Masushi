@@ -5,7 +5,7 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useCart } from "@/context/CartContext";
 import { useUser, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useUserProfile } from "@/context/UserContext";
-import { FaShoppingBag, FaUserCircle, FaPhoneAlt, FaSignOutAlt } from "react-icons/fa";
+import { ShoppingBag, UserCircle, PhoneCall, LogOut } from "lucide-react";
 import { useRouter } from "next/router";
 import logoMasushi from "@/public/images/logo-masushi.webp";
 
@@ -90,7 +90,7 @@ const Navbar: React.FC = () => {
               className="relative inline-flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/40"
               aria-label="Mi perfil"
             >
-              <FaUserCircle className="text-2xl" aria-hidden="true" />
+              <UserCircle className="h-6 w-6" aria-hidden="true" />
             </button>
 
             {/* Menú desplegable */}
@@ -111,7 +111,7 @@ const Navbar: React.FC = () => {
                     onClick={() => setShowProfileMenu(false)}
                     className="flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition-colors"
                   >
-                    <FaUserCircle className="text-xl text-white" aria-hidden="true" />
+                    <UserCircle className="h-5 w-5 text-white" aria-hidden="true" />
                     <span className="text-white">Mi perfil</span>
                   </Link>
 
@@ -122,7 +122,7 @@ const Navbar: React.FC = () => {
                     onClick={() => setShowProfileMenu(false)}
                     className="flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition-colors"
                   >
-                    <FaPhoneAlt className="text-xl text-white" aria-hidden="true" />
+                    <PhoneCall className="h-5 w-5 text-white" aria-hidden="true" />
                     <span className="text-white">Contáctanos</span>
                   </a>
 
@@ -130,7 +130,7 @@ const Navbar: React.FC = () => {
                     onClick={handleLogout}
                     className="w-full flex items-center gap-3 px-4 py-3 bg-red-600 hover:bg-red-700 transition-colors text-white font-semibold"
                   >
-                    <FaSignOutAlt className="text-xl" aria-hidden="true" />
+                    <LogOut className="h-5 w-5" aria-hidden="true" />
                     <span>Cerrar Sesión</span>
                   </button>
                 </div>
@@ -156,7 +156,7 @@ const Navbar: React.FC = () => {
             aria-label={safeCount ? `Abrir carrito, ${safeCount} items` : "Abrir carrito"}
             suppressHydrationWarning
           >
-            <FaShoppingBag className="text-2xl" aria-hidden="true" />
+            <ShoppingBag className="h-6 w-6" aria-hidden="true" />
             {mounted && safeCount > 0 && (
               <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1.5 text-[11px] leading-[20px] text-white bg-red-500 rounded-full text-center font-bold">
                 {safeCount}

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { FiAlertCircle, FiCalendar, FiCheckCircle, FiPhone } from "react-icons/fi";
+import { AlertCircle, Calendar, CheckCircle, Phone } from "lucide-react";
 import { normalize } from "@/utils/strings";
 
 interface Cliente {
@@ -95,7 +95,7 @@ export default function ClientesAdminPanel() {
 
     if (verified) {
       return {
-  icon: <FiCheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" aria-hidden />,
+  icon: <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" aria-hidden />,
         content: (
           <div className="flex flex-col gap-1 text-xs text-gray-200">
           <span className="inline-flex items-center gap-1 self-start rounded-full bg-emerald-700/80 px-2 py-1 font-semibold text-white">
@@ -110,7 +110,7 @@ export default function ClientesAdminPanel() {
     }
 
     return {
-  icon: <FiAlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" aria-hidden />,
+  icon: <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" aria-hidden />,
       content: (
         <div className="flex flex-col gap-1 text-xs text-gray-200">
           <span className="inline-flex items-center gap-1 self-start rounded-full bg-amber-600/80 px-2 py-1 font-semibold text-white">
@@ -232,7 +232,7 @@ export default function ClientesAdminPanel() {
                 </div>
                 <div className="space-y-1 text-xs">
                   <div className="flex items-center gap-2">
-                    <FiPhone className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
+                    <Phone className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
                     <span className="text-gray-300">
                       {cliente.phone || <span className="text-gray-500 italic">Sin teléfono</span>}
                     </span>
@@ -242,7 +242,7 @@ export default function ClientesAdminPanel() {
                     <div className="flex-1 text-gray-300">{verification.content}</div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <FiCalendar className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
+                    <Calendar className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
                     <span className="text-gray-400">{formatDate(cliente.created_at)}</span>
                   </div>
                 </div>

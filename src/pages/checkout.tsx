@@ -1,6 +1,6 @@
 "use client";
 import React, { useMemo, useReducer, useEffect, useState, useCallback } from "react";
-import { FaBirthdayCake } from "react-icons/fa";
+import { Cake, Loader2, Trash2, CheckCircle2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import useSWR from "swr";
 import { useCart } from "@/context/CartContext";
@@ -861,9 +861,9 @@ export default function Checkout() {
                                     disabled={deletingAddressIds.includes(a.id)}
                                   >
                                     {deletingAddressIds.includes(a.id) ? (
-                                      <svg className="w-4 h-4 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/></svg>
+                                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                                     ) : (
-                                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m5 0V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2"/></svg>
+                                      <Trash2 className="h-4 w-4" aria-hidden="true" />
                                     )}
                                   </button>
                                 </div>
@@ -999,7 +999,7 @@ export default function Checkout() {
                 ) : birthdayCouponEligible ? (
                     <div className="flex flex-col gap-3 rounded-2xl border border-green-400/40 bg-green-500/10 p-4 text-xs text-green-100 shadow-[0_8px_20px_rgba(16,185,129,0.25)]">
                     <div className="flex items-start gap-3">
-                      <FaBirthdayCake className="mt-0.5 text-base" aria-hidden="true" />
+                      <Cake className="mt-0.5 h-4 w-4" aria-hidden="true" />
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-green-200">{birthdayCardTitle}</p>
                         <p className="mt-1 leading-relaxed">{birthdayCardBody}</p>
@@ -1104,9 +1104,7 @@ export default function Checkout() {
           <div className="bg-neutral-900 rounded-lg p-6 max-w-md w-full shadow-2xl border border-neutral-800">
             <div className="text-center mb-4">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-900/30 mb-3">
-                <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+                <CheckCircle2 className="h-8 w-8 text-green-500" aria-hidden="true" />
               </div>
               <h3 className="text-2xl font-bold text-green-500 mb-2">¡Pedido Recibido! 🍣</h3>
               {lastOrderId && (

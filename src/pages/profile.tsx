@@ -1,13 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import type { IconType } from "react-icons";
-import {
-  FaBirthdayCake,
-  FaCalendarCheck,
-  FaStore,
-  FaIdBadge,
-  FaShoppingBag,
-  FaTruck,
-} from "react-icons/fa";
+import type { LucideIcon } from "lucide-react";
+import { Cake, CalendarCheck, Store, IdCard, ShoppingBag, Truck, ChevronDown } from "lucide-react";
 import { useRouter } from "next/router";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -171,12 +164,12 @@ export default function ProfilePage() {
   const [birthdaySaving, setBirthdaySaving] = useState(false);
   const [birthdayDetailsOpen, setBirthdayDetailsOpen] = useState(false);
   const birthdayWindowLength = BIRTHDAY_WEEK_LENGTH_DAYS;
-  const requirementIcons = useMemo<Record<string, IconType>>(
+  const requirementIcons = useMemo<Record<string, LucideIcon>>(
     () => ({
-      birthday: FaBirthdayCake,
-      accountAge: FaIdBadge,
-      orders: FaShoppingBag,
-      window: FaCalendarCheck,
+      birthday: Cake,
+      accountAge: IdCard,
+      orders: ShoppingBag,
+      window: CalendarCheck,
     }),
     [],
   );
@@ -609,7 +602,7 @@ export default function ProfilePage() {
               aria-controls="birthday-discount-details"
             >
               <div className="flex items-start gap-3">
-                <FaBirthdayCake className="mt-1 h-6 w-6 text-green-300" aria-hidden="true" />
+                <Cake className="mt-1 h-6 w-6 text-green-300" aria-hidden="true" />
                 <div>
                   <h2 className="text-xl font-bold">Descuento de cumpleaños</h2>
                   <p className="mt-1 text-sm text-gray-400">
@@ -617,14 +610,10 @@ export default function ProfilePage() {
                   </p>
                 </div>
               </div>
-              <svg
+              <ChevronDown
                 className={`mt-1 h-5 w-5 flex-shrink-0 text-gray-400 transition-transform ${birthdayDetailsOpen ? "-rotate-180" : ""}`}
-                viewBox="0 0 20 20"
-                fill="currentColor"
                 aria-hidden="true"
-              >
-                <path d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.168l3.71-2.938a.75.75 0 0 1 .94 1.17l-4.2 3.325a.75.75 0 0 1-.94 0l-4.2-3.325a.75.75 0 0 1 .02-1.06z" />
-              </svg>
+              />
             </button>
             {profile.birthday ? (
               <div className="self-start rounded-full bg-green-500/20 px-4 py-1 text-sm text-green-200">
@@ -704,7 +693,7 @@ export default function ProfilePage() {
         {/* Últimos pedidos */}
         <div className="bg-gray-900 p-6 rounded-xl shadow space-y-4 mt-6">
           <h2 className="flex items-center gap-2 text-xl font-bold">
-            <FaStore className="h-5 w-5 text-green-300" aria-hidden="true" />
+            <Store className="h-5 w-5 text-green-300" aria-hidden="true" />
             <span>Mis últimos pedidos</span>
           </h2>
 
@@ -731,10 +720,10 @@ export default function ProfilePage() {
                         const deliveryType = resolveDeliveryTypeValue(order.delivery_type);
                         const deliveryMeta = (() => {
                           if (deliveryType === "delivery") {
-                            return { Icon: FaTruck, text: "Delivery" };
+                            return { Icon: Truck, text: "Delivery" };
                           }
                           if (deliveryType === "retiro") {
-                            return { Icon: FaStore, text: "Retiro" };
+                            return { Icon: Store, text: "Retiro" };
                           }
                           return { Icon: null, text: "Tipo de entrega desconocido" };
                         })();

@@ -1,6 +1,6 @@
 "use client";
 import React, { useMemo, useReducer, useEffect, useState, useCallback } from "react";
-import { FaBirthdayCake } from "react-icons/fa";
+import { FaBirthdayCake, FaCheckCircle, FaSpinner, FaTrashAlt } from "react-icons/fa";
 import dynamic from "next/dynamic";
 import useSWR from "swr";
 import { useCart } from "@/context/CartContext";
@@ -861,29 +861,9 @@ export default function Checkout() {
                                     disabled={deletingAddressIds.includes(a.id)}
                                   >
                                     {deletingAddressIds.includes(a.id) ? (
-                                      <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 512 512"
-                                        className="h-4 w-4 animate-spin"
-                                        aria-hidden="true"
-                                      >
-                                        <path
-                                          fill="currentColor"
-                                          d="M304 48c0-26.51 21.49-48 48-48a160 160 0 1 1-160 160c0-26.51 21.49-48 48-48s48 21.49 48 48a64 64 0 1 0 64-64c-26.51 0-48-21.49-48-48zm-64 416c0 26.51-21.49 48-48 48A160 160 0 1 1 352 352c0 26.51-21.49 48-48 48s-48-21.49-48-48a64 64 0 1 0-64 64c26.51 0 48 21.49 48 48z"
-                                        />
-                                      </svg>
+                                      <FaSpinner className="h-4 w-4 animate-spin" aria-hidden="true" />
                                     ) : (
-                                      <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 448 512"
-                                        className="h-4 w-4"
-                                        aria-hidden="true"
-                                      >
-                                        <path
-                                          fill="currentColor"
-                                          d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96h384c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C306.8 6.8 296.9 0 285.3 0H162.7c-11.6 0-21.5 6.8-27.5 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45h245.8c25.3 0 46.3-19.7 47.9-45L416 128z"
-                                        />
-                                      </svg>
+                                      <FaTrashAlt className="h-4 w-4" aria-hidden="true" />
                                     )}
                                   </button>
                                 </div>
@@ -1124,17 +1104,7 @@ export default function Checkout() {
           <div className="bg-neutral-900 rounded-lg p-6 max-w-md w-full shadow-2xl border border-neutral-800">
             <div className="text-center mb-4">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-900/30 mb-3">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 512 512"
-                  className="h-8 w-8 text-green-500"
-                  aria-hidden="true"
-                >
-                  <path
-                    fill="currentColor"
-                    d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zm113-303L241 337c-9 9-24 9-33 0l-65-65c-9-9-9-24 0-33s24-9 33 0l49 49 112-112c9-9 24-9 33 0s9 24 0 33z"
-                  />
-                </svg>
+                <FaCheckCircle className="h-8 w-8 text-green-500" aria-hidden="true" />
               </div>
               <h3 className="text-2xl font-bold text-green-500 mb-2">¡Pedido Recibido! 🍣</h3>
               {lastOrderId && (

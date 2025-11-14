@@ -15,6 +15,9 @@ import type { BirthdayEligibility } from "@/types/birthday";
 // THEME
 const ACCENT_FROM = "from-emerald-500";
 const ACCENT_TO = "to-green-600";
+const DELIVERY_MIN_TOTAL = 10_000;
+const DELIVERY_START_HOUR = 18;
+const WEEKDAY_DELIVERY_MESSAGE = "Delivery lun-vie desde las 18:00 hrs (sábado horario completo).";
 
 type SavedAddress = AddressRecord;
 
@@ -452,6 +455,12 @@ export default function Checkout() {
     deliveryType,
   ]);
 
+  const now = new Date();
+  const isWeekday = now.getDay() >= 1 && now.getDay() <= 5;
+  const isBeforeDeliveryHour = now.getHours() < DELIVERY_START_HOUR;
+  const deliveryScheduleBlocked = deliveryType === "delivery" && isWeekday && isBeforeDeliveryHour;
+  const deliveryMinTotalBlocked = deliveryType === "delivery" && totalFinal < DELIVERY_MIN_TOTAL;
+
   const requiresPayment = deliveryType === "delivery";
 
   // La validación de salsas se hará en el componente ExtrasSelector con los checkboxes
@@ -569,174 +578,184 @@ export default function Checkout() {
   }, [birthdayCouponEligible]);
 
   // ⚠️ No permitir enviar si el estado aún está cargando o si ya estamos enviando
-  const canSubmit = canSubmitBase && abierto === true && !loadingStatus && !submitting;
+  const canSubmit =
+    canSubmitBase &&
+    abierto === true &&
+    !loadingStatus &&
+    !submitting &&
+    !deliveryScheduleBlocked &&
+    !deliveryMinTotalBlocked;
 
   const handleSubmit = async (e?: React.FormEvent | React.MouseEvent) => {
-    if (e && typeof (e as any).preventDefault === 'function') (e as any).preventDefault();
+    if (e && typeof (e as any).preventDefault === "function") (e as any).preventDefault();
+
+    if (submitting) return;
 
     if (cartTyped.length === 0) {
       alert("Tu carrito está vacío");
       return;
     }
 
-    // Validar salsas obligatorias
     if (!salsasValidas) {
       alert("Debes seleccionar al menos una salsa de cada tipo o marcar las casillas correspondientes (Sin salsas Soya/Teriyaki o Sin Jengibre/Wasabi)");
       return;
     }
 
-    // Verificación inmediata en servidor contra /api/status
-    fetch(`/api/status?t=${Date.now()}`, { cache: "no-store" })
-      .then((r) => r.json() as Promise<StatusApi>)
-      .then(async (od) => {
-        if (!od?.abierto) {
-          alert(
-            od?.nextOpen?.human
-              ? `Estamos cerrados. Abrimos ${od.nextOpen.human}.`
-              : "Estamos cerrados en este momento."
-          );
+    if (deliveryScheduleBlocked) {
+      alert(WEEKDAY_DELIVERY_MESSAGE);
+      return;
+    }
+
+    if (deliveryMinTotalBlocked) {
+      alert(`El monto mínimo para delivery es ${fmt(DELIVERY_MIN_TOTAL)}.`);
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const statusResp = await fetch(`/api/status?t=${Date.now()}`, { cache: "no-store" });
+      const od = (await statusResp.json()) as StatusApi | undefined;
+
+      if (!od?.abierto) {
+        alert(
+          od?.nextOpen?.human
+            ? `Estamos cerrados. Abrimos ${od.nextOpen.human}.`
+            : "Estamos cerrados en este momento."
+        );
+        return;
+      }
+
+      if (deliveryType === "delivery") {
+        if (!coords) {
+          alert("Ingrese una dirección válida.");
           return;
         }
 
-        if (deliveryType === "delivery") {
-          if (!coords) {
-            alert("Ingrese una dirección válida.");
-            return;
-          }
-          // Aceptamos número dentro de la dirección o el campo separado `numeroCasa`
-          if (!(REGEX_NUMERO_CALLE.test(address) || (numeroCasa && numeroCasa.trim().length > 0))) {
-            alert("Debe ingresar un número de domicilio (ej.: N° 1234 o #1234) o completar el campo N° / Dpto.");
-            return;
-          }
-          const { default: booleanPointInPolygon } = await import("@turf/boolean-point-in-polygon");
-          const { polygon, point } = await import("@turf/helpers");
-          const zonaPolygon = polygon([[...polygonCoords, polygonCoords[0]]]);
-          const inside = booleanPointInPolygon(point(coords), zonaPolygon);
-          if (!inside) {
-            alert("Lo sentimos, tu dirección está fuera de la zona de reparto.");
-            return;
-          }
+        if (!(REGEX_NUMERO_CALLE.test(address) || (numeroCasa && numeroCasa.trim().length > 0))) {
+          alert("Debe ingresar un número de domicilio (ej.: N° 1234 o #1234) o completar el campo N° / Dpto.");
+          return;
         }
 
-            const includedItems = cartTyped.filter(it => includedMap[`${it.id}:${it.opcion?.id ?? 'base'}`] !== false);
-
-            const productosTexto = includedItems
-              .map((item) => {
-                const lineaNombre = `${nameWithTipo(item)} x${item.cantidad}`;
-                const totalLinea = fmt(priceOf(item) * item.cantidad);
-                return ` ${lineaNombre} — ${totalLinea}`;
-              })
-              .join("\n");
-
-        // ========= Salsas/Palitos =========
-        const nSoya = Number(soya || 0);
-        const nTeri = Number(teriyaki || 0);
-        const nJenGratis = Number(jengibre || 0);
-        const nWasGratis = Number(wasabi || 0);
-        const nPalitosGratis = Number(palitos || 0);
-        const nPalitosExtra = Number(palitosExtra || 0);
-        const nAyudaPalitos = Number(ayudaPalitos || 0);
-
-        const lineasSalsas: string[] = [];
-        
-        // Solo salsas gratis - las extras ahora son productos normales
-        if (nSoya > 0) lineasSalsas.push(`Soya (gratis): ${nSoya}`);
-        if (nTeri > 0) lineasSalsas.push(`Teriyaki (gratis): ${nTeri}`);
-        if (nJenGratis > 0) lineasSalsas.push(`Jengibre: Sí`);
-        if (nWasGratis > 0) lineasSalsas.push(`Wasabi: Sí`);
-        
-        // Agregar líneas para "sin salsas" si corresponde
-        if (nSoya === 0 && nTeri === 0) lineasSalsas.push("Sin salsas Soya/Teriyaki");
-        if (nJenGratis === 0 && nWasGratis === 0) lineasSalsas.push("Jengibre: No | Wasabi: No");
-
-        const lineasPalitos: string[] = [];
-        if (nPalitosGratis > 0) lineasPalitos.push(`Palitos (gratis): ${nPalitosGratis}`);
-        if (nPalitosExtra > 0) lineasPalitos.push(`Palitos extra: ${nPalitosExtra} = ${fmt(costoPalitosExtra)}`);
-        if (nAyudaPalitos > 0) lineasPalitos.push(`Ayuda palitos: ${nAyudaPalitos} = ${fmt(costoAyudaPalitos)}`);
-
-       const bloqueSalsasPalitos =
-          [...lineasSalsas, ...lineasPalitos].length > 0
-            ? `\n--- Salsas y palitos ---\n${[...lineasSalsas, ...lineasPalitos].join("\n")}\n`
-            : "";
-        // ========= FIN =========
-
-        // Construir dirección corta e incluir número/departamento si el usuario los puso
-        const pieces = [toShortCLAddress(address)];
-        if (numeroCasa && numeroCasa.trim()) pieces.push(`N° ${numeroCasa.trim()}`);
-        const shortAddress = pieces.filter(Boolean).join(", ");
-        
-        // Guardar pedido en BD si el usuario está logueado
-        if (user) {
-          setSubmitting(true);
-          try {
-            const orderItems = cartTyped
-            .filter(it => includedMap[`${it.id}:${((it as unknown) as { opcion?: { id?: string } }).opcion?.id ?? 'base'}`] !== false)
-              .map((it) => {
-                const opcion = (it as unknown as { opcion?: unknown }).opcion as unknown;
-                return {
-                  codigo: codePartOf(it),
-                  nombre: it.nombre,
-                  valor: priceOf(it),
-                  cantidad: it.cantidad,
-                  opcion: opcion,
-                };
-              });
-
-            const resp = await fetch("/api/orders", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                items: orderItems,
-                total: totalFinal,
-                delivery_type: deliveryType,
-                address: deliveryType === "delivery" ? shortAddress : null,
-                payment_method: deliveryType === "delivery" ? paymentMethod : null,
-                pagar_con: deliveryType === "delivery" && paymentMethod === "efectivo" && pagarCon ? pagarCon : null,
-                customer: {
-                  name: `${name} ${lastName}`,
-                  phone,
-                },
-                // include coupon if birthday discount is active
-                ...(birthdayCouponCode ? { coupon_code: birthdayCouponCode } : {}),
-                // Agregar extras
-                extras: bloqueSalsasPalitos.trim(),
-                // Incluir también los valores individuales para formateo personalizado
-                extrasDetalle: {
-                  soya: nSoya,
-                  teriyaki: nTeri,
-                  jengibreGratis: nJenGratis,
-                  wasabiGratis: nWasGratis,
-                  palitosGratis: nPalitosGratis,
-                  palitosExtra: nPalitosExtra,
-                  ayudaPalitos: nAyudaPalitos,
-                },
-                // Agregar observaciones
-                observaciones: observacion && observacion.trim() ? observacion.trim() : null,
-              }),
-            });
-
-            const json = await resp.json().catch(() => null);
-            if (resp.ok) {
-              // show confirmation modal with order id when available
-              const oid = json?.order?.id ?? null;
-              if (oid) setLastOrderId(oid as number);
-              setLastOrderWhatsApp(json?.whatsapp ?? null);
-              setShowOrderModal(true);
-              fetchBirthdayEligibility();
-              // Optionally clear cart here if you want: (not doing automatically)
-            } else {
-              console.error('Error saving order:', json);
-              alert('No se pudo guardar el pedido. Intenta de nuevo.');
-            }
-          } catch (error) {
-            console.error("Error saving order:", error);
-            alert('No se pudo guardar el pedido. Intenta de nuevo.');
-          } finally {
-            setSubmitting(false);
-          }
+        const { default: booleanPointInPolygon } = await import("@turf/boolean-point-in-polygon");
+        const { polygon, point } = await import("@turf/helpers");
+        const zonaPolygon = polygon([[...polygonCoords, polygonCoords[0]]]);
+        const inside = booleanPointInPolygon(point(coords), zonaPolygon);
+        if (!inside) {
+          alert("Lo sentimos, tu dirección está fuera de la zona de reparto.");
+          return;
         }
-      })
-      .catch(() => alert("No se pudo verificar el estado del local. Intenta de nuevo."));
+      }
+
+      const includedItems = cartTyped.filter((it) => includedMap[`${it.id}:${it.opcion?.id ?? "base"}`] !== false);
+      const productosTexto = includedItems
+        .map((item) => {
+          const lineaNombre = `${nameWithTipo(item)} x${item.cantidad}`;
+          const totalLinea = fmt(priceOf(item) * item.cantidad);
+          return ` ${lineaNombre} — ${totalLinea}`;
+        })
+        .join("\n");
+
+      const nSoya = Number(soya || 0);
+      const nTeri = Number(teriyaki || 0);
+      const nJenGratis = Number(jengibre || 0);
+      const nWasGratis = Number(wasabi || 0);
+      const nPalitosGratis = Number(palitos || 0);
+      const nPalitosExtra = Number(palitosExtra || 0);
+      const nAyudaPalitos = Number(ayudaPalitos || 0);
+
+      const lineasSalsas: string[] = [];
+      if (nSoya > 0) lineasSalsas.push(`Soya (gratis): ${nSoya}`);
+      if (nTeri > 0) lineasSalsas.push(`Teriyaki (gratis): ${nTeri}`);
+      if (nJenGratis > 0) lineasSalsas.push(`Jengibre: Sí`);
+      if (nWasGratis > 0) lineasSalsas.push(`Wasabi: Sí`);
+      if (nSoya === 0 && nTeri === 0) lineasSalsas.push("Sin salsas Soya/Teriyaki");
+      if (nJenGratis === 0 && nWasGratis === 0) lineasSalsas.push("Jengibre: No | Wasabi: No");
+
+      const lineasPalitos: string[] = [];
+      if (nPalitosGratis > 0) lineasPalitos.push(`Palitos (gratis): ${nPalitosGratis}`);
+      if (nPalitosExtra > 0) lineasPalitos.push(`Palitos extra: ${nPalitosExtra} = ${fmt(costoPalitosExtra)}`);
+      if (nAyudaPalitos > 0) lineasPalitos.push(`Ayuda palitos: ${nAyudaPalitos} = ${fmt(costoAyudaPalitos)}`);
+
+      const bloqueSalsasPalitos =
+        [...lineasSalsas, ...lineasPalitos].length > 0
+          ? `\n--- Salsas y palitos ---\n${[...lineasSalsas, ...lineasPalitos].join("\n")}\n`
+          : "";
+
+      const pieces = [toShortCLAddress(address)];
+      if (numeroCasa && numeroCasa.trim()) pieces.push(`N° ${numeroCasa.trim()}`);
+      const shortAddress = pieces.filter(Boolean).join(", ");
+
+      if (!user) {
+        alert("Debes iniciar sesión para realizar pedidos.");
+        return;
+      }
+
+      const orderItems = cartTyped
+        .filter((it) => includedMap[`${it.id}:${((it as unknown) as { opcion?: { id?: string } }).opcion?.id ?? "base"}`] !== false)
+        .map((it) => {
+          const opcion = (it as unknown as { opcion?: unknown }).opcion as unknown;
+          return {
+            codigo: codePartOf(it),
+            nombre: it.nombre,
+            valor: priceOf(it),
+            cantidad: it.cantidad,
+            opcion,
+          };
+        });
+
+      const resp = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: orderItems,
+          total: totalFinal,
+          delivery_type: deliveryType,
+          address: deliveryType === "delivery" ? shortAddress : null,
+          payment_method: deliveryType === "delivery" ? paymentMethod : null,
+          pagar_con: deliveryType === "delivery" && paymentMethod === "efectivo" && pagarCon ? pagarCon : null,
+          customer: {
+            name: `${name} ${lastName}`,
+            phone,
+          },
+          // include coupon if birthday discount is active
+          ...(birthdayCouponCode ? { coupon_code: birthdayCouponCode } : {}),
+          // Agregar extras
+          extras: bloqueSalsasPalitos.trim(),
+          // Incluir también los valores individuales para formateo personalizado
+          extrasDetalle: {
+            soya: nSoya,
+            teriyaki: nTeri,
+            jengibreGratis: nJenGratis,
+            wasabiGratis: nWasGratis,
+            palitosGratis: nPalitosGratis,
+            palitosExtra: nPalitosExtra,
+            ayudaPalitos: nAyudaPalitos,
+          },
+          // Agregar observaciones
+          observaciones: observacion && observacion.trim() ? observacion.trim() : null,
+        }),
+      });
+
+      const json = await resp.json().catch(() => null);
+      if (!resp.ok) {
+        console.error("Error saving order:", json);
+        alert("No se pudo guardar el pedido. Intenta de nuevo.");
+        return;
+      }
+
+      const oid = json?.order?.id ?? null;
+      if (oid) setLastOrderId(oid as number);
+      setLastOrderWhatsApp(json?.whatsapp ?? null);
+      setShowOrderModal(true);
+      fetchBirthdayEligibility();
+      // Optionally clear cart here if you want: (not doing automatically)
+    } catch (error) {
+      console.error("Error procesando pedido:", error);
+      alert("No se pudo procesar el pedido. Intenta de nuevo.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const inputBase =
@@ -1076,6 +1095,12 @@ export default function Checkout() {
                     <div className="text-lg text-white font-bold">Total</div>
                       <div className="text-lg text-white font-bold">{fmt(totalAfterDiscount)}</div>
                   </div>
+                  {deliveryType === "delivery" && deliveryScheduleBlocked ? (
+                    <div className="mb-2 text-sm text-amber-300">{WEEKDAY_DELIVERY_MESSAGE}</div>
+                  ) : null}
+                  {deliveryType === "delivery" && deliveryMinTotalBlocked ? (
+                    <div className="mb-2 text-sm text-amber-300">El monto mínimo para delivery es {fmt(DELIVERY_MIN_TOTAL)}.</div>
+                  ) : null}
                   <div className="mb-3 text-sm text-red-400">{estimateText ? `Hora estimada: ${estimateText}` : null}</div>
                   <div>
                     <button

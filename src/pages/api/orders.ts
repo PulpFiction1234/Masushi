@@ -10,6 +10,11 @@ import { getEstimateRange, formatEstimate, getEstimateWindow, formatWindow } fro
 import { fmt, paymentLabel } from '@/utils/checkout';
 import { computeBirthdayEligibility, BIRTHDAY_COUPON_CODE } from '@/server/birthdayEligibility';
 
+const DELIVERY_MIN_TOTAL = 10_000;
+const DELIVERY_START_HOUR = 18;
+const DELIVERY_TIME_ZONE = process.env.STORE_TIME_ZONE || 'America/Santiago';
+const WEEKDAY_DELIVERY_MESSAGE = 'Delivery lun-vie desde las 18:00 hrs (sábado horario completo).';
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const supabase = createPagesServerClient({ req, res });
   const { data: { session } } = await supabase.auth.getSession();
@@ -72,6 +77,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (deliveryTypeValue === null) return res.status(400).json({ error: 'Invalid delivery_type' });
+
+    if (deliveryTypeValue === 1) {
+      const now = new Date();
+      const localNow = new Date(now.toLocaleString('en-US', { timeZone: DELIVERY_TIME_ZONE }));
+      const day = localNow.getDay();
+      const hour = localNow.getHours();
+      const isWeekday = day >= 1 && day <= 5;
+
+      if (isWeekday && hour < DELIVERY_START_HOUR) {
+        return res.status(400).json({ error: WEEKDAY_DELIVERY_MESSAGE });
+      }
+
+      if (originalTotal < DELIVERY_MIN_TOTAL) {
+        return res.status(400).json({ error: `El monto mínimo para delivery es ${fmt(DELIVERY_MIN_TOTAL)}.` });
+      }
+    }
 
     // Antes de insertar, validar cupón si es provisto
     const normalizedCoupon = typeof coupon_code === 'string' ? coupon_code.trim().toUpperCase() : null;

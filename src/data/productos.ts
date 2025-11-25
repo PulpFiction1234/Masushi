@@ -449,7 +449,7 @@ const _productos: Producto[] = [
       },
     {
       id: 57.1,
-      codigo: "0057",
+      codigo: "H57",
       nombre: "Promo handrolls",
       descripcion: "Elige la combinación:",
       valor: 10000, // ajusta si corresponde

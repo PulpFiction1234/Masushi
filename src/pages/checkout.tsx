@@ -480,6 +480,10 @@ export default function Checkout() {
   const [birthdayEligibility, setBirthdayEligibility] = useState<BirthdayEligibility | null>(null);
   const [birthdayStatusLoading, setBirthdayStatusLoading] = useState(false);
   const [skipBirthdayCoupon, setSkipBirthdayCoupon] = useState(false);
+  const [giftCardCodeInput, setGiftCardCodeInput] = useState('');
+  const [giftCard, setGiftCard] = useState<{ code: string; amount_total: number; amount_remaining: number } | null>(null);
+  const [giftCardError, setGiftCardError] = useState<string | null>(null);
+  const [validatingGiftCard, setValidatingGiftCard] = useState(false);
 
   const birthdayCouponEligible = birthdayEligibility?.eligibleNow ?? false;
 
@@ -500,6 +504,16 @@ export default function Checkout() {
   const totalAfterDiscount = useMemo(
     () => Math.max(0, totalFinal - birthdayDiscountAmount),
     [totalFinal, birthdayDiscountAmount],
+  );
+
+  const giftCardAppliedAmount = useMemo(() => {
+    if (!giftCard) return 0;
+    return Math.min(totalAfterDiscount, giftCard.amount_remaining);
+  }, [giftCard, totalAfterDiscount]);
+
+  const totalAfterGiftCard = useMemo(
+    () => Math.max(0, totalAfterDiscount - giftCardAppliedAmount),
+    [totalAfterDiscount, giftCardAppliedAmount],
   );
 
   const birthdayCouponCode = birthdayCouponActive ? BIRTHDAY_COUPON_CODE : null;
@@ -531,6 +545,51 @@ export default function Checkout() {
 
   const handleActivateBirthdayCoupon = useCallback(() => {
     setSkipBirthdayCoupon(false);
+  }, []);
+
+  const handleApplyGiftCard = useCallback(async () => {
+    const code = giftCardCodeInput.trim();
+    if (!code) {
+      setGiftCardError('Ingresa un código');
+      return;
+    }
+    setGiftCardError(null);
+    setValidatingGiftCard(true);
+    try {
+      const resp = await fetch('/api/giftcards/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      const json = await resp.json();
+      if (!resp.ok) {
+        setGiftCard(null);
+        setGiftCardError(json?.error || 'No se pudo validar la gift card');
+        return;
+      }
+      const card = json?.giftCard;
+      if (!card) {
+        setGiftCardError('Respuesta inválida del servidor');
+        return;
+      }
+      setGiftCard({
+        code: card.code,
+        amount_total: Number(card.amount_total) || 0,
+        amount_remaining: Number(card.amount_remaining) || 0,
+      });
+      setGiftCardError(null);
+    } catch (e) {
+      console.error('Error applying gift card', e);
+      setGiftCardError('No se pudo validar la gift card');
+    } finally {
+      setValidatingGiftCard(false);
+    }
+  }, [giftCardCodeInput]);
+
+  const handleRemoveGiftCard = useCallback(() => {
+    setGiftCard(null);
+    setGiftCardCodeInput('');
+    setGiftCardError(null);
   }, []);
 
   const fetchBirthdayEligibility = useCallback(async () => {
@@ -720,6 +779,7 @@ export default function Checkout() {
           },
           // include coupon if birthday discount is active
           ...(birthdayCouponCode ? { coupon_code: birthdayCouponCode } : {}),
+            ...(giftCard ? { gift_card_code: giftCard.code } : {}),
           // Agregar extras
           extras: bloqueSalsasPalitos.trim(),
           // Incluir también los valores individuales para formateo personalizado
@@ -814,7 +874,7 @@ export default function Checkout() {
                     <PaymentSelector 
                       paymentMethod={paymentMethod} 
                       pagarCon={pagarCon}
-                      totalAPagar={totalAfterDiscount}
+                      totalAPagar={totalAfterGiftCard}
                       dispatch={dispatch} 
                     />
                   </div>
@@ -1069,6 +1129,41 @@ export default function Checkout() {
                 </div>
                 {/* Footer dentro del contenedor derecho (parte inferior del card) */}
                 <div className="mt-4 p-4 border-t border-white/5 bg-neutral-900 rounded-b-2xl md:relative md:shadow-none md:mx-0 md:max-w-none sm:fixed sm:bottom-4 sm:left-1/2 sm:-translate-x-1/2 sm:w-[calc(100%-2rem)] lg:left-1/2 lg:-translate-x-1/2 lg:w-[750px] sm:z-50 sm:rounded-2xl sm:shadow-lg md:rounded-b-2xl">
+                  <div className="mb-4 space-y-2">
+                    <label className="block text-sm font-medium text-neutral-200">Código de descuento / Gift card</label>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <input
+                        type="text"
+                        value={giftCardCodeInput}
+                        onChange={(e) => setGiftCardCodeInput(e.target.value)}
+                        placeholder="Ingresa tu código"
+                        className="flex-1 rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={handleApplyGiftCard}
+                          disabled={validatingGiftCard}
+                          className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-500 disabled:opacity-60"
+                        >
+                          {validatingGiftCard ? 'Validando…' : 'Aplicar'}
+                        </button>
+                        {giftCard ? (
+                          <button
+                            type="button"
+                            onClick={handleRemoveGiftCard}
+                            className="rounded-lg border border-white/10 px-3 py-2 text-sm text-neutral-300 hover:bg-white/10"
+                          >
+                            Quitar
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                    {giftCardError ? <p className="text-xs text-red-400">{giftCardError}</p> : null}
+                    {giftCard ? (
+                      <p className="text-xs text-green-200">Saldo disponible: {fmt(giftCard.amount_remaining)} (monto original {fmt(giftCard.amount_total)})</p>
+                    ) : null}
+                  </div>
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-sm text-neutral-400">Subtotal</div>
                     <div className="text-sm font-semibold">{fmt(totalProductos)}</div>
@@ -1085,6 +1180,12 @@ export default function Checkout() {
                         <div>-{fmt(birthdayDiscountAmount)}</div>
                       </div>
                     )}
+                    {giftCardAppliedAmount > 0 && (
+                      <div className="flex items-center justify-between mb-2 text-sm text-green-300">
+                        <div>Gift card {giftCard?.code}</div>
+                        <div>-{fmt(giftCardAppliedAmount)}</div>
+                      </div>
+                    )}
                   {deliveryFee > 0 && (
                     <div className="flex items-center justify-between mb-2">
                       <div className="text-sm text-neutral-400">Delivery</div>
@@ -1093,7 +1194,7 @@ export default function Checkout() {
                   )}
                   <div className="flex items-center justify-between mb-3">
                     <div className="text-lg text-white font-bold">Total</div>
-                      <div className="text-lg text-white font-bold">{fmt(totalAfterDiscount)}</div>
+                      <div className="text-lg text-white font-bold">{fmt(totalAfterGiftCard)}</div>
                   </div>
                   {deliveryType === "delivery" && deliveryScheduleBlocked ? (
                     <div className="mb-2 text-sm text-amber-300">{WEEKDAY_DELIVERY_MESSAGE}</div>

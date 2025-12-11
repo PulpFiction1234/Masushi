@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import type { IconType } from 'react-icons';
-import { FiClock, FiLayout, FiMenu, FiPackage, FiTrendingUp, FiUsers, FiX } from 'react-icons/fi';
+import { FiClock, FiGift, FiLayout, FiMenu, FiPackage, FiTrendingUp, FiUsers, FiX } from 'react-icons/fi';
 import { useUserProfile } from '@/context/UserContext';
 
 type NavItem = {
@@ -18,6 +18,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin/productos', label: 'Productos', icon: FiPackage },
   { href: '/admin/clientes', label: 'Clientes', icon: FiUsers },
   { href: '/admin/finanzas', label: 'Finanzas', icon: FiTrendingUp },
+  { href: '/admin/giftcards', label: 'Gift Cards', icon: FiGift },
 ];
 
 export default function AdminLayout({ children, title }: { children: React.ReactNode; title?: string }) {

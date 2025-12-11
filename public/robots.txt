@@ -10,7 +10,7 @@ Disallow: /checkout
 Disallow: /api/
 
 # Host
-Host: https://www.masushi.cl
+Host: https://masushi.cl
 
 # Sitemaps
-Sitemap: https://www.masushi.cl/sitemap.xml
+Sitemap: https://masushi.cl/sitemap.xml

@@ -51,7 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'POST') {
     // Crear nuevo pedido
-    const { items, total, delivery_type, address, customer, coupon_code, payment_method, pagar_con } = req.body;
+    const { items, total, delivery_type, address, customer, coupon_code, gift_card_code, payment_method, pagar_con } = req.body;
 
     if (!items || !total || !delivery_type) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -98,6 +98,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const normalizedCoupon = typeof coupon_code === 'string' ? coupon_code.trim().toUpperCase() : null;
   let finalTotal = originalTotal;
   let appliedCoupon: { id: number | null; code: string; type: 'manual' | 'birthday'; percent?: number; amount?: number } | null = null;
+  let appliedGiftCard: { id: number; code: string; amountUsed: number; remainingAfter: number } | null = null;
   let discountAmount = 0;
   let discountLabel: string | null = null;
     if (normalizedCoupon === BIRTHDAY_COUPON_CODE) {
@@ -154,6 +155,67 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (discountAmount <= 0) {
       discountAmount = 0;
       discountLabel = null;
+    }
+
+    // Gift card (se aplica después del cupón de cumpleaños/manual)
+    const normalizedGiftCode = typeof gift_card_code === 'string' ? gift_card_code.trim().toUpperCase() : null;
+    if (normalizedGiftCode) {
+      try {
+        const { data: card, error: gcErr } = await supabaseAdmin
+          .from('gift_cards')
+          .select('*')
+          .eq('code', normalizedGiftCode)
+          .maybeSingle();
+
+        if (gcErr) throw gcErr;
+        if (!card) {
+          return res.status(400).json({ error: 'Gift card no encontrada' });
+        }
+
+        if (card.status === 'pending') return res.status(400).json({ error: 'Gift card aún no activada por admin' });
+        if (card.status === 'disabled') return res.status(400).json({ error: 'Gift card desactivada' });
+        if (card.amount_remaining <= 0 || card.status === 'exhausted') return res.status(400).json({ error: 'Gift card agotada' });
+
+        // Asegurar que la gift card quede asociada a la primera cuenta que la use
+        if (!card.claimed_by_user_id) {
+          const { data: claimed, error: claimErr } = await supabaseAdmin
+            .from('gift_cards')
+            .update({ claimed_by_user_id: userId, claimed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+            .eq('id', card.id)
+            .eq('claimed_by_user_id', null)
+            .select('*')
+            .maybeSingle();
+
+          if (claimErr) throw claimErr;
+          if (claimed) {
+            Object.assign(card, claimed);
+          } else {
+            const { data: refetched } = await supabaseAdmin
+              .from('gift_cards')
+              .select('*')
+              .eq('id', card.id)
+              .maybeSingle();
+            if (refetched?.claimed_by_user_id && refetched.claimed_by_user_id !== userId) {
+              return res.status(400).json({ error: 'Este código ya se asoció a otra cuenta' });
+            }
+            Object.assign(card, refetched || {});
+          }
+        } else if (card.claimed_by_user_id !== userId) {
+          return res.status(400).json({ error: 'Este código ya se asoció a otra cuenta' });
+        }
+
+        const giftUse = Math.min(finalTotal, card.amount_remaining);
+        finalTotal = Math.max(0, finalTotal - giftUse);
+        appliedGiftCard = {
+          id: card.id,
+          code: card.code,
+          amountUsed: giftUse,
+          remainingAfter: Math.max(0, card.amount_remaining - giftUse),
+        };
+      } catch (e) {
+        console.error('Error validating gift card:', e);
+        return res.status(500).json({ error: 'Error validando gift card' });
+      }
     }
 
     const { data, error } = await supabase
@@ -256,7 +318,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         : '';
 
   const totalResolved = typeof data.total === 'number' ? data.total : finalTotal;
-  const totalText = fmt(totalResolved);
+  const totalText = (() => {
+    const base = fmt(totalResolved);
+    const pieces: string[] = [];
+    if (discountAmount > 0) pieces.push(`${discountLabel ?? 'Descuento'}: -${fmt(discountAmount)}`);
+    if (appliedGiftCard?.amountUsed) pieces.push(`Gift card ${appliedGiftCard.code}: -${fmt(appliedGiftCard.amountUsed)}`);
+    return pieces.length ? `${base} (${pieces.join(' · ')})` : base;
+  })();
 
       // Use provided template name or fallback to approved `confirmacion_cliente`
       const templateName = process.env.WHATSAPP_TEMPLATE_NAME || 'confirmacion_cliente';
@@ -592,6 +660,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         detailSections.push('', discountLine);
       }
 
+      if (appliedGiftCard && appliedGiftCard.amountUsed > 0) {
+        const giftLine = `Gift card ${appliedGiftCard.code}: -${fmt(appliedGiftCard.amountUsed)} (resto ${fmt(appliedGiftCard.remainingAfter)})`;
+        detailSections.push('', giftLine);
+      }
+
       const localDetailText = detailSections.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 
       let extrasText = '';
@@ -673,6 +746,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } catch (e) {
       console.error('Error sending WhatsApp notifications', e);
       whatsappResults.push({ warning: `Error sending WhatsApp notifications: ${e instanceof Error ? e.message : String(e)}` });
+    }
+
+    // Si se aplicó gift card, descontar saldo y registrar uso
+    if (appliedGiftCard && data?.id) {
+      try {
+        const nowIso = new Date().toISOString();
+        const nextStatus = appliedGiftCard.remainingAfter <= 0 ? 'exhausted' : 'active';
+        await supabaseAdmin
+          .from('gift_cards')
+          .update({ amount_remaining: appliedGiftCard.remainingAfter, status: nextStatus, updated_at: nowIso })
+          .eq('id', appliedGiftCard.id);
+
+        await supabaseAdmin
+          .from('gift_card_usages')
+          .insert({
+            gift_card_id: appliedGiftCard.id,
+            order_id: data.id,
+            user_id: userId,
+            amount_used: appliedGiftCard.amountUsed,
+            used_at: nowIso,
+          });
+      } catch (e) {
+        console.error('Error updating gift card after order:', e);
+      }
     }
 
     // Si se aplicó un cupón, marcarlo como usado y referenciar el pedido

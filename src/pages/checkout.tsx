@@ -1,6 +1,6 @@
 "use client";
 import React, { useMemo, useReducer, useEffect, useState, useCallback } from "react";
-import { FaBirthdayCake, FaCheckCircle, FaSpinner, FaTrashAlt } from "react-icons/fa";
+import { FaBirthdayCake, FaCheckCircle, FaSpinner, FaTrashAlt, FaGift } from "react-icons/fa";
 import dynamic from "next/dynamic";
 import useSWR from "swr";
 import { useCart } from "@/context/CartContext";
@@ -484,6 +484,8 @@ export default function Checkout() {
   const [giftCard, setGiftCard] = useState<{ code: string; amount_total: number; amount_remaining: number } | null>(null);
   const [giftCardError, setGiftCardError] = useState<string | null>(null);
   const [validatingGiftCard, setValidatingGiftCard] = useState(false);
+  const [giftCardLoading, setGiftCardLoading] = useState(false);
+  const [giftCardDeferred, setGiftCardDeferred] = useState(false);
 
   const birthdayCouponEligible = birthdayEligibility?.eligibleNow ?? false;
 
@@ -507,9 +509,9 @@ export default function Checkout() {
   );
 
   const giftCardAppliedAmount = useMemo(() => {
-    if (!giftCard) return 0;
+    if (!giftCard || giftCardDeferred) return 0;
     return Math.min(totalAfterDiscount, giftCard.amount_remaining);
-  }, [giftCard, totalAfterDiscount]);
+  }, [giftCard, giftCardDeferred, totalAfterDiscount]);
 
   const totalAfterGiftCard = useMemo(
     () => Math.max(0, totalAfterDiscount - giftCardAppliedAmount),
@@ -577,6 +579,7 @@ export default function Checkout() {
         amount_total: Number(card.amount_total) || 0,
         amount_remaining: Number(card.amount_remaining) || 0,
       });
+      setGiftCardDeferred(false);
       setGiftCardError(null);
     } catch (e) {
       console.error('Error applying gift card', e);
@@ -586,11 +589,40 @@ export default function Checkout() {
     }
   }, [giftCardCodeInput]);
 
-  const handleRemoveGiftCard = useCallback(() => {
-    setGiftCard(null);
-    setGiftCardCodeInput('');
-    setGiftCardError(null);
-  }, []);
+  // Cargar gift card reclamada y con saldo para el usuario
+  useEffect(() => {
+    if (!user) {
+      setGiftCard(null);
+      setGiftCardCodeInput('');
+      setGiftCardDeferred(false);
+      return;
+    }
+    const fetchClaimedGiftCard = async () => {
+      setGiftCardLoading(true);
+      try {
+        const resp = await fetch('/api/giftcards');
+        if (!resp.ok) return;
+        const json = await resp.json();
+        const cards = (json?.giftCards ?? []) as Array<any>;
+        const mine = cards.find((c) => c.claimed_by_user_id === user.id && c.status === 'active' && Number(c.amount_remaining) > 0);
+        if (mine) {
+          setGiftCard({
+            code: mine.code,
+            amount_total: Number(mine.amount_total) || 0,
+            amount_remaining: Number(mine.amount_remaining) || 0,
+          });
+          setGiftCardCodeInput(mine.code || '');
+          setGiftCardError(null);
+          setGiftCardDeferred(false);
+        }
+      } catch (e) {
+        console.error('Error fetching claimed gift card', e);
+      } finally {
+        setGiftCardLoading(false);
+      }
+    };
+    fetchClaimedGiftCard();
+  }, [user]);
 
   const fetchBirthdayEligibility = useCallback(async () => {
     if (!user) {
@@ -1074,7 +1106,9 @@ export default function Checkout() {
 
               <div className="mt-6 space-y-4">
                 {birthdayStatusLoading ? (
-                  <p className="text-xs text-neutral-400">Verificando descuento de cumpleaños…</p>
+                  <div className="h-4">
+                    <span className="sr-only">Verificando descuento de cumpleaños…</span>
+                  </div>
                 ) : birthdayCouponEligible ? (
                     <div className="flex flex-col gap-3 rounded-2xl border border-green-400/40 bg-green-500/10 p-4 text-xs text-green-100 shadow-[0_8px_20px_rgba(16,185,129,0.25)]">
                     <div className="flex items-start gap-3">
@@ -1099,6 +1133,31 @@ export default function Checkout() {
                       {skipBirthdayCoupon ? (
                         <span className="text-xs text-green-200">{birthdayValidityReminder}</span>
                       ) : null}
+                    </div>
+                  </div>
+                ) : null}
+
+                {giftCard ? (
+                  <div className="flex flex-col gap-3 rounded-2xl border border-amber-400/40 bg-amber-500/10 p-4 text-xs text-amber-100 shadow-[0_8px_20px_rgba(251,191,36,0.25)]">
+                    <div className="flex items-start gap-3">
+                      <FaGift className="mt-0.5 text-base" aria-hidden="true" />
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-amber-100">Gift card {giftCardDeferred ? 'guardada' : 'aplicada'}</p>
+                        <p className="mt-1 leading-relaxed">Código <span className="font-semibold">{giftCard.code}</span>. Saldo disponible {fmt(giftCard.amount_remaining)} (monto original {fmt(giftCard.amount_total)}). Queda asociada a tu cuenta hasta agotar saldo.</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-amber-100">
+                      <button
+                        type="button"
+                        onClick={() => setGiftCardDeferred((prev) => !prev)}
+                        className={`rounded-full px-5 py-2 font-semibold transition-all duration-150 ${
+                          giftCardDeferred
+                            ? 'bg-amber-700/40 text-amber-100 hover:bg-amber-700/60'
+                            : 'bg-amber-500 text-neutral-900 hover:bg-amber-400 shadow-lg shadow-amber-400/40'
+                        }`}
+                      >
+                        {giftCardDeferred ? 'Usar en este pedido' : 'Guardar para otro pedido'}
+                      </button>
                     </div>
                   </div>
                 ) : null}
@@ -1137,26 +1196,18 @@ export default function Checkout() {
                         value={giftCardCodeInput}
                         onChange={(e) => setGiftCardCodeInput(e.target.value)}
                         placeholder="Ingresa tu código"
-                        className="flex-1 rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                        disabled={!!giftCard}
+                        className={`flex-1 rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-green-500 ${giftCard ? 'opacity-60 cursor-not-allowed' : ''}`}
                       />
                       <div className="flex gap-2">
                         <button
                           type="button"
                           onClick={handleApplyGiftCard}
-                          disabled={validatingGiftCard}
+                          disabled={validatingGiftCard || giftCardLoading || !!giftCard}
                           className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-500 disabled:opacity-60"
                         >
-                          {validatingGiftCard ? 'Validando…' : 'Aplicar'}
+                          {giftCard ? 'Aplicada' : validatingGiftCard || giftCardLoading ? 'Validando…' : 'Aplicar'}
                         </button>
-                        {giftCard ? (
-                          <button
-                            type="button"
-                            onClick={handleRemoveGiftCard}
-                            className="rounded-lg border border-white/10 px-3 py-2 text-sm text-neutral-300 hover:bg-white/10"
-                          >
-                            Quitar
-                          </button>
-                        ) : null}
                       </div>
                     </div>
                     {giftCardError ? <p className="text-xs text-red-400">{giftCardError}</p> : null}

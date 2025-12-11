@@ -41,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .from('gift_cards')
         .update({ claimed_by_user_id: userId, claimed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
         .eq('id', card.id)
-        .eq('claimed_by_user_id', null)
+        .is('claimed_by_user_id', null)
         .select('*')
         .maybeSingle();
 

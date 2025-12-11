@@ -77,10 +77,10 @@ export default function GiftCardsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white">
+    <div className="min-h-screen bg-neutral-950 text-white flex flex-col">
       <Seo title="Gift Cards — Masushi" canonicalPath="/giftcards" />
       <Navbar />
-      <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+      <main className="flex-1 max-w-4xl mx-auto px-4 py-8 space-y-6 w-full">
         <div className="bg-neutral-900/80 border border-white/10 rounded-2xl p-6 space-y-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-amber-300">Regala Masushi</p>
@@ -136,29 +136,15 @@ export default function GiftCardsPage() {
         </div>
 
         <div className="bg-neutral-900/80 border border-white/10 rounded-2xl p-6 space-y-3">
-          <h2 className="text-xl font-semibold">Tus gift cards</h2>
-          {loadingList ? (
-            <p className="text-sm text-neutral-400">Cargando...</p>
-          ) : giftCards.length === 0 ? (
-            <p className="text-sm text-neutral-400">Aún no tienes gift cards.</p>
-          ) : (
-            <div className="space-y-2">
-              {giftCards.map((gc) => (
-                <div key={gc.id} className="rounded-xl border border-white/10 bg-neutral-800/60 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-semibold">Código: <span className="font-mono">{gc.code}</span></p>
-                    <p className="text-xs text-neutral-400">Monto: {fmt(gc.amount_total)} · Saldo: {fmt(gc.amount_remaining)}</p>
-                    <p className="text-xs text-neutral-400">Estado: {gc.status}</p>
-                  </div>
-                  <div className="text-xs text-neutral-400">
-                    {gc.status === 'pending' ? 'Pendiente de activación (admin)' : null}
-                    {gc.status === 'active' ? 'Activa y lista para usar en checkout' : null}
-                    {gc.status === 'exhausted' ? 'Agotada' : null}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <h2 className="text-xl font-semibold">Paga por transferencia</h2>
+          <div className="rounded-xl border border-white/10 bg-neutral-800/60 p-4 text-sm text-neutral-100 leading-relaxed space-y-1">
+            <p className="font-semibold text-green-200">Datos bancarios</p>
+            <p>Banco: Banco Ficticio</p>
+            <p>Cuenta corriente: 12-345678-9</p>
+            <p>RUT: 12.345.678-9</p>
+            <p>Titular: Masushi Spa</p>
+            <p className="pt-1 text-neutral-200">Envía el comprobante a WhatsApp +56 9 8765 4321 para activar tu gift card.</p>
+          </div>
         </div>
       </main>
       <Footer />

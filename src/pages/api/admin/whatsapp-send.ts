@@ -32,18 +32,58 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const toRaw = typeof req.body?.to === 'string' ? req.body.to : ''
   const textRaw = typeof req.body?.text === 'string' ? req.body.text : ''
+  const buttonPayload = typeof req.body?.buttonPayload === 'string' ? req.body.buttonPayload : ''
+  const buttonTitle = typeof req.body?.buttonTitle === 'string' ? req.body.buttonTitle : ''
   const to = toRaw.replace(/\D/g, '')
   const text = textRaw.trim()
 
   if (!to || to.length < 8) return res.status(400).json({ error: 'Destinatario inválido' })
-  if (!text) return res.status(400).json({ error: 'Texto requerido' })
+  if (!text && !buttonPayload) return res.status(400).json({ error: 'Texto o payload requerido' })
 
-  const sendResult = await sendWhatsAppMessage(to, text)
-  if (!sendResult.ok) {
-    return res.status(sendResult.status || 500).json({ error: sendResult.error || 'Envio falló', body: sendResult.body })
+  let sendResult
+  let persistedType = 'text'
+  let persistedText = text
+  if (buttonPayload) {
+    // Enviar como "presionar" botón: type button con payload
+    persistedType = 'button'
+    persistedText = buttonTitle || buttonPayload
+    try {
+      const apiUrl = process.env.WHATSAPP_API_URL
+      const token = process.env.WHATSAPP_TOKEN
+      if (!apiUrl || !token) {
+        return res.status(500).json({ error: 'WhatsApp API config missing' })
+      }
+      const body = {
+        messaging_product: 'whatsapp',
+        to,
+        type: 'button',
+        button: { payload: buttonPayload },
+      }
+      const resp = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      })
+      const respText = await resp.text()
+      let parsed: any = respText
+      try { parsed = JSON.parse(respText) } catch (e) { /* keep raw */ }
+      sendResult = { ok: resp.ok, status: resp.status, body: parsed, error: resp.ok ? undefined : 'Provider returned error' }
+    } catch (err: any) {
+      const msg = err instanceof Error ? err.message : String(err)
+      return res.status(500).json({ error: msg })
+    }
+  } else {
+    sendResult = await sendWhatsAppMessage(to, text)
   }
 
-  const body: any = sendResult.body
+  if (!sendResult?.ok) {
+    return res.status((sendResult && sendResult.status) || 500).json({ error: sendResult?.error || 'Envio falló', body: sendResult?.body })
+  }
+
+  const body: any = sendResult?.body
   const waId = body?.messages?.[0]?.id || null
   const fromNumber = to // usamos el número del cliente como clave de conversación
   const phoneNumberId = extractPhoneNumberIdFromUrl(process.env.WHATSAPP_API_URL)
@@ -54,8 +94,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       from_number: fromNumber,
       to_number: phoneNumberId,
       profile_name: null,
-      type: 'text',
-      text_body: text,
+      type: persistedType,
+      text_body: persistedText,
       direction: 'out',
       payload: body ?? null,
       timestamp_ms: Date.now(),

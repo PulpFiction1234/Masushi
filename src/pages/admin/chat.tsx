@@ -7,6 +7,8 @@ const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 const QUICK_REPLIES = ['Sí', 'No', 'OK', 'Recibido', 'Confirmo'];
 
+type ButtonOption = { id: string; title: string };
+
 type WhatsAppMessage = {
   id: string;
   wa_id: string | null;
@@ -27,7 +29,7 @@ function formatTs(m: WhatsAppMessage) {
   return new Date(ts).toLocaleString('es-CL', { hour12: false });
 }
 
-function MessageBubble({ msg }: { msg: WhatsAppMessage }) {
+function MessageBubble({ msg, buttons, onSelectButton }: { msg: WhatsAppMessage; buttons: ButtonOption[]; onSelectButton?: (opt: ButtonOption) => void }) {
   const inbound = msg.direction !== 'out';
   const badge = inbound ? 'Entrante' : 'Saliente';
   return (
@@ -40,6 +42,20 @@ function MessageBubble({ msg }: { msg: WhatsAppMessage }) {
         </div>
         <div className="mt-1 text-sm whitespace-pre-wrap text-white">{msg.text_body || `[${msg.type || 'mensaje'}]`}</div>
         <div className="mt-1 text-[11px] text-gray-300">wa_id: {msg.wa_id || '—'}</div>
+        {inbound && buttons.length > 0 ? (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {buttons.map(btn => (
+              <button
+                key={btn.id}
+                type="button"
+                onClick={() => onSelectButton?.(btn)}
+                className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white hover:border-lime-300/70 hover:text-lime-100"
+              >
+                {btn.title}
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -77,6 +93,20 @@ export default function AdminChat() {
 
   const messages: WhatsAppMessage[] = convoData?.messages || [];
 
+  function extractButtons(msg: WhatsAppMessage): ButtonOption[] {
+    const p: any = msg?.payload;
+    const buttons: ButtonOption[] = [];
+    const arr = p?.interactive?.action?.buttons;
+    if (Array.isArray(arr)) {
+      for (const b of arr) {
+        const id = b?.reply?.id || b?.id || '';
+        const title = b?.reply?.title || b?.title || '';
+        if (id && title) buttons.push({ id, title });
+      }
+    }
+    return buttons;
+  }
+
   async function handleSend(customText?: string) {
     if (!selectedPhone) return;
     const text = (customText ?? draft).trim();
@@ -106,6 +136,25 @@ export default function AdminChat() {
   function handleQuickReply(text: string) {
     if (sending) return;
     handleSend(text);
+  }
+
+  function handleButtonReply(opt: ButtonOption) {
+    if (!selectedPhone || sending) return;
+    setSending(true);
+    setSendError(null);
+    fetch('/api/admin/whatsapp-send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: selectedPhone, buttonPayload: opt.id, buttonTitle: opt.title }),
+    })
+      .then(async res => {
+        const data = await res.json().catch(() => ({} as any));
+        if (!res.ok) throw new Error(data?.error || `Error ${res.status}`);
+        mutateConvo();
+        mutateAll();
+      })
+      .catch(err => setSendError(err?.message || 'No se pudo enviar'))
+      .finally(() => setSending(false));
   }
 
   return (
@@ -181,7 +230,17 @@ export default function AdminChat() {
                         const bts = b.timestamp_ms || Date.parse(b.created_at);
                         return (ats || 0) - (bts || 0);
                       })
-                      .map(msg => <MessageBubble key={msg.id || msg.wa_id || Math.random().toString(36)} msg={msg} />)
+                      .map(msg => {
+                        const buttons = extractButtons(msg);
+                        return (
+                          <MessageBubble
+                            key={msg.id || msg.wa_id || Math.random().toString(36)}
+                            msg={msg}
+                            buttons={buttons}
+                            onSelectButton={buttons.length ? handleButtonReply : undefined}
+                          />
+                        );
+                      })
                   )}
                 </div>
                 <div className="mt-3 border-t border-white/5 pt-3">
@@ -208,7 +267,7 @@ export default function AdminChat() {
                     />
                     <button
                       type="button"
-                      onClick={handleSend}
+                      onClick={() => handleSend()}
                       disabled={sending || !draft.trim()}
                       className="self-end rounded-xl border border-lime-400/60 bg-lime-600 px-4 py-2 text-sm font-semibold text-white shadow disabled:cursor-not-allowed disabled:opacity-60"
                     >

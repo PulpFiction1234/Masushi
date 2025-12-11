@@ -27,7 +27,7 @@ const buildEmailHtml = (card: GiftCard) => {
       <p>Puedes usarla parcialmente hasta agotar el saldo. Se asocia a la primera cuenta que ingrese el código.</p>
       <div style="margin-top:16px; max-width:640px; border-radius:16px; overflow:hidden; position:relative; box-shadow:0 12px 30px rgba(0,0,0,0.25);">
         <img src="${img}" alt="Gift card Masushi" style="display:block; width:100%; height:auto;" />
-        <div style="position:absolute; right:8%; bottom:9%;">
+        <div style="margin-top:-78px; text-align:right; padding-right:60px;">
           <span style="display:inline-block; background:#ffffff; color:#111; padding:10px 18px; border-radius:8px; font-family:monospace; letter-spacing:2px; font-size:18px; box-shadow:0 4px 12px rgba(0,0,0,0.18); min-width:220px; text-align:center;">
             ${card.code}
           </span>

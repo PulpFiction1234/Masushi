@@ -5,6 +5,8 @@ import Seo from '@/components/Seo';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
+const QUICK_REPLIES = ['Sí', 'No', 'OK', 'Recibido', 'Confirmo'];
+
 type WhatsAppMessage = {
   id: string;
   wa_id: string | null;
@@ -45,6 +47,9 @@ function MessageBubble({ msg }: { msg: WhatsAppMessage }) {
 
 export default function AdminChat() {
   const [selectedPhone, setSelectedPhone] = useState<string | null>(null);
+  const [draft, setDraft] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const { data: allData, isLoading: loadingAll, mutate: mutateAll } = useSWR('/api/admin/whatsapp-messages?limit=200', fetcher, { refreshInterval: 15000 });
   const { data: convoData, isLoading: loadingConvo, mutate: mutateConvo } = useSWR(
     selectedPhone ? `/api/admin/whatsapp-messages?phone=${encodeURIComponent(selectedPhone)}` : null,
@@ -71,6 +76,37 @@ export default function AdminChat() {
   }, [allData?.messages]);
 
   const messages: WhatsAppMessage[] = convoData?.messages || [];
+
+  async function handleSend(customText?: string) {
+    if (!selectedPhone) return;
+    const text = (customText ?? draft).trim();
+    if (!text) return;
+    setSending(true);
+    setSendError(null);
+    try {
+      const res = await fetch('/api/admin/whatsapp-send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: selectedPhone, text }),
+      });
+      const data = await res.json().catch(() => ({} as any));
+      if (!res.ok) {
+        throw new Error(data?.error || `Error ${res.status}`);
+      }
+      if (!customText) setDraft('');
+      mutateConvo();
+      mutateAll();
+    } catch (err: any) {
+      setSendError(err?.message || 'No se pudo enviar');
+    } finally {
+      setSending(false);
+    }
+  }
+
+  function handleQuickReply(text: string) {
+    if (sending) return;
+    handleSend(text);
+  }
 
   return (
     <div>
@@ -147,6 +183,39 @@ export default function AdminChat() {
                       })
                       .map(msg => <MessageBubble key={msg.id || msg.wa_id || Math.random().toString(36)} msg={msg} />)
                   )}
+                </div>
+                <div className="mt-3 border-t border-white/5 pt-3">
+                  {sendError ? <div className="mb-2 text-xs text-red-300">{sendError}</div> : null}
+                  <div className="mb-2 flex flex-wrap gap-2 text-xs text-gray-200">
+                    {QUICK_REPLIES.map(q => (
+                      <button
+                        key={q}
+                        type="button"
+                        disabled={sending}
+                        onClick={() => handleQuickReply(q)}
+                        className="rounded-full border border-white/10 bg-white/5 px-3 py-1 hover:border-lime-400/50 hover:text-white disabled:opacity-50"
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex flex-col gap-2 md:flex-row">
+                    <textarea
+                      value={draft}
+                      onChange={e => setDraft(e.target.value)}
+                      placeholder="Escribe tu respuesta…"
+                      className="min-h-[72px] flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-lime-400/50 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSend}
+                      disabled={sending || !draft.trim()}
+                      className="self-end rounded-xl border border-lime-400/60 bg-lime-600 px-4 py-2 text-sm font-semibold text-white shadow disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {sending ? 'Enviando…' : 'Enviar'}
+                    </button>
+                  </div>
+                  <div className="mt-1 text-[11px] text-gray-400">Se envía como texto simple al número seleccionado.</div>
                 </div>
               </div>
             )}

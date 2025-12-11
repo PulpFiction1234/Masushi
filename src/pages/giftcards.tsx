@@ -139,11 +139,13 @@ export default function GiftCardsPage() {
           <h2 className="text-xl font-semibold">Paga por transferencia</h2>
           <div className="rounded-xl border border-white/10 bg-neutral-800/60 p-4 text-sm text-neutral-100 leading-relaxed space-y-1">
             <p className="font-semibold text-green-200">Datos bancarios</p>
-            <p>Banco: Banco Ficticio</p>
-            <p>Cuenta corriente: 12-345678-9</p>
-            <p>RUT: 12.345.678-9</p>
-            <p>Titular: Masushi Spa</p>
-            <p className="pt-1 text-neutral-200">Envía el comprobante a WhatsApp +56 9 8765 4321 para activar tu gift card.</p>
+            <p>Titular: Sociedad Masushi Spa</p>
+            <p>RUT: 78.229.101-7</p>
+            <p>Banco: Banco Bci</p>
+            <p>Cuenta corriente en pesos</p>
+            <p>Número de cuenta: 10733701</p>
+            <p>Correo para comprobante: alex@mazushiltda.com</p>
+            <p className="pt-1 text-neutral-200">Envía el comprobante a WhatsApp +56 9 4087 3865 para activar tu gift card.</p>
           </div>
         </div>
       </main>

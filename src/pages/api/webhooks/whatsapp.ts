@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
+import supabaseAdmin from '@/server/supabase'
 
 // Simple webhook endpoint for WhatsApp Cloud API status updates.
 // - GET: used by Meta to verify the webhook (hub.mode=subscribe & hub.verify_token & hub.challenge)
@@ -9,7 +10,7 @@ import crypto from 'crypto'
 
 export const config = {
   api: {
-    bodyParser: true, // keep default; if you need raw body for strict signature verification, change this
+    bodyParser: false, // necesitamos el raw body para validar firma correctamente
   },
 }
 
@@ -20,17 +21,82 @@ function ensureLogDir() {
   if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true })
 }
 
-function verifySignature(req: NextApiRequest): boolean {
+async function getRawBody(req: NextApiRequest): Promise<Buffer> {
+  const chunks: Buffer[] = []
+  for await (const chunk of req) {
+    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk)
+  }
+  return Buffer.concat(chunks)
+}
+
+function verifySignature(req: NextApiRequest, rawBody: Buffer): boolean {
   const appSecret = process.env.WHATSAPP_APP_SECRET
   const signature = req.headers['x-hub-signature-256'] as string | undefined
-  if (!appSecret) return true // no secret configured, skip verification
-  if (!signature) return false
-  // compute signature over raw body. We will stringify the body because Next.js parsed it already.
-  const payload = JSON.stringify(req.body)
+  if (!appSecret) return true // sin secret configurado, no verificamos
+  if (!signature) return true // permitimos si Meta no envía firma (por compatibilidad)
   const hmac = crypto.createHmac('sha256', appSecret)
-  hmac.update(payload)
+  hmac.update(rawBody)
   const expected = 'sha256=' + hmac.digest('hex')
   return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature))
+}
+
+function extractTextBody(msg: any): string | null {
+  if (!msg) return null
+  if (msg.text?.body) return String(msg.text.body)
+  if (msg.button?.text) return String(msg.button.text)
+  const interactive = msg.interactive
+  if (interactive?.button_reply?.title) return String(interactive.button_reply.title)
+  if (interactive?.button_reply?.id) return String(interactive.button_reply.id)
+  if (interactive?.list_reply?.title) return String(interactive.list_reply.title)
+  if (interactive?.list_reply?.description) return String(interactive.list_reply.description)
+  return null
+}
+
+async function persistIncomingMessages(body: any) {
+  const entries = Array.isArray(body?.entry) ? body.entry : []
+  const rows: Array<Record<string, any>> = []
+
+  for (const entry of entries) {
+    const changes = Array.isArray(entry?.changes) ? entry.changes : []
+    for (const change of changes) {
+      const value = change?.value
+      const messages = Array.isArray(value?.messages) ? value.messages : []
+      const metadata = value?.metadata || {}
+
+      for (const msg of messages) {
+        const waId = msg?.id || null
+        const fromNumber = msg?.from || null
+        const toNumber = metadata?.phone_number_id || metadata?.display_phone_number || null
+        const profileName = msg?.profile?.name || value?.contacts?.[0]?.profile?.name || null
+        const type = msg?.type || null
+        const textBody = extractTextBody(msg)
+        const timestampMs = msg?.timestamp ? Number(msg.timestamp) * 1000 : null
+
+        rows.push({
+          wa_id: waId,
+          from_number: fromNumber,
+          to_number: toNumber,
+          profile_name: profileName,
+          type,
+          text_body: textBody,
+          direction: 'in',
+          payload: msg ?? null,
+          timestamp_ms: Number.isFinite(timestampMs) ? timestampMs : null,
+        })
+      }
+    }
+  }
+
+  if (!rows.length) return
+
+  try {
+    const { error } = await supabaseAdmin
+      .from('whatsapp_messages')
+      .upsert(rows, { onConflict: 'wa_id' })
+    if (error) console.error('Failed to upsert whatsapp messages', error)
+  } catch (err) {
+    console.error('Error upserting whatsapp messages', err)
+  }
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -46,8 +112,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'POST') {
-    // Optional verification
-    const ok = verifySignature(req)
+    const rawBody = await getRawBody(req)
+
+    let parsed: any
+    try {
+      parsed = JSON.parse(rawBody.toString('utf8'))
+    } catch (err) {
+      console.error('Failed to parse webhook body', err)
+      return res.status(400).send('Invalid JSON')
+    }
+
+    const ok = verifySignature(req, rawBody)
     if (!ok) {
       console.error('Webhook signature verification failed')
       return res.status(401).send('Invalid signature')
@@ -57,7 +132,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const entry = {
       receivedAt: new Date().toISOString(),
       headers: req.headers,
-      body: req.body,
+      body: parsed,
     }
     try {
       fs.appendFileSync(LOG_FILE, JSON.stringify(entry, null, 2) + '\n---\n')
@@ -65,7 +140,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.error('Failed to write webhook log', err)
     }
     // Also print to console for immediate dev feedback
-    console.log('WhatsApp webhook event received:', JSON.stringify(req.body))
+    console.log('WhatsApp webhook event received:', JSON.stringify(parsed))
+
+    // Persist inbound messages for admin chat view (best-effort; non-blocking)
+    persistIncomingMessages(parsed).catch(err => {
+      console.error('Failed to persist whatsapp messages', err)
+    })
 
     return res.status(200).json({ ok: true })
   }

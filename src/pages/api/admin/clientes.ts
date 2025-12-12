@@ -17,8 +17,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
+    const parsedPage = Number(req.query.page || 1);
+    const parsedPerPage = Number(req.query.perPage || 50);
+    const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+    const perPage = Number.isFinite(parsedPerPage) ? Math.min(Math.max(parsedPerPage, 1), 200) : 50;
+
+    // Count total profiles to build pagination metadata
+    const { count: totalCount, error: countError } = await supabaseAdmin
+      .from('profiles')
+      .select('id', { count: 'exact', head: true });
+    if (countError) {
+      console.error('[admin:clientes] error counting profiles', countError);
+    }
+
     // Get all users from auth.users
-    const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers();
+    const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
     
     if (authError) {
       console.error('[admin:clientes] error listing users', authError);
@@ -31,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const userIds = users.map(u => u.id);
     
     if (userIds.length === 0) {
-      return res.status(200).json({ clientes: [] });
+      return res.status(200).json({ clientes: [], page, perPage, total: totalCount || 0 });
     }
 
     const { data: profiles, error: profilesError } = await supabaseAdmin
@@ -106,7 +119,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Sort by created_at desc (newest first)
     clientes.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-    return res.status(200).json({ clientes });
+    return res.status(200).json({ clientes, page, perPage, total: totalCount || clientes.length });
   } catch (e: any) {
     console.error('[admin:clientes] exception', e);
     return res.status(500).json({ error: e?.message || String(e) });

@@ -23,12 +23,16 @@ export default function ClientesAdminPanel() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(50);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const r = await fetch('/api/admin/clientes');
+        const params = new URLSearchParams({ page: String(page), perPage: String(perPage) });
+        const r = await fetch(`/api/admin/clientes?${params.toString()}`);
         if (!r.ok) {
           console.error('Error fetching clientes');
           return;
@@ -36,14 +40,29 @@ export default function ClientesAdminPanel() {
         const json = await r.json();
         if (!mounted) return;
         setClientes(json.clientes || []);
+        setTotal(json.total ?? (json.clientes?.length || 0));
       } catch (e) {
         console.error('Exception fetching clientes:', e);
       } finally {
         if (mounted) setLoading(false);
       }
     })();
-    return () => { mounted = false; };
-  }, []);
+  }, [page, perPage]);
+
+  const totalPages = Math.max(1, Math.ceil(total / perPage || 1));
+
+  const goToPage = (p: number) => {
+    const next = Math.min(Math.max(p, 1), totalPages);
+    setPage(next);
+  };
+
+  const pageNumbers = useMemo(() => {
+    const nums: number[] = [];
+    const start = Math.max(1, page - 2);
+    const end = Math.min(totalPages, start + 4);
+    for (let n = start; n <= end; n++) nums.push(n);
+    return nums;
+  }, [page, totalPages]);
 
   const queryNorm = normalize(query).trim();
   const tokens = useMemo(() => queryNorm.split(/\s+/).filter(Boolean), [queryNorm]);
@@ -142,10 +161,10 @@ export default function ClientesAdminPanel() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <p className="text-xs md:text-sm text-gray-300">
-            Total de clientes registrados: <span className="font-semibold text-white">{clientes.length}</span>
+            Total de clientes registrados: <span className="font-semibold text-white">{total || clientes.length}</span>
           </p>
           <p className="text-xs text-gray-400">
-            Mostrando: {filtered.length} cliente{filtered.length !== 1 ? 's' : ''}
+            Mostrando: {filtered.length} cliente{filtered.length !== 1 ? 's' : ''} (página {page} de {totalPages})
           </p>
         </div>
         <input 
@@ -252,6 +271,36 @@ export default function ClientesAdminPanel() {
           </div>
         </div>
       )}
+
+      {/* Paginación */}
+      <div className="flex flex-wrap items-center gap-2 text-sm text-gray-200">
+        <button
+          onClick={() => goToPage(page - 1)}
+          disabled={page <= 1}
+          className="rounded border border-white/10 px-3 py-1 disabled:opacity-50"
+        >
+          Anterior
+        </button>
+        <div className="flex flex-wrap gap-1">
+          {pageNumbers.map((pageNumber) => (
+            <button
+              key={pageNumber}
+              onClick={() => goToPage(pageNumber)}
+              className={`min-w-[36px] rounded px-3 py-1 text-sm ${pageNumber === page ? 'bg-lime-600 text-white' : 'border border-white/10 text-gray-200 hover:border-lime-400/50'}`}
+            >
+              {pageNumber}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => goToPage(page + 1)}
+          disabled={page >= totalPages}
+          className="rounded border border-white/10 px-3 py-1 disabled:opacity-50"
+        >
+          Siguiente
+        </button>
+        <div className="ml-auto text-xs text-gray-400">Por página: {perPage}</div>
+      </div>
     </div>
   );
 }

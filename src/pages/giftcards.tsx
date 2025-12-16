@@ -133,6 +133,13 @@ export default function GiftCardsPage() {
             </button>
             {!user ? <p className="text-sm text-neutral-400 self-center">Inicia sesión para continuar.</p> : null}
           </div>
+          <p className="text-xs text-neutral-400 leading-relaxed">
+            Por la compra de la gift card no se emite boleta ni factura asociada.
+          </p>
+          <p className="text-xs text-neutral-400 leading-relaxed">
+            Cada compra que realices usando saldo de la gift card sí emite su boleta correspondiente.
+          </p>
+          
         </div>
 
         <div className="bg-neutral-900/80 border border-white/10 rounded-2xl p-6 space-y-3">

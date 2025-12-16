@@ -126,21 +126,19 @@ export default function MenuPage() {
       />
 
       {/* Banner ocupando el espacio del encabezado, responsivo en ancho/alto */}
-      <div className="bg-gray-950 w-full md:pl-56">
-        <div className="mx-auto mb-4 w-full max-w-6xl px-4 md:px-6">
-          <div className="relative overflow-hidden rounded-xl bg-gray-900 aspect-[16/6] md:aspect-[16/5] lg:aspect-[16/4] min-h-[200px]">
-            <Image
-              src="/images/giftcards/Banner_Mazushi.webp"
-              alt="Banner Masushi"
-              fill
-              className="object-contain md:object-cover"
-              sizes="(min-width: 1280px) 80vw, (min-width: 768px) 90vw, 100vw"
-              priority
-            />
-            <div className="sr-only">
-              <h1>Carta | Masushi Ciudad del Este</h1>
-              <p>Calidad y frescura en cada roll. Delivery en Puente Alto y retiro en local.</p>
-            </div>
+      <div className="bg-gray-950 flex justify-center px-4 md:px-6 md:ml-56">
+        <div className="relative w-full max-w-6xl overflow-hidden rounded-xl bg-gray-900 aspect-[16/6] md:aspect-[16/5] lg:aspect-[16/4] min-h-[200px] mb-4">
+          <Image
+            src="/images/giftcards/Banner_Mazushi.webp"
+            alt="Banner Masushi"
+            fill
+            className="object-contain md:object-cover"
+            sizes="(min-width: 1280px) 80vw, (min-width: 768px) 90vw, 100vw"
+            priority
+          />
+          <div className="sr-only">
+            <h1>Carta | Masushi Ciudad del Este</h1>
+            <p>Calidad y frescura en cada roll. Delivery en Puente Alto y retiro en local.</p>
           </div>
         </div>
       </div>

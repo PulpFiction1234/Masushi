@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Head from "next/head";
+import Image from "next/image";
 import dynamic from "next/dynamic";
 
 import Navbar from "@/components/Navbar";
@@ -139,6 +140,21 @@ export default function Home() {
       <h1 className="mx-auto mt-4 max-w-3xl px-4 text-center text-[22px] leading-tight text-neutral-100 font-medium">
         Sushi Delivery | Masushi Ciudad del Este 
       </h1>
+
+      <section className="mx-auto mt-6 w-[80%]  md:w-[80%]">
+        <a href="/giftcards" aria-label="Ver gift cards Masushi">
+          <div className="overflow-hidden rounded-xl border border-white/10 shadow-lg shadow-black/40">
+            <Image
+              src="/images/giftcards/Banner_Mazushi.webp"
+              alt="Banner de gift cards Masushi"
+              width={3840}
+              height={2160}
+              className="h-auto w-full"
+              priority
+            />
+          </div>
+        </a>
+      </section>
 
       <ProductSection
         title="Top Rolls"

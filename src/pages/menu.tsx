@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState, useDeferredValue } from "react";
 import Head from "next/head";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import ListaProductos from "@/components/ListaProductos";
 import Navbar from "@/components/Navbar";
@@ -124,16 +125,24 @@ export default function MenuPage() {
         profileName={birthdayProfile?.full_name}
       />
 
-      {/* H1 + descripción (mismo texto que el <title>) */}
-      <div className="bg-gray-950 flex justify-center md:ml-56">
-        <header className="w-11/12 max-w-[19rem] sm:max-w-xs md:max-w-2xl text-center px-2 mb-3">
-          <h1 className="text-[22px] font-semibold text-neutral-100">
-            Carta | Masushi Ciudad del Este
-          </h1>
-          <p className="text-[16px] text-neutral-100 mt-1">
-            Calidad y frescura en cada roll. Delivery en Puente Alto y retiro en local.
-          </p>
-        </header>
+      {/* Banner ocupando el espacio del encabezado, responsivo en ancho/alto */}
+      <div className="bg-gray-950 w-full md:pl-56">
+        <div className="mx-auto mb-4 w-full max-w-6xl px-4 md:px-6">
+          <div className="relative overflow-hidden rounded-xl bg-gray-900 aspect-[16/6] md:aspect-[16/5] lg:aspect-[16/4] min-h-[200px]">
+            <Image
+              src="/images/giftcards/Banner_Mazushi.webp"
+              alt="Banner Masushi"
+              fill
+              className="object-contain md:object-cover"
+              sizes="(min-width: 1280px) 80vw, (min-width: 768px) 90vw, 100vw"
+              priority
+            />
+            <div className="sr-only">
+              <h1>Carta | Masushi Ciudad del Este</h1>
+              <p>Calidad y frescura en cada roll. Delivery en Puente Alto y retiro en local.</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Botón flotante categorías (móvil) */}

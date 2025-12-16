@@ -12,9 +12,12 @@ export const imageForGiftcardAmount = (amount: number) => {
 export const buildGiftcardEmailHtml = (card: GiftCard, opts?: { baseUrl?: string }) => {
   const site = (opts?.baseUrl || resolveSiteUrl()).replace(/\/$/, '');
   const img = `${site}${imageForGiftcardAmount(card.amount_total)}`;
+  const senderName = card.purchaser_name?.trim() || 'Un cliente de Masushi';
+  const recipientName = card.recipient_name?.trim() || 'ti';
   return `
     <div style="font-family:Arial,sans-serif;color:#111;">
       <p>¡Tu gift card está lista!</p>
+      <p>Este es un regalo especialmente para ti 🎁 <strong>${recipientName}</strong>, con cariño de <strong>${senderName}</strong>. Para que la uses cuando quieras.</p>
       <p>Monto: <strong>$${card.amount_total.toLocaleString('es-CL')}</strong></p>
       <p>Código: <strong style="font-family:monospace;letter-spacing:1px;">${card.code}</strong></p>
       <p>Puedes usarla parcialmente hasta agotar el saldo. Se asocia a la primera cuenta que ingrese el código.</p>
@@ -33,5 +36,8 @@ export const buildGiftcardEmailHtml = (card: GiftCard, opts?: { baseUrl?: string
   `;
 };
 
-export const buildGiftcardEmailText = (card: GiftCard) =>
-  `Tu gift card Masushi está activa. Monto: $${card.amount_total.toLocaleString('es-CL')}. Código: ${card.code}`;
+export const buildGiftcardEmailText = (card: GiftCard) => {
+  const senderName = card.purchaser_name?.trim() || 'Un cliente de Masushi';
+  const recipientName = card.recipient_name?.trim() || 'ti';
+  return `Tu gift card Masushi está activa. Monto: $${card.amount_total.toLocaleString('es-CL')}. Código: ${card.code}. Este es un regalo especialmente para ti ( ${recipientName} ), con cariño de ${senderName}. Para que la uses cuando quieras.`;
+};

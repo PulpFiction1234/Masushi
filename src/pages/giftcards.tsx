@@ -152,7 +152,7 @@ export default function GiftCardsPage() {
             <p>Cuenta corriente en pesos</p>
             <p>Número de cuenta: 10733701</p>
             <p>Correo para comprobante: masushi.spa@gmail.com</p>
-            <p className="pt-1 text-neutral-200">Envía el comprobante a WhatsApp +56 9 4087 3865 para activar tu gift card.</p>
+            <p className="pt-5 text-neutral-200">Envía el comprobante a WhatsApp +56 9 4087 3865 para activar tu gift card.</p>
           </div>
         </div>
       </main>

@@ -17,10 +17,10 @@ export const buildGiftcardEmailHtml = (card: GiftCard, opts?: { baseUrl?: string
   return `
     <div style="font-family:Arial,sans-serif;color:#111;">
       <p>¡Tu gift card está lista!</p>
-      <p>Este es un regalo especialmente para ti 🎁 <strong>${recipientName}</strong>, con cariño de <strong>${senderName}</strong>. Para que la uses cuando quieras.</p>
+      <p>Este es un regalo especialmente para 🎁 <strong>${recipientName}</strong>, con cariño de <strong>${senderName}</strong>. Para que la uses cuando quieras.</p>
       <p>Monto: <strong>$${card.amount_total.toLocaleString('es-CL')}</strong></p>
       <p>Código: <strong style="font-family:monospace;letter-spacing:1px;">${card.code}</strong></p>
-      <p>Esta gift card es valida para utilizarla en nuestra pagina web.<br />Puedes usarla parcialmente hasta agotar el saldo y se asocia a la primera cuenta que ingrese el código.</p>
+      <p>Esta gift card es valida para utilizarla en nuestra pagina web www.masushi.cl .<br />Puedes usarla parcialmente hasta agotar el saldo y se asocia a la primera cuenta que ingrese el código.</p>
       <div style="margin-top:16px; max-width:640px; border-radius:16px; overflow:hidden; box-shadow:0 12px 30px rgba(0,0,0,0.25);">
         <table role="presentation" width="100%" height="420" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; background:url('${img}') center/cover no-repeat;">
           <tr>

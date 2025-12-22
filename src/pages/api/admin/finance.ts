@@ -4,11 +4,23 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
 import supabaseAdmin from '@/server/supabase';
 
+const TIME_ZONE = 'America/Santiago';
+
+function getTZYearMonth(d: Date) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+  }).formatToParts(d);
+  const year = Number(parts.find(p => p.type === 'year')?.value || 0);
+  const month = Number(parts.find(p => p.type === 'month')?.value || 0);
+  return { year, month };
+}
+
 function monthKey(d: Date) {
-  // Use UTC to match the UTC-based `start` calculation and avoid timezone shifts
-  const y = d.getUTCFullYear();
-  const m = d.getUTCMonth() + 1;
-  return `${y}-${String(m).padStart(2, '0')}`;
+  // Bucket by Chile time to avoid off-by-one-month due to UTC offsets
+  const { year, month } = getTZYearMonth(d);
+  return `${year}-${String(month).padStart(2, '0')}`;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -35,10 +47,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const monthsParam = Number(req.query.months ?? 6);
     const months = Number.isInteger(monthsParam) && monthsParam > 0 ? monthsParam : 6;
 
-    // compute a conservative start date (first day of current month minus months-1)
+    // compute months range in Chile time (America/Santiago) to align buckets with local business time
     const now = new Date();
-    const conservativeStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-    conservativeStart.setUTCMonth(conservativeStart.getUTCMonth() - (months - 1));
+    const { year: endYear, month: endMonth } = getTZYearMonth(now);
+
+    // build months array ending at the current Chile month
+    const monthsArr: string[] = [];
+    // convert year-month to a linear index to move backwards safely
+    const endLinear = endYear * 12 + (endMonth - 1);
+    for (let offset = months - 1; offset >= 0; offset--) {
+      const linear = endLinear - offset;
+      const y = Math.floor(linear / 12);
+      const m = (linear % 12) + 1;
+      monthsArr.push(`${y}-${String(m).padStart(2, '0')}`);
+    }
+
+    // fetch orders since the start of the first month (UTC midnight) so we include the full period
+    const [startY, startM] = monthsArr[0].split('-').map(Number);
+    const conservativeStart = new Date(Date.UTC(startY, (startM || 1) - 1, 1));
 
     // fetch orders since the conservative start (this ensures we get any recent orders)
     const { data: orders, error } = await supabaseAdmin
@@ -50,25 +76,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (error) {
       console.error('/api/admin/finance supabase error:', error.message);
       return res.status(500).json({ error: error.message });
-    }
-
-    // determine the effective end month: prefer the latest order date if present so charts include newest orders
-    let endDate = new Date();
-    if (orders && orders.length > 0) {
-      const lastOrderDate = new Date(orders[orders.length - 1].created_at);
-      if (lastOrderDate.getTime() > endDate.getTime()) endDate = lastOrderDate;
-    }
-
-    // prepare months array in chronological order ending at endDate's month
-    const monthsArr: string[] = [];
-    const endY = endDate.getUTCFullYear();
-    const endM = endDate.getUTCMonth();
-    // start month = end month - (months-1)
-    const startMonthIndex = endM - (months - 1);
-    for (let i = 0; i < months; i++) {
-      const m = startMonthIndex + i;
-      const d = new Date(Date.UTC(endY, m, 1));
-      monthsArr.push(monthKey(d));
     }
 
     // initialize series

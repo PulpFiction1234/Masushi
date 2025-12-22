@@ -23,20 +23,21 @@ export default function LocalMap({ lat, lng }: LocalMapProps) {
 
     if (mapRef.current || !mapContainerRef.current) return;
 
-    // Asegura cierre del anillo del polígono
-    const ring =
-      zonaRepartoLngLat[0][0] === zonaRepartoLngLat[zonaRepartoLngLat.length - 1][0] &&
-      zonaRepartoLngLat[0][1] === zonaRepartoLngLat[zonaRepartoLngLat.length - 1][1]
-        ? zonaRepartoLngLat
-        : [...zonaRepartoLngLat, zonaRepartoLngLat[0]];
+    // Cierra cada anillo (outer + holes) para Mapbox
+    const closedRings = zonaRepartoLngLat.map((ring) => {
+      const first = ring[0];
+      const last = ring[ring.length - 1];
+      const isClosed = first[0] === last[0] && first[1] === last[1];
+      return isClosed ? ring : [...ring, first];
+    });
 
-    // GeoJSON del polígono
+    // GeoJSON del polígono (con agujero si viene en data)
     const polygonGeoJSON: GeoJSON.Feature<GeoJSON.Polygon> = {
       type: "Feature",
       properties: { name: "zona-reparto" },
       geometry: {
         type: "Polygon",
-        coordinates: [ring], // Mapbox espera [ [ [lng,lat], ... ] ]
+        coordinates: closedRings, // Mapbox espera [ outer, hole1, hole2, ... ]
       },
     };
 
@@ -98,7 +99,9 @@ export default function LocalMap({ lat, lng }: LocalMapProps) {
       }
 
       // Ajusta vista al polígono (padding para que respire)
-      const bounds = ring.reduce((b, [lngP, latP]) => b.extend([lngP, latP]), new mapboxgl.LngLatBounds(ring[0], ring[0]));
+      // usar outer ring para bounds
+      const outer = closedRings[0];
+      const bounds = outer.reduce((b, [lngP, latP]) => b.extend([lngP, latP]), new mapboxgl.LngLatBounds(outer[0], outer[0]));
       map.fitBounds(bounds, { padding: 28, duration: 600 });
     };
 

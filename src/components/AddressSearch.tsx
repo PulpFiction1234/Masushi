@@ -5,8 +5,12 @@ import * as turf from "@turf/turf";
 import mapboxgl from "mapbox-gl";
 import addressOverrides from "@/data/addressOverrides";
 
+type Ring = number[][]; // [lng, lat][]
+type Rings = Ring[];
+
 interface AddressSearchProps {
-  polygonCoords: number[][];
+  // Accept simple ring or rings (outer + holes). Both in [lng, lat] order.
+  polygonCoords: Ring | Rings;
   onValidAddress: (address: string, coords: [number, number]) => void;
   /** If true, show the full Mapbox place_name in the input instead of a shortened version */
   displayFullAddress?: boolean;
@@ -25,17 +29,32 @@ const AddressSearch: React.FC<AddressSearchProps> = ({ polygonCoords, onValidAdd
 
   const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
 
+  const normalizeRings = useCallback((poly: Ring | Rings): Rings => {
+    const first = (poly as any)?.[0];
+    const isMulti = Array.isArray(first?.[0]);
+    return isMulti ? (poly as Rings) : [poly as Ring];
+  }, []);
+
   useEffect(() => {
     mapboxgl.accessToken = MAPBOX_TOKEN;
+    const rings = normalizeRings(polygonCoords);
+    const outer = rings[0];
+    const closedRings = rings.map((ring) => {
+      const first = ring[0];
+      const last = ring[ring.length - 1];
+      const isClosed = first && last && first[0] === last[0] && first[1] === last[1];
+      return isClosed ? ring : [...ring, first];
+    });
+
     const map = new mapboxgl.Map({
       container: mapContainerRef.current!,
       style: "mapbox://styles/mapbox/dark-v11",
-      center: [polygonCoords[0][0], polygonCoords[0][1]] as [number, number],
+      center: outer?.[0] ? [outer[0][0], outer[0][1]] : [0, 0],
       zoom: 13,
     });
 
     map.on("load", () => {
-      const polygonFeature = turf.polygon([[...polygonCoords, polygonCoords[0]]]);
+      const polygonFeature = turf.polygon(closedRings);
       map.addSource("delivery-zone", {
         type: "geojson",
         data: { type: "FeatureCollection" as const, features: [polygonFeature] },
@@ -56,7 +75,7 @@ const AddressSearch: React.FC<AddressSearchProps> = ({ polygonCoords, onValidAdd
 
     mapRef.current = map;
     return () => map.remove();
-  }, [MAPBOX_TOKEN, polygonCoords]);
+  }, [MAPBOX_TOKEN, polygonCoords, normalizeRings]);
 
   const fetchSuggestions = useCallback(
     async (value: string) => {
@@ -97,8 +116,10 @@ const AddressSearch: React.FC<AddressSearchProps> = ({ polygonCoords, onValidAdd
       try {
         // If the user included a number in the query, prefer an exact (non-autocomplete) address lookup
         const hasNumber = /\d/.test(value);
-        const centerProximity = polygonCoords && polygonCoords.length > 0
-          ? `${polygonCoords[0][0]},${polygonCoords[0][1]}` // Mapbox expects proximity=lng,lat
+        const rings = normalizeRings(polygonCoords);
+        const outer = rings[0];
+        const centerProximity = outer && outer.length > 0
+          ? `${outer[0][0]},${outer[0][1]}` // Mapbox expects proximity=lng,lat
           : undefined;
 
         const params = new URLSearchParams();
@@ -175,8 +196,15 @@ const AddressSearch: React.FC<AddressSearchProps> = ({ polygonCoords, onValidAdd
     }
 
     const coords: [number, number] = [rawCoords[0], rawCoords[1]];
+    const rings = normalizeRings(polygonCoords);
+    const closedRings = rings.map((ring) => {
+      const first = ring[0];
+      const last = ring[ring.length - 1];
+      const isClosed = first && last && first[0] === last[0] && first[1] === last[1];
+      return isClosed ? ring : [...ring, first];
+    });
     const point = turf.point(coords);
-    const polygon = turf.polygon([[...polygonCoords, polygonCoords[0]]]);
+    const polygon = turf.polygon(closedRings);
     const isInside = turf.booleanPointInPolygon(point, polygon);
 
     if (isInside) {

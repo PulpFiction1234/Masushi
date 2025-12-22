@@ -15,45 +15,54 @@ function prettyMonth(key: string) {
   return new Intl.DateTimeFormat('es-CL', { month: 'short', year: 'numeric' }).format(date);
 }
 
+function prettyMonthShort(key: string) {
+  // Avoid UTC parsing quirks: build date in UTC and format in locale
+  const [y, m] = key.split('-');
+  const date = new Date(Date.UTC(Number(y), Number(m) - 1, 1));
+  return new Intl.DateTimeFormat('es-CL', { month: 'short' }).format(date);
+}
+
 export function StackedBarOrders({ months, delivery, pickup }: { months: string[]; delivery: number[]; pickup: number[] }) {
-  // Render grouped bars (delivery and pickup side-by-side) per month
+  // Render grouped bars (delivery and pickup side-by-side) per month using a shared max so heights are comparable across months
   const max = Math.max(...months.map((_, i) => Math.max(delivery[i] || 0, pickup[i] || 0)), 1);
+  const minBarWidth = 60; // ensure all months stay visible; overflow scrolls if needed
+  const contentMinWidth = Math.max(months.length * minBarWidth, 320);
 
   return (
     <div className="w-full bg-gray-900 p-4 rounded-lg">
       <h3 className="text-sm font-semibold mb-2">Pedidos (Delivery vs Retiro)</h3>
-      <div className="flex gap-3 items-end h-40">
-        {months.map((m, i) => {
-          const d = delivery[i] || 0;
-          const p = pickup[i] || 0;
-          // scale per-month so differences between delivery and pickup are visible
-          const localMax = Math.max(d, p, 1);
-          // use pixel heights (based on parent h-40 which is ~160px); reserve space for labels
-          const innerHeightPx = 110; // px available for the bars
-          const dPxRaw = Math.round((d / localMax) * innerHeightPx);
-          const pPxRaw = Math.round((p / localMax) * innerHeightPx);
-          const minVisiblePx = 6; // minimum pixel height
-          const dPx = d > 0 ? Math.max(minVisiblePx, dPxRaw) : 2;
-          const pPx = p > 0 ? Math.max(minVisiblePx, pPxRaw) : 2;
-          return (
-            <div key={m} className="flex-1 flex flex-col items-center text-xs" title={`${prettyMonth(m)} — Delivery: ${d} · Retiro: ${p}`}>
-             
-              <div className="w-full flex items-end justify-center gap-1 h-full min-h-[28px]">
-                <div className="w-1/2 h-full flex flex-col justify-end items-center">
-                  <div style={{ height: `${dPx}px` }} className="bg-emerald-500 w-full flex items-center justify-center">
-                    {dPx > 18 && <span className="text-[10px] text-white">{d}</span>}
+      <div className="overflow-x-auto">
+        <div className="flex gap-3 items-end h-40" style={{ minWidth: `${contentMinWidth}px` }}>
+          {months.map((m, i) => {
+            const d = delivery[i] || 0;
+            const p = pickup[i] || 0;
+            // use a shared scale (max) so month-to-month differences are visible
+            const innerHeightPx = 110; // px available for the bars
+            const dPxRaw = Math.round((d / max) * innerHeightPx);
+            const pPxRaw = Math.round((p / max) * innerHeightPx);
+            const minVisiblePx = 6; // minimum pixel height
+            const dPx = d > 0 ? Math.max(minVisiblePx, dPxRaw) : 2;
+            const pPx = p > 0 ? Math.max(minVisiblePx, pPxRaw) : 2;
+            return (
+              <div key={m} className="flex-1 flex flex-col items-center text-xs" title={`${prettyMonth(m)} — Delivery: ${d} · Retiro: ${p}`}>
+                
+                <div className="w-full flex items-end justify-center gap-1 h-full min-h-[28px]">
+                  <div className="w-1/2 h-full flex flex-col justify-end items-center">
+                    <div style={{ height: `${dPx}px` }} className="bg-emerald-500 w-full flex items-center justify-center">
+                      {dPx > 18 && <span className="text-[10px] text-white">{d}</span>}
+                    </div>
+                  </div>
+                  <div className="w-1/2 h-full flex flex-col justify-end items-center">
+                    <div style={{ height: `${pPx}px` }} className="bg-indigo-600 w-full flex items-center justify-center">
+                      {pPx > 18 && <span className="text-[10px] text-white">{p}</span>}
+                    </div>
                   </div>
                 </div>
-                <div className="w-1/2 h-full flex flex-col justify-end items-center">
-                  <div style={{ height: `${pPx}px` }} className="bg-indigo-600 w-full flex items-center justify-center">
-                    {pPx > 18 && <span className="text-[10px] text-white">{p}</span>}
-                  </div>
-                </div>
+                <div className="mt-2 text-gray-300 text-[12px]">{prettyMonth(m)}</div>
               </div>
-              <div className="mt-2 text-gray-300 text-[12px]">{prettyMonth(m)}</div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
       <div className="flex gap-3 mt-3 text-xs text-gray-400">
         <div className="flex items-center gap-2"><span className="w-3 h-3 bg-emerald-500 inline-block rounded-sm"/> Delivery</div>
@@ -80,7 +89,7 @@ export function RevenueLine({ months, revenue }: { months: string[]; revenue: nu
 
   const labels = months.map((m, i) => {
     const x = padding + (i / Math.max(1, months.length - 1)) * innerW;
-    return <text key={m} x={x} y={height - 6} fontSize={10} fill="#cbd5e1" textAnchor="middle">{new Intl.DateTimeFormat('es-CL', { month: 'short' }).format(new Date(m + '-01'))}</text>;
+    return <text key={m} x={x} y={height - 6} fontSize={10} fill="#cbd5e1" textAnchor="middle">{prettyMonthShort(m)}</text>;
   });
 
   return (

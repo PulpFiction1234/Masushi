@@ -1,6 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import supabaseAdmin from '@/server/supabase';
 import { buildFullName } from '@/utils/name';
+import { isWithinBirthdayWindow, BIRTHDAY_MIN_MONTHS, BIRTHDAY_MIN_ORDERS } from '@/utils/birthday';
+import { monthsBetween } from '@/utils/birthday';
 
 type VerificationRow = {
   user_id: string;
@@ -49,8 +51,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { data: profiles, error: profilesError } = await supabaseAdmin
       .from('profiles')
-      .select('id, full_name, phone, role, created_at, apellido_paterno, apellido_materno')
+      .select('id, full_name, phone, role, created_at, apellido_paterno, apellido_materno, birthday')
       .in('id', userIds);
+
+    // Fetch order counts per user for birthday eligibility
+    const { data: orderCounts, error: orderCountError } = await supabaseAdmin
+      .from('orders')
+      .select('user_id')
+      .in('user_id', userIds);
+
+    if (orderCountError) {
+      console.error('[admin:clientes] error fetching order counts', orderCountError);
+    }
+
+    // Count orders per user
+    const orderCountMap = new Map<string, number>();
+    if (Array.isArray(orderCounts)) {
+      for (const order of orderCounts) {
+        const count = orderCountMap.get(order.user_id) || 0;
+        orderCountMap.set(order.user_id, count + 1);
+      }
+    }
 
     if (profilesError) {
       console.error('[admin:clientes] error fetching profiles', profilesError);
@@ -100,13 +121,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const apellidoMaterno = profile?.apellido_materno || user.user_metadata?.apellido_materno || '';
       const nombreCompleto = buildFullName(profile?.full_name || user.user_metadata?.full_name || '', apellidoPaterno, apellidoMaterno);
       
+      // Calcular elegibilidad para descuento de cumpleaños
+      const birthday = profile?.birthday || null;
+      const userCreatedAt = profile?.created_at || user.created_at;
+      const orderCount = orderCountMap.get(user.id) || 0;
+      const monthsRegistered = monthsBetween(userCreatedAt, new Date());
+      const meetsMinMonths = monthsRegistered >= BIRTHDAY_MIN_MONTHS;
+      const meetsMinOrders = orderCount >= BIRTHDAY_MIN_ORDERS;
+      const isInBirthdayWeek = birthday ? isWithinBirthdayWindow(birthday) : false;
+      const birthdayEligible = birthday && meetsMinMonths && meetsMinOrders && isInBirthdayWeek;
+
       return {
         id: user.id,
         email: user.email || '',
         full_name: nombreCompleto,
         phone: profile?.phone || user.user_metadata?.phone || '',
         role: profile?.role || 'user',
-        created_at: profile?.created_at || user.created_at,
+        created_at: userCreatedAt,
+        birthday,
+        birthdayEligible,
+        orderCount,
+        isInBirthdayWeek,
+        meetsMinMonths,
+        meetsMinOrders,
+        monthsRegistered,
         verification: {
           verified: Boolean(user.email_confirmed_at),
           confirmed_at: user.email_confirmed_at || null,

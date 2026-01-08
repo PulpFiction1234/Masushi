@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { FiAlertCircle, FiCalendar, FiCheckCircle, FiPhone } from "react-icons/fi";
+import { FiAlertCircle, FiCalendar, FiCheckCircle, FiGift, FiPhone } from "react-icons/fi";
 import { normalize } from "@/utils/strings";
 
 interface Cliente {
@@ -11,6 +11,13 @@ interface Cliente {
   phone: string;
   role: string;
   created_at: string;
+  birthday: string | null;
+  birthdayEligible: boolean;
+  orderCount: number;
+  isInBirthdayWeek: boolean;
+  meetsMinMonths: boolean;
+  meetsMinOrders: boolean;
+  monthsRegistered: number;
   verification?: {
     verified: boolean;
     confirmed_at: string | null;
@@ -107,6 +114,20 @@ export default function ClientesAdminPanel() {
     }
   };
 
+  const formatBirthday = (dateStr: string | null) => {
+    if (!dateStr) return null;
+    try {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      return date.toLocaleDateString('es-CL', {
+        day: '2-digit',
+        month: 'short',
+      });
+    } catch {
+      return dateStr;
+    }
+  };
+
   const getVerificationInfo = (cliente: Cliente) => {
     const verified = cliente.verification?.verified;
     const pendingCode = cliente.verification?.pending_code;
@@ -191,6 +212,7 @@ export default function ClientesAdminPanel() {
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Nombre</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Correo</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Teléfono</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Cumpleaños</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Rol</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Verificación</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Registrado</th>
@@ -207,6 +229,36 @@ export default function ClientesAdminPanel() {
                     <td className="px-4 py-3 text-sm text-gray-300">{cliente.email}</td>
                     <td className="px-4 py-3 text-sm text-gray-300">
                       {cliente.phone || <span className="text-gray-500 italic">Sin teléfono</span>}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      {cliente.birthday ? (
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-200 font-medium">{formatBirthday(cliente.birthday)}</span>
+                            {cliente.birthdayEligible && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-pink-600/80 px-2 py-0.5 text-xs font-semibold text-white">
+                                <FiGift className="h-3 w-3" /> 10%
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-0.5 text-[10px]">
+                            <div className="flex items-center gap-1">
+                              <span className={`inline-block h-1.5 w-1.5 rounded-full ${cliente.isInBirthdayWeek ? 'bg-green-500' : 'bg-red-500'}`} />
+                              <span className="text-gray-400">Semana cumple</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span className={`inline-block h-1.5 w-1.5 rounded-full ${cliente.meetsMinMonths ? 'bg-green-500' : 'bg-red-500'}`} />
+                              <span className="text-gray-400">+1 mes ({cliente.monthsRegistered}m)</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span className={`inline-block h-1.5 w-1.5 rounded-full ${cliente.meetsMinOrders ? 'bg-green-500' : 'bg-red-500'}`} />
+                              <span className="text-gray-400">+3 pedidos ({cliente.orderCount})</span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-gray-500 italic">No ingresado</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm">
                       <span className={`px-2 py-1 rounded text-xs font-semibold ${
@@ -255,6 +307,37 @@ export default function ClientesAdminPanel() {
                     <span className="text-gray-300">
                       {cliente.phone || <span className="text-gray-500 italic">Sin teléfono</span>}
                     </span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <FiGift className="h-4 w-4 shrink-0 text-gray-400 mt-0.5" aria-hidden />
+                    {cliente.birthday ? (
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-300 font-medium">{formatBirthday(cliente.birthday)}</span>
+                          {cliente.birthdayEligible && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-pink-600/80 px-2 py-0.5 text-xs font-semibold text-white">
+                              10%
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px]">
+                          <div className="flex items-center gap-1">
+                            <span className={`inline-block h-1.5 w-1.5 rounded-full ${cliente.isInBirthdayWeek ? 'bg-green-500' : 'bg-red-500'}`} />
+                            <span className="text-gray-400">Semana</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className={`inline-block h-1.5 w-1.5 rounded-full ${cliente.meetsMinMonths ? 'bg-green-500' : 'bg-red-500'}`} />
+                            <span className="text-gray-400">{cliente.monthsRegistered}m</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className={`inline-block h-1.5 w-1.5 rounded-full ${cliente.meetsMinOrders ? 'bg-green-500' : 'bg-red-500'}`} />
+                            <span className="text-gray-400">{cliente.orderCount} ped.</span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-gray-500 italic">Sin cumpleaños</span>
+                    )}
                   </div>
                   <div className="flex items-start gap-2">
                     {verification.icon}

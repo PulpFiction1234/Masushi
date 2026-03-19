@@ -135,6 +135,7 @@ export default function Home() {
         profileName={birthdayProfile?.full_name}
       />
 
+      {/* Banner de Gift Cards (oculto temporalmente)
       <section className="mx-auto mt-4 w-[80%] md:w-[80%] pb-4 md:pb-6">
         <a href="/giftcards" aria-label="Ver gift cards Masushi">
           <div className="overflow-hidden rounded-xl border border-white/10 shadow-lg shadow-black/40">
@@ -149,11 +150,10 @@ export default function Home() {
           </div>
         </a>
       </section>
+      */}
 
       {/* H1 visible: Es vital para el SEO y está perfecto */}
-      <h1 className="mx-auto mt-4 mb-4 max-w-3xl px-4 text-center text-[22px] leading-tight text-neutral-100 font-medium">
-        Sushi Delivery | Masushi Ciudad del Este 
-      </h1>
+
 
       <HeroCarousel intervalMs={9000} />
       <ProductSection

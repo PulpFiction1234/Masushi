@@ -10,6 +10,7 @@ type Row = {
   force_closed_at: string | null;
   force_open: boolean;
   force_open_at: string | null;
+  force_open_ymd: string | null;
 };
 
 async function resetIfNewDayInDB(): Promise<void> {
@@ -51,6 +52,7 @@ export async function setAdminMode(mode: AdminMode): Promise<void> {
           force_closed_at: null,
           force_open: false,
           force_open_at: null,
+          force_open_ymd: null,
         }
       : mode === "forceClosed"
       ? {
@@ -59,10 +61,12 @@ export async function setAdminMode(mode: AdminMode): Promise<void> {
           force_closed_at: nowIso,
           force_open: false,
           force_open_at: null,
+          force_open_ymd: null,
         }
       : {
           force_open: true,
           force_open_at: nowIso,
+          force_open_ymd: ymd,
           force_closed: false,
           force_closed_ymd: null,
           force_closed_at: null,

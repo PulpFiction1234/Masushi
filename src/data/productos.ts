@@ -164,6 +164,7 @@ export interface Producto {
   valor: number;          // precio base
   imagen?: string | StaticImageData;
   imageObjectPosition?: string;
+  imageObjectFit?: string;
   categoria: string;
   enabled?: boolean;      // nuevo: producto habilitado (true por defecto)
   opciones?: ProductoOpcion[]; // ← SOLO si el producto tiene variantes
@@ -205,7 +206,7 @@ const _productos: Producto[] = [
   { id: 1, codigo: "001", nombre: "Maguro acevichado", descripcion: "Camaron apanado - Palta - en Atun con salsa acevichada.", valor: 7990, imagen: MaguroRollImg, categoria: "Roll premium", enabled: true },
   { id: 2, codigo: "002", nombre: "Acevichado roll", descripcion: "Camarón - Queso crema -Palta - En salmon con salsa acevichada.", valor: 7990, imagen: AcevichadoRollImg, categoria: "Roll premium", enabled: true },   
   { id: 3, codigo: "003", nombre: "Ebi ahumado", descripcion: "Camaron - Queso crema - Palta - En salmon ahumado.", valor: 7990, imagen: ebiAhumadoImg, categoria: "Roll premium" },
-  { id: 4, codigo: "004", nombre: "Ceviche roll", descripcion: "Camarón - Queso crema - Cebollin - En panko con ceviche.", valor: 10490, imagen: CevicheRollImg, imageObjectPosition: "top", categoria: "Roll premium" },
+  { id: 4, codigo: "004", nombre: "Ceviche roll", descripcion: "Camarón - Queso crema - Cebollin - En panko con ceviche.", valor: 10490, imagen: CevicheRollImg, imageObjectFit: "contain", categoria: "Roll premium" },
 //Sin arroz
     { id: 5, codigo: "005", nombre: "Vegi oriental", descripcion: "Champiñon - Palmito - Palta - Queso Crema - Cebollin - En palta.", valor: 7490, imagen: vegiOrientalImg, categoria: "Rolls vegetarianos" },
     { id: 6, codigo: "006", nombre: "Tori ebi oriental", descripcion: "Pollo - Camaron - Queso crema - Palta - En palta.", valor: 8190, imagen: teriOrientalImg, categoria: "Roll sin arroz" },

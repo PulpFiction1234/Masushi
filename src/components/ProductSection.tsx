@@ -1,7 +1,7 @@
 ﻿import Image from "next/image";
 import { productos, type Producto } from "@/data/productos";
 import { getMergedProductsSync, fetchMergedProducts } from '@/utils/mergedProducts';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { formatCLP } from "@/utils/format";
 import { useCart } from "@/context/CartContext";
 import { animateToCart } from "@/utils/animateToCart";
@@ -69,7 +69,10 @@ export default function ProductSection({ title, productIds, linkBase }: ProductS
                 width={500}
                 height={300}
                 className="w-full h-full object-cover"
-                style={p.imageObjectPosition ? { objectPosition: p.imageObjectPosition } : undefined}
+                style={{
+                  objectFit: (p.imageObjectFit as CSSProperties['objectFit']) ?? 'cover',
+                  ...(p.imageObjectPosition ? { objectPosition: p.imageObjectPosition } : {}),
+                }}
                 quality={60}
                 placeholder={
                   typeof p.imagen === "string"

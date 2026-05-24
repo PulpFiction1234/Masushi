@@ -62,13 +62,13 @@ export default function ProductSection({ title, productIds, linkBase }: ProductS
               key={p.id}
               className="bg-[#1a1a1a] rounded-lg overflow-hidden shadow flex flex-col h-full min-h-[480px]"
             >
-              <div className="overflow-hidden bg-[#2d2d2d]">
+              <div className="overflow-hidden bg-[#2d2d2d] h-72 sm:h-80">
               <Image
                 src={p.imagen}
                 alt={p.nombre}
                 width={500}
                 height={300}
-                className="w-full h-72 sm:h-80 object-cover"
+                className="w-full h-full object-cover"
                 style={p.imageObjectPosition ? { objectPosition: p.imageObjectPosition } : undefined}
                 quality={60}
                 placeholder={

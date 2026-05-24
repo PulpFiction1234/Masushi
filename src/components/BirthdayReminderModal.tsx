@@ -1,4 +1,4 @@
-import { useRouter } from "next/router";
+﻿import { useRouter } from "next/router";
 import { BIRTHDAY_DISCOUNT_PERCENT, BIRTHDAY_WEEK_LENGTH_DAYS } from "@/utils/birthday";
 
 interface BirthdayReminderModalProps {
@@ -37,10 +37,10 @@ export default function BirthdayReminderModal({
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-gray-900/95 text-white shadow-2xl">
+      <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-[#111111]/95 text-white shadow-2xl">
         <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-green-300">Cupón de cumpleaños</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#93C021]">Cupón de cumpleaños</p>
             <h2 className="mt-2 text-xl font-semibold text-white">{formatGreeting(profileName)}</h2>
           </div>
           <button
@@ -60,11 +60,11 @@ export default function BirthdayReminderModal({
             Solo puedes ingresarla una vez, así que asegúrate de que sea correcta. Podemos avisarte cuando el beneficio esté disponible.
           </p>
         </div>
-        <div className="flex flex-col gap-3 border-t border-white/10 bg-gray-900/80 px-6 py-5 text-sm font-medium text-gray-200 sm:flex-row sm:items-center sm:justify-end">
+        <div className="flex flex-col gap-3 border-t border-white/10 bg-[#111111]/80 px-6 py-5 text-sm font-medium text-gray-200 sm:flex-row sm:items-center sm:justify-end">
           <button
             type="button"
             onClick={goToProfile}
-            className="flex-1 rounded-xl bg-green-500 px-4 py-2 text-gray-900 transition hover:bg-green-400 sm:flex-initial"
+            className="flex-1 rounded-xl bg-[#93C021] px-4 py-2 text-gray-900 transition hover:bg-[#93C021] sm:flex-initial"
           >
             Agregar mi cumpleaños
           </button>

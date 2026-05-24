@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React from "react";
 import { useRouter } from "next/router";
@@ -23,10 +23,10 @@ export default function AuthRequiredModal({ open, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center px-4 py-8">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-gray-900/95 p-6 text-white shadow-2xl">
+      <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-[#111111]/95 p-6 text-white shadow-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-green-300">¡Hola!</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#93C021]">¡Hola!</p>
             <h3 className="mt-2 text-xl font-semibold">Necesitas una cuenta</h3>
           </div>
           <button
@@ -42,7 +42,7 @@ export default function AuthRequiredModal({ open, onClose }: Props) {
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <button
             onClick={() => goTo('/login')}
-            className="flex-1 rounded-xl bg-green-500 px-4 py-2 text-gray-900 transition hover:bg-green-400"
+            className="flex-1 rounded-xl bg-[#93C021] px-4 py-2 text-gray-900 transition hover:bg-[#93C021]"
           >
             Iniciar sesión
           </button>

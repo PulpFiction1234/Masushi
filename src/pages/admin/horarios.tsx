@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import Seo from '@/components/Seo';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useAdminMode, type AdminMode } from '@/hooks/useAdminMode';
@@ -18,13 +18,13 @@ export default function AdminHorariosPage() {
     }
   };
 
-  const buttonClass = (active: boolean) => `w-full sm:w-56 text-left px-6 py-4 rounded ${active ? 'bg-emerald-700 text-white' : 'bg-gray-800 text-gray-200'} border border-gray-700`;
+  const buttonClass = (active: boolean) => `w-full sm:w-56 text-left px-6 py-4 rounded ${active ? 'bg-[#93C021] text-white' : 'bg-[#1a1a1a] text-gray-200'} border border-[#2a2a2a]`;
 
   return (
     <div>
       <Seo title="Admin — Horarios" canonicalPath="/admin/horarios" noIndex />
       <AdminLayout title="Horarios">
-        <div className="bg-gray-900 p-6 rounded-xl shadow space-y-6">
+        <div className="bg-[#111111] p-6 rounded-xl shadow space-y-6">
           <div className="flex items-start justify-between">
             <div>
               <h2 className="text-lg font-semibold">Panel de pedidos</h2>

@@ -45,12 +45,12 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
       {open && <div className="fixed inset-0 bg-transparent z-40" onClick={handleClose} />}
 
       <div
-        className={`fixed top-0 right-0 w-80 h-full bg-gray-900 shadow-lg transform transition-transform duration-300 z-50 text-white flex flex-col ${
+        className={`fixed top-0 right-0 w-80 h-full bg-[#111111] shadow-lg transform transition-transform duration-300 z-50 text-white flex flex-col ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
         {/* HEADER */}
-        <div className="flex justify-between items-center p-4 border-b border-gray-700 flex-shrink-0">
+        <div className="flex justify-between items-center p-4 border-b border-[#2a2a2a] flex-shrink-0">
           <h2 className="text-xl font-bold">Carrito</h2>
           <button onClick={handleClose} className="text-gray-300 hover:text-gray-100" aria-label="Cerrar">
             ✖
@@ -62,9 +62,9 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
           {!ready ? (
             // Skeleton mientras hidrata
             <div className="space-y-3 animate-pulse">
-              <div className="h-12 bg-gray-800 rounded" />
-              <div className="h-12 bg-gray-800 rounded" />
-              <div className="h-12 bg-gray-800 rounded" />
+              <div className="h-12 bg-[#1a1a1a] rounded" />
+              <div className="h-12 bg-[#1a1a1a] rounded" />
+              <div className="h-12 bg-[#1a1a1a] rounded" />
             </div>
           ) : hasItems ? (
             safeCart.map((item) => (
@@ -91,7 +91,7 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => updateQuantity(item.cartKey, item.cantidad - 1)}
-                    className="px-2 py-1 border border-gray-500 rounded"
+                    className="px-2 py-1 border border-[#2a2a2a] rounded hover:border-[#93C021] transition-colors"
                     disabled={!ready}
                     aria-label="Disminuir"
                   >
@@ -100,7 +100,7 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
                   <span>{item.cantidad}</span>
                   <button
                     onClick={() => updateQuantity(item.cartKey, item.cantidad + 1)}
-                    className="px-2 py-1 border border-gray-500 rounded"
+                    className="px-2 py-1 border border-[#2a2a2a] rounded hover:border-[#93C021] transition-colors"
                     disabled={!ready}
                     aria-label="Aumentar"
                   >
@@ -123,19 +123,19 @@ const CarritoPanel: React.FC<Props> = ({ open, onClose }) => {
 
         {/* FOOTER */}
         {ready && hasItems && (
-          <div className="p-4 border-t border-gray-700 space-y-2 bg-gray-900 flex-shrink-0">
+          <div className="p-4 border-t border-[#2a2a2a] space-y-2 bg-[#111111] flex-shrink-0">
             <p className="font-bold">
               Total: <span suppressHydrationWarning>{formatCLP(safeTotal)}</span>
             </p>
             <button
                 onClick={handlePedido}
-              className="bg-green-500 text-white w-full py-2 rounded hover:bg-green-600"
+              className="bg-[#93C021] text-black font-semibold w-full py-2 rounded hover:bg-[#7fa01c] transition-colors"
             >
               Realizar pedido
             </button>
             <button
               onClick={clearCart}
-              className="bg-red-500 text-white w-full py-2 rounded hover:bg-red-600"
+              className="bg-[#D1933E] text-white w-full py-2 rounded hover:bg-[#b87a32]"
             >
               Vaciar carrito
             </button>

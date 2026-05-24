@@ -61,7 +61,7 @@ const Navbar: React.FC = () => {
   const userName = profile?.full_name || user?.email?.split("@")[0] || "Usuario";
 
   return (
-    <nav className="bg-gray-950 shadow-md px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 flex justify-between items-center sticky top-0 z-50 text-white">
+    <nav className="bg-black shadow-md px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 flex justify-between items-center sticky top-0 z-50 text-white border-b border-[#222]">
       {/* Logo */}
       <Link href="/" aria-label="Ir al inicio" className="flex items-center gap-2">
               <Image
@@ -78,9 +78,9 @@ const Navbar: React.FC = () => {
 
       {/* Links + Carrito */}
       <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
-        <Link href="/menu" className="hover:text-blue-400 text-sm sm:text-base">Carta</Link>
-        <Link href="/menu?categoria=Promociones" className="hover:text-blue-400 text-sm sm:text-base">Promociones</Link>
-        <Link href="/local" className="hover:text-blue-400 text-sm sm:text-base">Local</Link>
+        <Link href="/menu" className="hover:text-[#93C021] transition-colors text-sm sm:text-base">Carta</Link>
+        <Link href="/menu?categoria=Promociones" className="hover:text-[#93C021] transition-colors text-sm sm:text-base">Promociones</Link>
+        <Link href="/local" className="hover:text-[#93C021] transition-colors text-sm sm:text-base">Local</Link>
 
         {/* Botón de perfil si está logueado con menú desplegable */}
         {mounted && user && (
@@ -95,11 +95,11 @@ const Navbar: React.FC = () => {
 
             {/* Menú desplegable */}
             {showProfileMenu && (
-              <div className="absolute right-0 mt-2 w-64 bg-gray-900 border border-gray-700 rounded-lg shadow-xl overflow-hidden z-50">
+              <div className="absolute right-0 mt-2 w-64 bg-[#111111] border border-[#2a2a2a] rounded-lg shadow-xl overflow-hidden z-50">
                 {/* Bienvenida */}
-                <div className="px-4 py-3 bg-gray-800 border-b border-gray-700">
+                <div className="px-4 py-3 bg-[#1a1a1a] border-b border-[#2a2a2a]">
                   <p className="text-sm text-gray-400">Bienvenido,</p>
-                  <p className="text-base font-semibold text-red-500 truncate">
+                  <p className="text-base font-semibold text-[#D1933E] truncate">
                     {userName}
                   </p>
                 </div>
@@ -109,7 +109,7 @@ const Navbar: React.FC = () => {
                   <Link
                     href="/profile"
                     onClick={() => setShowProfileMenu(false)}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition-colors"
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-[#1a1a1a] transition-colors"
                   >
                     <FaUserCircle className="text-xl text-white" aria-hidden="true" />
                     <span className="text-white">Mi perfil</span>
@@ -120,7 +120,7 @@ const Navbar: React.FC = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setShowProfileMenu(false)}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-800 transition-colors"
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-[#1a1a1a] transition-colors"
                   >
                     <FaPhoneAlt className="text-xl text-white" aria-hidden="true" />
                     <span className="text-white">Contáctanos</span>
@@ -128,7 +128,7 @@ const Navbar: React.FC = () => {
 
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 bg-red-600 hover:bg-red-700 transition-colors text-white font-semibold"
+                    className="w-full flex items-center gap-3 px-4 py-3 bg-[#D1933E] hover:bg-[#b87a32] transition-colors text-white font-semibold"
                   >
                     <FaSignOutAlt className="text-xl" aria-hidden="true" />
                     <span>Cerrar Sesión</span>
@@ -143,7 +143,7 @@ const Navbar: React.FC = () => {
         {mounted && !user && (
           <Link
             href="/login"
-            className="px-3 py-1.5 text-sm sm:text-base rounded bg-green-600 hover:bg-green-700 transition-colors"
+            className="px-3 py-1.5 text-sm sm:text-base rounded bg-[#93C021] hover:bg-[#7fa01c] text-black font-semibold transition-colors"
           >
             Ingresar
           </Link>
@@ -158,7 +158,7 @@ const Navbar: React.FC = () => {
           >
             <FaShoppingBag className="text-2xl" aria-hidden="true" />
             {mounted && safeCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1.5 text-[11px] leading-[20px] text-white bg-red-500 rounded-full text-center font-bold">
+              <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1.5 text-[11px] leading-[20px] text-black bg-[#D1933E] rounded-full text-center font-bold">
                 {safeCount}
               </span>
             )}

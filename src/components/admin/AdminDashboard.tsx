@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
 import ProductsAdminPanel from "./ProductsAdminPanel";
@@ -8,17 +8,17 @@ export default function AdminDashboard() {
   const [tab, setTab] = useState<'products'|'horarios'>('products');
 
   return (
-    <div className="max-w-4xl mx-auto mt-4 md:mt-6 bg-gray-900 p-4 md:p-6 rounded-xl shadow">
+    <div className="max-w-4xl mx-auto mt-4 md:mt-6 bg-[#111111] p-4 md:p-6 rounded-xl shadow">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
             onClick={() => setTab('products')}
-            className={`flex-1 sm:flex-none px-3 md:px-4 py-2 rounded-tl rounded-bl font-semibold text-sm md:text-base ${tab==='products' ? 'bg-gray-800 border border-gray-700' : 'bg-gray-800/60 hover:bg-gray-800'}`}>
+            className={`flex-1 sm:flex-none px-3 md:px-4 py-2 rounded-tl rounded-bl font-semibold text-sm md:text-base ${tab==='products' ? 'bg-[#1a1a1a] border border-[#2a2a2a]' : 'bg-[#1a1a1a]/60 hover:bg-[#1a1a1a]'}`}>
             Productos
           </button>
           <button
             onClick={() => setTab('horarios')}
-            className={`flex-1 sm:flex-none px-3 md:px-4 py-2 rounded-tr rounded-br font-semibold text-sm md:text-base ${tab==='horarios' ? 'bg-gray-800 border border-gray-700' : 'bg-gray-800/60 hover:bg-gray-800'}`}>
+            className={`flex-1 sm:flex-none px-3 md:px-4 py-2 rounded-tr rounded-br font-semibold text-sm md:text-base ${tab==='horarios' ? 'bg-[#1a1a1a] border border-[#2a2a2a]' : 'bg-[#1a1a1a]/60 hover:bg-[#1a1a1a]'}`}>
             Horarios
           </button>
         </div>

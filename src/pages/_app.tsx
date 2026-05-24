@@ -1,4 +1,4 @@
-import "@/styles/globals.css";
+﻿import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 
 import { useEffect, useState } from "react";
@@ -35,14 +35,14 @@ function FloatingCartButton({ onClick }: { onClick: () => void }) {
     <button
       data-cart-anchor
       onClick={onClick}
-      className="fixed bottom-6 right-6 bg-red-500 text-white w-14 h-14 rounded-full shadow-lg hover:bg-gray-600 transition z-50 flex items-center justify-center"
+      className="fixed bottom-6 right-6 bg-[#D1933E] text-white w-14 h-14 rounded-full shadow-lg hover:bg-[#b87a32] transition z-50 flex items-center justify-center"
       aria-label={safeCount ? `Abrir carrito, ${safeCount} items` : "Abrir carrito"}
       suppressHydrationWarning
     >
       <div className="relative flex items-center justify-center">
   <FaShoppingBag className="text-[32px] leading-none" aria-hidden="true" />
         {mounted && safeCount > 0 && (
-          <span className="absolute -top-2 -right-2 bg-gray-900 text-white text-xs font-bold rounded-full px-2 py-0.5 shadow-lg">
+          <span className="absolute -top-2 -right-2 bg-[#111111] text-white text-xs font-bold rounded-full px-2 py-0.5 shadow-lg">
             {safeCount}
           </span>
         )}

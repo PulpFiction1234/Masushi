@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useMemo, useState } from 'react';
 import useSWR from 'swr';
@@ -128,7 +128,7 @@ export default function GiftCardsAdminPanel() {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.25em] text-lime-300">Gift cards</p>
+          <p className="text-xs uppercase tracking-[0.25em] text-[#93C021]">Gift cards</p>
           <h2 className="text-xl font-bold text-white">Activación y estado</h2>
           <p className="text-sm text-gray-400">Activa las pendientes y revisa saldo/uso.</p>
         </div>
@@ -136,7 +136,7 @@ export default function GiftCardsAdminPanel() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-lg border border-white/10 bg-gray-800 px-3 py-2 text-sm text-white"
+            className="rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white"
           >
             <option value="">Todos</option>
             <option value="pending">Pendientes</option>
@@ -149,23 +149,23 @@ export default function GiftCardsAdminPanel() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar por código/correo"
-            className="rounded-lg border border-white/10 bg-gray-800 px-3 py-2 text-sm text-white"
+            className="rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white"
           />
         </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-        <div className="rounded-xl border border-white/10 bg-gray-900/80 p-3">
+        <div className="rounded-xl border border-white/10 bg-[#111111]/80 p-3">
           <p className="text-xs text-gray-400">Total</p>
           <p className="text-lg font-semibold text-white">{summary.total}</p>
         </div>
-        <div className="rounded-xl border border-lime-400/30 bg-lime-500/10 p-3">
-          <p className="text-xs text-lime-200">Pendientes</p>
-          <p className="text-lg font-semibold text-lime-50">{summary.pending}</p>
+        <div className="rounded-xl border border-[#D1933E]/30 bg-[#D1933E]/10 p-3">
+          <p className="text-xs text-[#D1933E]">Pendientes</p>
+          <p className="text-lg font-semibold text-white">{summary.pending}</p>
         </div>
-        <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-3">
-          <p className="text-xs text-emerald-200">Activas</p>
-          <p className="text-lg font-semibold text-emerald-50">{summary.active}</p>
+        <div className="rounded-xl border border-[#93C021]/30 bg-[#93C021]/10 p-3">
+          <p className="text-xs text-[#93C021]">Activas</p>
+          <p className="text-lg font-semibold text-white">{summary.active}</p>
         </div>
         <div className="rounded-xl border border-amber-400/30 bg-amber-500/10 p-3">
           <p className="text-xs text-amber-200">Agotadas</p>
@@ -174,9 +174,9 @@ export default function GiftCardsAdminPanel() {
       </div>
 
       {error ? <p className="text-sm text-red-400">{error}</p> : null}
-      {success ? <p className="text-sm text-green-300">{success}</p> : null}
+      {success ? <p className="text-sm text-[#93C021]">{success}</p> : null}
 
-      <div className="rounded-2xl border border-white/10 bg-gray-900/70 p-3 md:p-4">
+      <div className="rounded-2xl border border-white/10 bg-[#111111]/70 p-3 md:p-4">
         {isLoading ? (
           <p className="text-sm text-gray-400">Cargando gift cards...</p>
         ) : filtered.length === 0 ? (
@@ -191,7 +191,7 @@ export default function GiftCardsAdminPanel() {
               const usageTotal = gc.usage_total ?? (gc.amount_total - gc.amount_remaining);
               const usageCount = gc.usage_count ?? 0;
               return (
-                <div key={gc.id} className="rounded-xl border border-white/10 bg-gray-800/60 p-3 md:p-4">
+                <div key={gc.id} className="rounded-xl border border-white/10 bg-[#1a1a1a]/60 p-3 md:p-4">
                   <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                     <div className="space-y-1">
                       <p className="text-sm font-semibold text-white">Código: <span className="font-mono">{gc.code}</span></p>
@@ -201,7 +201,7 @@ export default function GiftCardsAdminPanel() {
                       <p className="text-xs text-gray-400">Claim: {gc.claimed_by_user_id ? `asociada (${gc.claimed_by_user_id})` : 'sin asociar'}</p>
                     </div>
                     <div className="flex flex-wrap gap-2 text-xs">
-                      <span className={`rounded-full px-3 py-1 font-semibold ${gc.status === 'pending' ? 'bg-amber-500/20 text-amber-200 border border-amber-400/30' : gc.status === 'active' ? 'bg-emerald-500/20 text-emerald-100 border border-emerald-400/30' : gc.status === 'exhausted' ? 'bg-gray-500/20 text-gray-200 border border-gray-400/30' : 'bg-rose-500/20 text-rose-100 border border-rose-400/30'}`}>
+                      <span className={`rounded-full px-3 py-1 font-semibold ${gc.status === 'pending' ? 'bg-amber-500/20 text-amber-200 border border-amber-400/30' : gc.status === 'active' ? 'bg-[#93C021]/20 text-[#93C021] border border-[#93C021]/30' : gc.status === 'exhausted' ? 'bg-[#333]/20 text-white/60 border border-white/10' : 'bg-rose-500/20 text-rose-100 border border-rose-400/30'}`}>
                         {gc.status}
                       </span>
                       <span className="rounded-full border border-white/10 px-3 py-1 text-gray-200">Usos: {usageCount}</span>
@@ -221,7 +221,7 @@ export default function GiftCardsAdminPanel() {
                         type="button"
                         onClick={() => activate(gc.code)}
                         disabled={activating === gc.code}
-                        className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-60"
+                        className="rounded-lg bg-[#93C021] px-4 py-2 text-sm font-semibold text-white hover:bg-[#93C021] disabled:opacity-60"
                       >
                         {activating === gc.code ? 'Activando…' : 'Activar y enviar correo'}
                       </button>

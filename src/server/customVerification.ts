@@ -18,7 +18,7 @@ const buildEmailHtml = (code: string, expiresAt: Date): string => {
     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; background-color: #ffffff;">
       <h2 style="color: #111827; margin-bottom: 16px;">${BRAND_NAME} — Código de verificación</h2>
       <p style="color: #4b5563; font-size: 15px;">Usa este código para terminar tu registro:</p>
-      <div style="margin: 20px 0; padding: 16px 24px; border-radius: 12px; border: 2px solid #ef4444; background: #fef2f2; font-size: 32px; letter-spacing: 12px; font-weight: 700; color: #ef4444; text-align: center; font-family: 'Courier New', Courier, monospace;">
+      <div style="margin: 20px 0; padding: 16px 24px; border-radius: 12px; border: 2px solid #D1933E; background: #fdf6ec; font-size: 32px; letter-spacing: 12px; font-weight: 700; color: #D1933E; text-align: center; font-family: 'Courier New', Courier, monospace;">
         ${code}
       </div>
       <p style="color: #6b7280; font-size: 14px;">El código expira el <strong>${expiresAt.toLocaleDateString('es-CL')} ${expiresAt.toLocaleTimeString('es-CL')}</strong>.</p>

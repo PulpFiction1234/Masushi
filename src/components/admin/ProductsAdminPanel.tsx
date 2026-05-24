@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useMemo, useState } from "react";
 import useSWR from "swr";
@@ -156,7 +156,7 @@ export default function ProductsAdminPanel() {
         <p className="text-xs md:text-sm text-gray-300">
           {overridesLoading ? 'Cargando overrides...' : 'Habilita o deshabilita productos. Los cambios se aplican inmediatamente para los clientes.'}
         </p>
-        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar..." className="bg-gray-800 placeholder-gray-400 text-xs md:text-sm px-3 py-2 rounded w-full sm:w-64 md:w-72" />
+        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar..." className="bg-[#1a1a1a] placeholder-gray-400 text-xs md:text-sm px-3 py-2 rounded w-full sm:w-64 md:w-72" />
       </div>
 
       <div className="mt-4">
@@ -164,14 +164,14 @@ export default function ProductsAdminPanel() {
           {filtered.map((p) => {
             const codigoKey = typeof p.codigo === 'string' ? p.codigo : String(p.codigo ?? '');
             return (
-            <div key={p.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-gray-800 p-3 rounded gap-3">
+            <div key={p.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-[#1a1a1a] p-3 rounded gap-3">
               <div className="flex-1">
                 <div className="text-xs md:text-sm font-semibold">{p.nombre} <span className="text-xs text-gray-400">{p.codigo}</span></div>
                 <div className="text-xs text-gray-400 break-words">{p.descripcion}</div>
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto">
-                <div className={`px-2 md:px-3 py-1 rounded text-xs md:text-sm font-semibold flex-1 sm:flex-none text-center ${p.enabled ? 'bg-emerald-700 text-white' : 'bg-rose-700 text-white'}`}>{p.enabled ? 'HABILITADO' : 'DESHABILITADO'}</div>
-                <button disabled={!!loadingMap[codigoKey]} onClick={() => toggle(codigoKey)} className={`px-2 md:px-3 py-1 ${loadingMap[codigoKey] ? 'bg-yellow-500' : 'bg-blue-600 hover:bg-blue-700'} rounded text-xs md:text-sm font-semibold flex-1 sm:flex-none whitespace-nowrap`}>
+                <div className={`px-2 md:px-3 py-1 rounded text-xs md:text-sm font-semibold flex-1 sm:flex-none text-center ${p.enabled ? 'bg-[#93C021] text-white' : 'bg-[#555555] text-white'}`}>{p.enabled ? 'HABILITADO' : 'DESHABILITADO'}</div>
+                <button disabled={!!loadingMap[codigoKey]} onClick={() => toggle(codigoKey)} className={`px-2 md:px-3 py-1 ${loadingMap[codigoKey] ? 'bg-yellow-500' : 'bg-[#D1933E] hover:bg-[#b87a32]'} rounded text-xs md:text-sm font-semibold flex-1 sm:flex-none whitespace-nowrap`}>
                   {loadingMap[codigoKey] ? (p.enabled ? 'Deshabilitando...' : 'Habilitando...') : (p.enabled ? 'Deshabilitar' : 'Habilitar')}
                 </button>
               </div>

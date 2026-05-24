@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useRouter } from "next/router";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -286,13 +286,13 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-950 text-white">
+    <div className="min-h-screen flex flex-col bg-black text-white">
       <Seo title="Registrarse — Masushi" canonicalPath="/register" noIndex />
       <Navbar />
       <main className="flex flex-1 items-center justify-center p-4">
         <form
           onSubmit={handleSubmit}
-          className="w-full max-w-sm bg-gray-900 p-6 rounded-xl shadow space-y-4"
+          className="w-full max-w-sm bg-[#111111] p-6 rounded-xl shadow space-y-4"
         >
           <h1 className="text-2xl font-bold text-center">Crear cuenta</h1>
 
@@ -301,7 +301,7 @@ export default function RegisterPage() {
             placeholder="Nombre"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
+            className="w-full px-3 py-2 rounded bg-[#1a1a1a] placeholder-gray-400"
           />
 
           <input
@@ -309,7 +309,7 @@ export default function RegisterPage() {
             placeholder="Apellido paterno"
             value={apellidoPaterno}
             onChange={(e) => setApellidoPaterno(e.target.value)}
-            className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
+            className="w-full px-3 py-2 rounded bg-[#1a1a1a] placeholder-gray-400"
           />
 
           <input
@@ -317,7 +317,7 @@ export default function RegisterPage() {
             placeholder="Apellido materno"
             value={apellidoMaterno}
             onChange={(e) => setApellidoMaterno(e.target.value)}
-            className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
+            className="w-full px-3 py-2 rounded bg-[#1a1a1a] placeholder-gray-400"
           />
 
           <input
@@ -325,7 +325,7 @@ export default function RegisterPage() {
             placeholder="Correo electrónico"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
+            className="w-full px-3 py-2 rounded bg-[#1a1a1a] placeholder-gray-400"
           />
 
           <div className="relative w-full">
@@ -342,7 +342,7 @@ export default function RegisterPage() {
                   setPhone(value);
                 }
               }}
-              className="w-full pl-[70px] pr-3 py-2 rounded bg-gray-800 placeholder-gray-400"
+              className="w-full pl-[70px] pr-3 py-2 rounded bg-[#1a1a1a] placeholder-gray-400"
             />
           </div>
 
@@ -358,7 +358,7 @@ export default function RegisterPage() {
               }
             }}
             maxLength={4}
-            className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
+            className="w-full px-3 py-2 rounded bg-[#1a1a1a] placeholder-gray-400"
           />
 
           {errorMessage && (
@@ -366,20 +366,20 @@ export default function RegisterPage() {
           )}
 
           {successMessage && (
-            <p className="text-green-400 text-sm text-center">{successMessage}</p>
+            <p className="text-[#93C021] text-sm text-center">{successMessage}</p>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 rounded bg-red-500 hover:bg-red-600 transition-colors font-semibold disabled:opacity-60"
+            className="w-full py-2 rounded bg-[#D1933E] hover:bg-[#b87a32] transition-colors font-semibold disabled:opacity-60"
           >
             {loading ? "Registrando..." : "Crear cuenta"}
           </button>
           
           <div className="text-center text-sm text-gray-400">
             ¿Ya tienes cuenta?{' '}
-            <Link href="/login" className="text-green-500 hover:text-green-400">
+            <Link href="/login" className="text-[#93C021] hover:text-[#93C021]">
               Inicia sesión aquí
             </Link>
           </div>
@@ -395,10 +395,10 @@ export default function RegisterPage() {
             }}
             aria-hidden="true"
           />
-          <div className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-white/10 bg-gray-900/95 p-6 text-white shadow-2xl">
+          <div className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-white/10 bg-[#111111]/95 p-6 text-white shadow-2xl">
             <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-green-300">Verificación</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#93C021]">Verificación</p>
                 <h3 className="mt-2 text-xl font-semibold">Confirma tu correo</h3>
                 <p className="mt-1 text-xs text-gray-400">Ingresa el código enviado a {email}.</p>
               </div>
@@ -423,7 +423,7 @@ export default function RegisterPage() {
                 value={verificationCode}
                 onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9\s]/g, ''))}
                 placeholder="Código de 6 dígitos"
-                className="w-full rounded-xl border border-white/10 bg-gray-800 px-3 py-2 text-center text-lg tracking-[0.4em] text-white shadow-inner"
+                className="w-full rounded-xl border border-white/10 bg-[#1a1a1a] px-3 py-2 text-center text-lg tracking-[0.4em] text-white shadow-inner"
               />
 
               <div className="flex flex-col gap-2 text-xs text-gray-400">
@@ -446,7 +446,7 @@ export default function RegisterPage() {
                 type="button"
                 onClick={handleVerifyCodeClick}
                 disabled={verifying}
-                className="w-full rounded-full bg-red-500 py-2 font-semibold text-white hover:bg-red-600 disabled:opacity-60"
+                className="w-full rounded-full bg-[#D1933E] py-2 font-semibold text-white hover:bg-[#b87a32] disabled:opacity-60"
               >
                 {verifying ? 'Verificando…' : 'Confirmar y continuar'}
               </button>

@@ -1,4 +1,4 @@
-import {
+﻿import {
   fmt,
   CheckoutState,
   CheckoutAction,
@@ -7,9 +7,9 @@ import {
 import React from "react";
 
 const smallInput =
-  "border border-white/10 bg-neutral-800/80 rounded-lg w-16 px-1.5 py-1 text-center text-xs text-neutral-100 focus:outline-none focus:ring-2 focus:ring-green-500";
+  "border border-white/10 bg-[#1a1a1a]/80 rounded-lg w-16 px-1.5 py-1 text-center text-xs text-neutral-100 focus:outline-none focus:ring-2 focus:ring-[#93C021]";
 const inputBase =
-  "w-full rounded-lg border border-white/10 bg-neutral-800/80 px-2 py-1 text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm";
+  "w-full rounded-lg border border-white/10 bg-[#1a1a1a]/80 px-2 py-1 text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#93C021] focus:border-transparent text-sm";
 
 interface Props {
   state: CheckoutState;
@@ -41,9 +41,9 @@ export default function ExtrasSelector({
           if (disabled) return;
           onChange(!checked);
         }}
-        className={`relative inline-flex items-center h-6 w-11 px-1 rounded-full transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 ${
+        className={`relative inline-flex items-center h-6 w-11 px-1 rounded-full transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#93C021] ${
           disabled ? "opacity-40 cursor-not-allowed" : ""
-        } ${checked ? "bg-emerald-500" : "bg-red-500"}`}
+        } ${checked ? "bg-[#93C021]" : "bg-[#555555]"}`}
       >
         <span
           className={`inline-block w-4 h-4 bg-white rounded-full transform transition-transform ${
@@ -117,7 +117,7 @@ export default function ExtrasSelector({
   return (
     <div>
       {/* === Salsas gratis (todo en un MISMO recuadro) === */}
-  <div className={`rounded-lg border p-3 bg-neutral-900/60 ${!esValido ? 'border-orange-400/50 bg-orange-900/10' : 'border-white/10'}`}>
+  <div className={`rounded-lg border p-3 bg-[#111111]/60 ${!esValido ? 'border-orange-400/50 bg-orange-900/10' : 'border-white/10'}`}>
         <h4 className="font-semibold mb-2 text-neutral-50 text-sm">Incluimos en tu pedido</h4>
 
         {/* 2 columnas: izquierda Soya/Teri, derecha Jengibre/Wasabi */}

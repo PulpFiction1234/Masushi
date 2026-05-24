@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import useSWR from 'swr';
 import AdminLayout from '@/components/admin/AdminLayout';
 import Seo from '@/components/Seo';
@@ -34,7 +34,7 @@ function MessageBubble({ msg, buttons, onSelectButton }: { msg: WhatsAppMessage;
   const badge = inbound ? 'Entrante' : 'Saliente';
   return (
     <div className={`flex ${inbound ? '' : 'justify-end'}`}>
-      <div className={`max-w-xl rounded-2xl border px-4 py-3 shadow ${inbound ? 'border-lime-400/30 bg-lime-900/20 text-lime-50' : 'border-cyan-400/30 bg-cyan-900/20 text-cyan-50'}`}>
+      <div className={`max-w-xl rounded-2xl border px-4 py-3 shadow ${inbound ? 'border-[#93C021]/30 bg-[#93C021]/10 text-white' : 'border-cyan-400/30 bg-cyan-900/20 text-cyan-50'}`}>
         <div className="flex items-center gap-2 text-[11px] uppercase tracking-wide opacity-80">
           <span>{badge}</span>
           <span className="text-gray-300">·</span>
@@ -49,7 +49,7 @@ function MessageBubble({ msg, buttons, onSelectButton }: { msg: WhatsAppMessage;
                 key={btn.id}
                 type="button"
                 onClick={() => onSelectButton?.(btn)}
-                className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white hover:border-lime-300/70 hover:text-lime-100"
+                className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white hover:border-[#93C021]/70 hover:text-white"
               >
                 {btn.title}
               </button>
@@ -162,13 +162,13 @@ export default function AdminChat() {
       <Seo title="Admin — Chat" canonicalPath="/admin/chat" noIndex />
       <AdminLayout title="Chat">
         <div className="grid gap-4 md:grid-cols-[280px_1fr]">
-          <div className="rounded-2xl border border-white/10 bg-gray-950/70 p-4 shadow-xl">
+          <div className="rounded-2xl border border-white/10 bg-black/70 p-4 shadow-xl">
             <div className="flex items-center justify-between text-sm font-semibold text-white">
               <span>Conversaciones</span>
               <button
                 type="button"
                 onClick={() => { mutateAll(); if (selectedPhone) mutateConvo(); }}
-                className="text-xs rounded-full border border-white/10 px-3 py-1 text-gray-200 hover:border-lime-400/50 hover:text-white"
+                className="text-xs rounded-full border border-white/10 px-3 py-1 text-gray-200 hover:border-[#93C021]/50 hover:text-white"
               >Refrescar</button>
             </div>
             <div className="mt-3 text-xs text-gray-400">
@@ -185,7 +185,7 @@ export default function AdminChat() {
                     key={phone}
                     type="button"
                     onClick={() => setSelectedPhone(phone)}
-                    className={`w-full rounded-xl border px-3 py-3 text-left transition ${selectedPhone === phone ? 'border-lime-400/50 bg-lime-900/20 text-white' : 'border-white/10 bg-white/5 text-gray-100 hover:border-lime-400/40 hover:bg-white/10'}`}
+                    className={`w-full rounded-xl border px-3 py-3 text-left transition ${selectedPhone === phone ? 'border-[#93C021]/50 bg-[#93C021]/10 text-white' : 'border-white/10 bg-white/5 text-gray-100 hover:border-[#93C021]/40 hover:bg-white/10'}`}
                   >
                     <div className="flex items-center justify-between text-sm font-semibold">
                       <span>{phone}</span>
@@ -201,7 +201,7 @@ export default function AdminChat() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-gray-950/70 p-4 shadow-2xl min-h-[60vh]">
+          <div className="rounded-2xl border border-white/10 bg-black/70 p-4 shadow-2xl min-h-[60vh]">
             {!selectedPhone ? (
               <div className="text-sm text-gray-300">Selecciona una conversación para ver los mensajes.</div>
             ) : (
@@ -214,7 +214,7 @@ export default function AdminChat() {
                   <button
                     type="button"
                     onClick={() => mutateConvo()}
-                    className="text-xs rounded-full border border-white/10 px-3 py-1 text-gray-200 hover:border-lime-400/50 hover:text-white"
+                    className="text-xs rounded-full border border-white/10 px-3 py-1 text-gray-200 hover:border-[#93C021]/50 hover:text-white"
                   >Actualizar</button>
                 </div>
                 <div className="flex-1 space-y-3 overflow-auto pr-1">
@@ -252,7 +252,7 @@ export default function AdminChat() {
                         type="button"
                         disabled={sending}
                         onClick={() => handleQuickReply(q)}
-                        className="rounded-full border border-white/10 bg-white/5 px-3 py-1 hover:border-lime-400/50 hover:text-white disabled:opacity-50"
+                        className="rounded-full border border-white/10 bg-white/5 px-3 py-1 hover:border-[#93C021]/50 hover:text-white disabled:opacity-50"
                       >
                         {q}
                       </button>
@@ -263,13 +263,13 @@ export default function AdminChat() {
                       value={draft}
                       onChange={e => setDraft(e.target.value)}
                       placeholder="Escribe tu respuesta…"
-                      className="min-h-[72px] flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-lime-400/50 focus:outline-none"
+                      className="min-h-[72px] flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-[#93C021]/50 focus:outline-none"
                     />
                     <button
                       type="button"
                       onClick={() => handleSend()}
                       disabled={sending || !draft.trim()}
-                      className="self-end rounded-xl border border-lime-400/60 bg-lime-600 px-4 py-2 text-sm font-semibold text-white shadow disabled:cursor-not-allowed disabled:opacity-60"
+                      className="self-end rounded-xl border border-[#93C021]/60 bg-[#93C021] px-4 py-2 text-sm font-semibold text-white shadow disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {sending ? 'Enviando…' : 'Enviar'}
                     </button>

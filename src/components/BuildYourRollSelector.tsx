@@ -1,4 +1,4 @@
-// src/components/BuildYourRollSelector.tsx
+﻿// src/components/BuildYourRollSelector.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { type ConfigArmalo, type ProductoOpcion } from "@/data/productos";
 
@@ -93,7 +93,7 @@ const BuildYourRollSelector: React.FC<Props> = ({
     <label className="block text-[10px] leading-4 text-gray-400 font-medium">
       {labelText}
       <select
-        className="mt-0.5 w-full bg-gray-800 text-gray-100 text-[10px] leading-4 rounded-sm border border-gray-700 px-2 py-1 h-7"
+        className="mt-0.5 w-full bg-[#1a1a1a] text-gray-100 text-[10px] leading-4 rounded-sm border border-[#2a2a2a] px-2 py-1 h-7"
         value={sel[id] ?? ""}
         onChange={(e) => setSel((s) => ({ ...s, [id]: e.target.value || undefined }))}
       >

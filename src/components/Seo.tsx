@@ -59,7 +59,7 @@ export default function Seo({
       <link rel="apple-touch-icon" href="/images/logo-masushi.webp" />
       
       {/* Theme Colors */}
-      <meta name="theme-color" content="#ef4444" />
+      <meta name="theme-color" content="#D1933E" />
       <meta name="msapplication-TileColor" content="#0a0a0a" />
     </Head>
   );

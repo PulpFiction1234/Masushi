@@ -101,11 +101,11 @@ export const sendWelcomeEmail = async ({ email, userId }: SendWelcomeEmailParams
     <h1 style="margin:0 0 8px 0; font-size:20px; color:#111827; font-weight:700">¡Bienvenido, ${namePart}!</h1>
     <p style="margin:0 0 20px 0; color:#6b7280; font-size:15px">Tu cuenta ha sido verificada correctamente. Ya puedes iniciar sesión y disfrutar de nuestros productos.</p>
 
-    <div style="background:#ffffff; border:2px solid #ef4444; border-radius:8px; padding:18px 20px; margin:18px auto; display:inline-block; min-width:260px;">
-      <div style="font-family:monospace, ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', monospace; color:#ef4444; font-size:18px; font-weight:700; letter-spacing:2px;">Cuenta verificada ✔</div>
+    <div style="background:#ffffff; border:2px solid #D1933E; border-radius:8px; padding:18px 20px; margin:18px auto; display:inline-block; min-width:260px;">
+      <div style="font-family:monospace, ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', monospace; color:#D1933E; font-size:18px; font-weight:700; letter-spacing:2px;">Cuenta verificada ✔</div>
     </div>
 
-    <p style="margin:0; color:#6b7280; font-size:14px">Si necesitas ayuda, contáctanos por <strong>WhatsApp</strong>${waLink ? `: <a href="${waLink}" style="color:#ef4444; text-decoration:none;"><span style="white-space:nowrap">${whatsappDisplay}</span></a>` : '.'}</p>
+    <p style="margin:0; color:#6b7280; font-size:14px">Si necesitas ayuda, contáctanos por <strong>WhatsApp</strong>${waLink ? `: <a href="${waLink}" style="color:#D1933E; text-decoration:none;"><span style="white-space:nowrap">${whatsappDisplay}</span></a>` : '.'}</p>
   </div>
 
   <div style="text-align:center; margin-top:22px; padding-top:18px; border-top:1px solid #e5e7eb;">

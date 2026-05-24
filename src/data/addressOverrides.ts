@@ -3,9 +3,24 @@
 export const addressOverrides: Record<string, { coords: [number, number]; label?: string }> = {
   // Ejemplo: la dirección que reportaste
   "avenida paseo pie andino 3286": {
-    // Coordenadas actualizadas desde Google Maps (user provided): lat -33.577623371698856, lng -70.53602853176628
     coords: [-70.53602853176628, -33.577623371698856], // [lng, lat]
     label: "Avenida Paseo Pie Andino 3286, Puente Alto",
+  },
+  "av diego portales 6577": {
+    coords: [-70.54831321642476, -33.56056698565852], // [lng, lat]
+    label: "Av. Diego Portales 6577, Puente Alto",
+  },
+  "avenida diego portales 6577": {
+    coords: [-70.54831321642476, -33.56056698565852],
+    label: "Av. Diego Portales 6577, Puente Alto",
+  },
+  "av diego portales 6537": {
+    coords: [-70.54821010293149, -33.560136525062454], // [lng, lat]
+    label: "Av. Diego Portales 6537, Puente Alto",
+  },
+  "avenida diego portales 6537": {
+    coords: [-70.54821010293149, -33.560136525062454],
+    label: "Av. Diego Portales 6537, Puente Alto",
   },
 };
 

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
@@ -143,24 +143,24 @@ export default function HorariosAdminPanel() {
           <p className="text-xs text-gray-400">Estado actual: <span className="font-semibold">{modeLoading ? 'cargando...' : (mode === 'forceOpen' ? 'FORZADO ABIERTO' : mode === 'forceClosed' ? 'FORZADO CERRADO' : 'NORMAL (según horario)')}</span></p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
-          <button disabled={modeLoading || savingMode} onClick={() => applyMode('normal')} className={`px-3 md:px-4 py-2 rounded font-semibold border text-xs md:text-sm ${mode === 'normal' ? 'bg-emerald-600 border-emerald-500' : 'bg-gray-800 border-gray-700 hover:bg-gray-700'}`}>Normal<div className="text-xs text-gray-200 font-normal">Respeta horario</div></button>
-          <button disabled={modeLoading || savingMode} onClick={() => applyMode('forceOpen')} className={`px-3 md:px-4 py-2 rounded font-semibold border text-xs md:text-sm ${mode === 'forceOpen' ? 'bg-green-700 border-green-600' : 'bg-gray-800 border-gray-700 hover:bg-gray-700'}`}>Forzar ABIERTO<div className="text-xs text-gray-200 font-normal">Solo hoy</div></button>
-          <button disabled={modeLoading || savingMode} onClick={() => applyMode('forceClosed')} className={`px-3 md:px-4 py-2 rounded font-semibold border text-xs md:text-sm ${mode === 'forceClosed' ? 'bg-rose-700 border-rose-600' : 'bg-gray-800 border-gray-700 hover:bg-gray-700'}`}>Forzar CERRADO<div className="text-xs text-gray-200 font-normal">Solo hoy</div></button>
+          <button disabled={modeLoading || savingMode} onClick={() => applyMode('normal')} className={`px-3 md:px-4 py-2 rounded font-semibold border text-xs md:text-sm ${mode === 'normal' ? 'bg-[#93C021] border-[#7fa01c]' : 'bg-[#1a1a1a] border-[#2a2a2a] hover:bg-[#222]'}`}>Normal<div className="text-xs text-gray-200 font-normal">Respeta horario</div></button>
+          <button disabled={modeLoading || savingMode} onClick={() => applyMode('forceOpen')} className={`px-3 md:px-4 py-2 rounded font-semibold border text-xs md:text-sm ${mode === 'forceOpen' ? 'bg-[#93C021] border-[#7fa01c]' : 'bg-[#1a1a1a] border-[#2a2a2a] hover:bg-[#222]'}`}>Forzar ABIERTO<div className="text-xs text-gray-200 font-normal">Solo hoy</div></button>
+          <button disabled={modeLoading || savingMode} onClick={() => applyMode('forceClosed')} className={`px-3 md:px-4 py-2 rounded font-semibold border text-xs md:text-sm ${mode === 'forceClosed' ? 'bg-[#D1933E] border-[#b87a32]' : 'bg-[#1a1a1a] border-[#2a2a2a] hover:bg-[#222]'}`}>Forzar CERRADO<div className="text-xs text-gray-200 font-normal">Solo hoy</div></button>
         </div>
       </div>
 
-      <div className="bg-gray-800 p-3 rounded">
+      <div className="bg-[#1a1a1a] p-3 rounded">
         <div className="flex items-center justify-between">
           <p className="text-xs md:text-sm text-gray-300">Editor de horarios (oculto por defecto)</p>
-          <button onClick={() => setShowJson((s) => !s)} className="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs md:text-sm">{showJson ? 'Ocultar JSON' : 'Mostrar JSON'}</button>
+          <button onClick={() => setShowJson((s) => !s)} className="px-3 py-1 bg-[#222] hover:bg-[#2a2a2a] rounded text-xs md:text-sm">{showJson ? 'Ocultar JSON' : 'Mostrar JSON'}</button>
         </div>
         {showJson && (
           <>
-            <textarea value={text} onChange={(e) => setText(e.target.value)} className="w-full h-64 bg-gray-800 p-3 rounded text-xs md:text-sm text-gray-100 font-mono mt-3" />
+            <textarea value={text} onChange={(e) => setText(e.target.value)} className="w-full h-64 bg-[#1a1a1a] p-3 rounded text-xs md:text-sm text-gray-100 font-mono mt-3" />
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-3">
-              <button onClick={copy} className="px-3 md:px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded font-semibold text-xs md:text-sm">{copied ? 'Copiado' : 'Copiar JSON'}</button>
-              <button onClick={() => { setText(DEFAULT_SERIALIZED); lastSyncedRef.current = DEFAULT_SERIALIZED; }} className="px-3 md:px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs md:text-sm">Restaurar valores</button>
-              <button onClick={save} disabled={savingJson} className="px-3 md:px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded font-semibold text-xs md:text-sm">{savingJson ? 'Guardando...' : 'Guardar en servidor'}</button>
+              <button onClick={copy} className="px-3 md:px-4 py-2 bg-[#D1933E] hover:bg-[#b87a32] rounded font-semibold text-xs md:text-sm">{copied ? 'Copiado' : 'Copiar JSON'}</button>
+              <button onClick={() => { setText(DEFAULT_SERIALIZED); lastSyncedRef.current = DEFAULT_SERIALIZED; }} className="px-3 md:px-4 py-2 bg-[#222] hover:bg-[#2a2a2a] rounded text-xs md:text-sm">Restaurar valores</button>
+              <button onClick={save} disabled={savingJson} className="px-3 md:px-4 py-2 bg-[#93C021] hover:bg-[#93C021] rounded font-semibold text-xs md:text-sm">{savingJson ? 'Guardando...' : 'Guardar en servidor'}</button>
             </div>
             <p className="text-xs text-gray-400 mt-2 break-words">Al guardar se persiste en la tabla <code>app_settings</code>. El código que usa estos horarios debe leer de la DB o aplicar cambios según tu deployment.</p>
           </>

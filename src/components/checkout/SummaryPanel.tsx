@@ -1,4 +1,4 @@
-import {
+﻿import {
   fmt,
   priceOf,
   keyOf,
@@ -11,7 +11,7 @@ import ExtrasSelector from "./ExtrasSelector";
 import React from "react";
 import { useCart } from "@/context/CartContext";
 
-const card = "border border-white/10 rounded-2xl bg-neutral-900/70 shadow-xl";
+const card = "border border-white/10 rounded-2xl bg-[#111111]/70 shadow-xl";
 
 interface Props {
   cart: CartItemLike[];
@@ -60,10 +60,10 @@ export default function SummaryPanel({
 
   const Spacer: React.FC = () => (
     // kept for accessibility fallback but not used; small neutral placeholder
-    <div className="w-5 h-5 rounded-full bg-neutral-700/40 flex items-center justify-center" aria-hidden="true" />
+    <div className="w-5 h-5 rounded-full bg-[#222]/40 flex items-center justify-center" aria-hidden="true" />
   );
   return (
-  <div className={`${card} p-4 bg-neutral-900 h-full flex flex-col`}>
+  <div className={`${card} p-4 bg-[#111111] h-full flex flex-col`}>
       <h3 className="font-bold mb-2 text-neutral-50 text-sm">Tu carrito</h3>
       {/* Fixed-height content area: products (scrollable) | extras (static) */}
       <div className="grid grid-cols-1 md:grid-cols-[1fr_340px] lg:grid-cols-[1fr_360px] gap-3 flex-1 h-full">
@@ -81,7 +81,7 @@ export default function SummaryPanel({
                         else removeFromCart(k);
                       }}
                       aria-label={`Quitar 1 a ${nameWithTipo(item)}`}
-                      className="w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center hover:bg-red-500 text-sm"
+                      className="w-6 h-6 rounded-full bg-[#D1933E] text-white flex items-center justify-center hover:bg-[#b87a32] text-sm"
                     >
                       <span className="text-sm leading-none">−</span>
                     </button>
@@ -92,7 +92,7 @@ export default function SummaryPanel({
                       type="button"
                       onClick={() => updateQuantity(keyOf(item), item.cantidad + 1)}
                       aria-label={`Agregar 1 a ${nameWithTipo(item)}`}
-                      className="w-6 h-6 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center text-sm"
+                      className="w-6 h-6 rounded-full bg-[#93C021] hover:bg-[#7fa01c] text-white flex items-center justify-center text-sm"
                     >
                       <span className="text-sm font-bold leading-none">+</span>
                     </button>

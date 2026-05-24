@@ -4,7 +4,7 @@ import { type Producto } from "@/data/productos";
 import ProductOptionSelector from "./ProductOptionSelector";
 import BuildYourRollSelector from "./BuildYourRollSelector"; // ⬅️ NUEVO
 import { fmtMiles } from "@/utils/format";
-import { WIDE_THRESHOLD, type FitMode } from "@/utils/constants";
+import { type FitMode } from "@/utils/constants";
 import { useUserProfile } from "@/context/UserContext";
 import { useUser } from "@supabase/auth-helpers-react";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
@@ -33,7 +33,7 @@ const ProductCard: React.FC<Props> = ({
   selectedOptionId,
   onSelectOption,
   onAdd,
-  fitMode = "cover",
+  fitMode = "contain",
   onFitChange,
   isAvailable = true,
   showAddButton = true,
@@ -83,8 +83,9 @@ const ProductCard: React.FC<Props> = ({
   };
 
   return (
-    <div className="bg-gray-900 rounded-lg shadow p-4 flex flex-col h-full">
-      <div className="relative aspect-square w-full overflow-hidden rounded bg-white">
+    <div className="bg-[#111111] rounded-lg shadow p-4 flex flex-col h-full border border-[#1e1e1e] hover:border-[#2a2a2a] transition-colors">
+      <div className={`relative aspect-square w-full overflow-hidden rounded ${product.imagen ? 'bg-black' : 'bg-white'}`}>
+        {product.imagen && (
         <Image
           src={product.imagen}
           alt={product.nombre}
@@ -103,15 +104,11 @@ const ProductCard: React.FC<Props> = ({
           blurDataURL={
             typeof product.imagen === "string" ? product.blurDataUrl : undefined
           }
-          onLoadingComplete={(img) => {
-            const ratio = img.naturalWidth / img.naturalHeight;
-            const newMode: FitMode = ratio >= WIDE_THRESHOLD ? "contain" : "cover";
-            if (newMode !== fitMode) onFitChange(newMode);
-          }}
         />
+        )}
         {/* ID del producto en la esquina superior derecha */}
         {product.codigo && (
-          <div className="absolute top-2 right-2 bg-green-600 text-white text-base font-bold px-2 py-1 rounded">
+          <div className="absolute top-2 right-2 bg-[#93C021] text-black text-base font-bold px-2 py-1 rounded">
             {product.codigo}
           </div>
         )}
@@ -131,7 +128,7 @@ const ProductCard: React.FC<Props> = ({
         )}
       </div>
 
-      <h3 className="text-lg text-gray-200 font-semibold mt-2">{product.nombre}</h3>
+      <h3 className="text-lg text-white font-semibold mt-2">{product.nombre}</h3>
       <p className="text-sm text-gray-400">{product.descripcion}</p>
 
       {!esArmalo && tieneOpciones && (
@@ -156,7 +153,7 @@ const ProductCard: React.FC<Props> = ({
 
       <div className="mt-auto">
         {showPrice && (
-          <p className="font-bold text-gray-200 mt-3">
+          <p className="font-bold text-[#D1933E] mt-3 text-lg">
             {"$"}
             {fmtMiles.format(precioMostrar)}
           </p>
@@ -166,7 +163,7 @@ const ProductCard: React.FC<Props> = ({
           <button
             type="button"
             onClick={onAdd}
-            className={`${globallyDisabled ? 'bg-gray-600 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'} text-white px-4 py-2 mt-3 rounded w-full disabled:opacity-50 disabled:cursor-not-allowed`}
+            className={`${globallyDisabled ? 'bg-[#333] cursor-not-allowed text-gray-500' : 'bg-[#93C021] hover:bg-[#7fa01c] text-black font-semibold'} px-4 py-2 mt-3 rounded w-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors`}
             disabled={disabled || globallyDisabled}
             aria-disabled={disabled || globallyDisabled}
           >

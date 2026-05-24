@@ -72,7 +72,7 @@ export default function HeroCarousel({
       {/* Contenido centrado (lo mismo que tenías) */}
       <div className="relative z-10 h-full bottom-15 flex items-end justify-center text-center px-4">
           <Link href="/menu" className="inline-block">
-            <button className="bg-red-500 hover:bg-red-600 px-6 py-3 rounded text-white font-semibold">
+            <button className="bg-[#D1933E] hover:bg-[#b87d34] px-8 py-3 rounded text-black font-bold tracking-wide shadow-lg transition-colors">
               Ver Carta
             </button>
           </Link>        

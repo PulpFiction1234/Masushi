@@ -1,4 +1,4 @@
-// src/pages/_document.tsx
+﻿// src/pages/_document.tsx
 import { Html, Head, Main, NextScript } from "next/document";
 
 export default function Document() {
@@ -24,7 +24,7 @@ export default function Document() {
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/manifest.json" />
       </Head>
-      <body className="bg-neutral-950 antialiased">
+      <body className="bg-black antialiased">
         <Main />
         <NextScript />
       </body>

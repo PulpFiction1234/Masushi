@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+﻿/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import * as turf from "@turf/turf";
@@ -238,7 +238,7 @@ const AddressSearch: React.FC<AddressSearchProps> = ({ polygonCoords, onValidAdd
   }, []);
 
   const statusClass =
-    status.startsWith("✅") ? "text-green-400"
+    status.startsWith("✅") ? "text-[#93C021]"
     : status.startsWith("❌") ? "text-red-400"
     : status.startsWith("⚠️") ? "text-yellow-300"
     : "text-neutral-300";
@@ -250,12 +250,12 @@ const AddressSearch: React.FC<AddressSearchProps> = ({ polygonCoords, onValidAdd
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Ingresa tu dirección (con número)"
-        className="w-full rounded-xl border border-white/10 bg-neutral-800/90 px-3 py-2 text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+        className="w-full rounded-xl border border-white/10 bg-[#1a1a1a]/90 px-3 py-2 text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#93C021] focus:border-transparent"
       />
 
       {suggestions.length > 0 && (
         <ul
-          className="absolute left-0 right-0 z-50 mt-2 max-h-64 overflow-auto rounded-xl border border-white/10 bg-neutral-900/95 text-neutral-100 shadow-xl backdrop-blur-sm"
+          className="absolute left-0 right-0 z-50 mt-2 max-h-64 overflow-auto rounded-xl border border-white/10 bg-[#111111]/95 text-neutral-100 shadow-xl backdrop-blur-sm"
           role="listbox"
         >
           {suggestions.map((sug) => (

@@ -366,7 +366,7 @@ if (prod.configuracion?.tipo === "armalo") {
               product={prod}
               selectedOptionId={seleccionActual}
               onSelectOption={(id) => setSeleccion((prev) => ({ ...prev, [prod.id]: id }))}
-              fitMode={fitMap[prod.id]}
+              fitMode={fitMap[prod.id] ?? "contain"}
               onFitChange={(mode) =>
                 setFitMap((m) => (m[prod.id] === mode ? m : { ...m, [prod.id]: mode }))
               }

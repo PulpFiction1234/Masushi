@@ -1,4 +1,4 @@
-import Image from "next/image";
+﻿import Image from "next/image";
 import { productos, type Producto } from "@/data/productos";
 import { formatCLP } from "@/utils/format";
 import { useCart } from "@/context/CartContext";
@@ -72,48 +72,49 @@ export default function ProductSectionPromo({ title, productIds, linkBase }: Pro
       <div className="w-full max-w-none px-10">
         <h2 className="text-2xl font-bold text-center mb-8">{title}</h2>
 
-        <div
-          className="grid gap-4 justify-center items-stretch [grid-template-columns:repeat(auto-fit,minmax(240px,300px))] sm:[grid-template-columns:repeat(auto-fit,minmax(260px,320px))]"
-        >
+        <div className="flex gap-4 overflow-x-auto pb-2">
           {products.map((p) => (
             <div
               key={p.id}
-              className="bg-gray-800 rounded-lg overflow-hidden shadow flex flex-col h-full"
+              className="flex-none w-[78vw] sm:w-[45vw] md:w-[32vw] lg:flex-1 lg:w-0 bg-[#1a1a1a] rounded-lg overflow-hidden shadow flex flex-col"
             >
-              <Image
-                src={p.imagen}
-                alt={p.nombre}
-                width={500}
-                height={200}
-                className="w-full h-50 object-cover"
-                style={{ width: 'auto', height: 'auto' }}
-                quality={60}
-                placeholder={
-                  typeof p.imagen === "string"
-                    ? p.blurDataUrl
-                      ? "blur"
-                      : undefined
-                    : "blur"
-                }
-                blurDataURL={typeof p.imagen === "string" ? p.blurDataUrl : undefined}
-              />
-              <div className="p-3 flex flex-col flex-1">
-                <h3 className="font-semibold text-sm">{p.nombre}</h3>
-                <p className="text-xs text-gray-300 line-clamp-2">{p.descripcion}</p>
+              <div className={`relative w-full aspect-[4/3] ${p.imagen ? 'bg-black' : 'bg-white'}`}>
+                {p.imagen && (
+                <Image
+                  src={p.imagen}
+                  alt={p.nombre}
+                  fill
+                  className="object-contain"
+                  sizes="(min-width: 1024px) 20vw, (min-width: 768px) 32vw, (min-width: 640px) 45vw, 78vw"
+                  quality={60}
+                  placeholder={
+                    typeof p.imagen === "string"
+                      ? p.blurDataUrl
+                        ? "blur"
+                        : undefined
+                      : "blur"
+                  }
+                  blurDataURL={typeof p.imagen === "string" ? p.blurDataUrl : undefined}
+                />
+                )}
+              </div>
+              <div className="p-4 flex flex-col flex-1">
+                <h3 className="font-semibold text-base">{p.nombre}</h3>
+                <p className="text-xs text-gray-300 mt-1">{p.descripcion}</p>
 
                 <div className="mt-auto pt-2 flex items-center justify-between">
                   <span className="font-bold">{formatCLP(p.valor)}</span>
 
                   {p.configuracion?.tipo !== "armalo" ? (
                     p.enabled === false ? (
-                      <button className="bg-gray-600 text-white px-3 py-1 rounded text-xs w-full cursor-not-allowed" disabled aria-disabled title="Sin stock">Sin stock</button>
+                      <button className="bg-[#2a2a2a] text-white px-3 py-1 rounded text-xs w-full cursor-not-allowed" disabled aria-disabled title="Sin stock">Sin stock</button>
                     ) : (
                       <button
                         onClick={(e) => {
                           addToCart(p);
                           animateToCart(e.nativeEvent as unknown as MouseEvent);
                         }}
-                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs"
+                        className="bg-[#93C021] hover:bg-[#93C021] text-white px-3 py-1 rounded text-xs"
                       >
                         Agregar
                       </button>

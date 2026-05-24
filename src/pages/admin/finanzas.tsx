@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import Seo from '@/components/Seo';
 import FinanceChart from '@/components/admin/FinanceChart';
@@ -52,7 +52,7 @@ export default function AdminFinanzasPage() {
     <div>
       <Seo title="Admin — Finanzas" canonicalPath="/admin/finanzas" noIndex />
       <AdminLayout title="Finanzas">
-        <div className="bg-gray-900 p-6 rounded-xl shadow space-y-6">
+        <div className="bg-[#111111] p-6 rounded-xl shadow space-y-6">
           <h2 className="text-lg font-semibold">Resumen financiero</h2>
 
           {loading ? (
@@ -62,18 +62,18 @@ export default function AdminFinanzasPage() {
           ) : data ? (
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-gray-800 p-4 rounded-lg">
+                <div className="bg-[#1a1a1a] p-4 rounded-lg">
                   <p className="text-sm text-gray-400">Pedidos (últimos {data.months.length} meses)</p>
                   <p className="text-2xl font-bold">{data.totals.periodTotalOrders}</p>
                   <p className="text-sm text-gray-400 mt-2">Delivery: <span className="font-semibold text-white">{data.totals.periodDeliveryOrders ?? 0}</span> • Retiro: <span className="font-semibold text-white">{data.totals.periodPickupOrders ?? 0}</span></p>
                 </div>
 
-                <div className="bg-gray-800 p-4 rounded-lg">
+                <div className="bg-[#1a1a1a] p-4 rounded-lg">
                   <p className="text-sm text-gray-400">Ingresos (últimos {data.months.length} meses)</p>
                   <p className="text-2xl font-bold">{money.format(data.totals.periodRevenue)}</p>
                 </div>
 
-                <div className="bg-gray-800 p-4 rounded-lg">
+                <div className="bg-[#1a1a1a] p-4 rounded-lg">
                   <p className="text-sm text-gray-400">Mes actual ({data.months[data.months.length - 1]})</p>
                   <p className="text-lg">Pedidos: <span className="font-bold">{data.totals.currentMonthOrders}</span></p>
                   <p className="text-sm text-gray-400">Delivery: <span className="font-semibold text-white">{data.totals.currentMonthDelivery ?? 0}</span> • Retiro: <span className="font-semibold text-white">{data.totals.currentMonthPickup ?? 0}</span></p>
@@ -83,7 +83,7 @@ export default function AdminFinanzasPage() {
 
               <FinanceChart data={{ months: data.months, totalOrders: data.series.totalOrders, deliveryOrders: data.series.deliveryOrders, pickupOrders: data.series.pickupOrders, revenue: data.series.revenue }} />
               {/* Recent orders table for debugging/verification */}
-              <div className="bg-gray-800 p-4 rounded-lg mt-4">
+              <div className="bg-[#1a1a1a] p-4 rounded-lg mt-4">
                 <h3 className="text-sm font-semibold mb-2">Últimos pedidos</h3>
                 {data.recentOrders && data.recentOrders.length > 0 ? (
                   <div className="overflow-auto">

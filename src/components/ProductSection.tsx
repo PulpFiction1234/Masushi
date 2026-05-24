@@ -1,4 +1,4 @@
-import Image from "next/image";
+﻿import Image from "next/image";
 import { productos, type Producto } from "@/data/productos";
 import { getMergedProductsSync, fetchMergedProducts } from '@/utils/mergedProducts';
 import { useEffect, useState } from 'react';
@@ -60,8 +60,9 @@ export default function ProductSection({ title, productIds, linkBase }: ProductS
           {products.map((p) => (
             <div
               key={p.id}
-              className="bg-gray-800 rounded-lg overflow-hidden shadow flex flex-col h-full min-h-[480px]"
+              className="bg-[#1a1a1a] rounded-lg overflow-hidden shadow flex flex-col h-full min-h-[480px]"
             >
+              <div className="overflow-hidden bg-[#2d2d2d]">
               <Image
                 src={p.imagen}
                 alt={p.nombre}
@@ -80,6 +81,7 @@ export default function ProductSection({ title, productIds, linkBase }: ProductS
                   typeof p.imagen === "string" ? p.blurDataUrl : undefined
                 }
               />
+              </div>
               <div className="p-3 flex flex-col flex-1">
                 <h3 className="font-semibold text-sm">{p.nombre}</h3>
                 <p className="text-xs text-gray-300 line-clamp-2">{p.descripcion}</p>
@@ -89,14 +91,14 @@ export default function ProductSection({ title, productIds, linkBase }: ProductS
 
                   {p.configuracion?.tipo !== "armalo" ? (
                     p.enabled === false ? (
-                      <button className="bg-gray-600 text-white px-3 py-1 rounded text-xs w-full cursor-not-allowed" disabled aria-disabled title="Sin stock">Sin stock</button>
+                      <button className="bg-[#2a2a2a] text-white px-3 py-1 rounded text-xs w-full cursor-not-allowed" disabled aria-disabled title="Sin stock">Sin stock</button>
                     ) : (
                       <button
                         onClick={(e) => {
                           addToCart(p);
                           animateToCart(e.nativeEvent as unknown as MouseEvent);
                         }}
-                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs"
+                        className="bg-[#93C021] hover:bg-[#93C021] text-white px-3 py-1 rounded text-xs"
                       >
                         Agregar
                       </button>

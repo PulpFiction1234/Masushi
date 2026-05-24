@@ -13,7 +13,7 @@ export function animateToCart(evt: MouseEvent) {
   const startY = evt.clientY;
 
   const dot = document.createElement("div");
-  dot.className = "fixed pointer-events-none w-3 h-3 rounded-full bg-red-500 z-[9999]";
+  dot.className = "fixed pointer-events-none w-3 h-3 rounded-full bg-[#D1933E] z-[9999]";
   dot.style.left = `${startX}px`;
   dot.style.top = `${startY}px`;
   document.body.appendChild(dot);

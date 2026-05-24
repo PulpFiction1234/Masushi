@@ -125,7 +125,7 @@ export default function MenuPage() {
       />
 
       {/* H1 + descripción (mismo texto que el <title>) */}
-      <div className="bg-gray-950 flex justify-center md:ml-56">
+      <div className="bg-black flex justify-center md:ml-56">
         <header className="w-11/12 max-w-[19rem] sm:max-w-xs md:max-w-2xl text-center px-2 mb-3">
           <h1 className="text-[22px] font-semibold text-neutral-100">
             Carta | Masushi Ciudad del Este
@@ -144,17 +144,17 @@ export default function MenuPage() {
           aria-expanded={menuAbierto}
           aria-controls="mobile-categorias"
           onClick={() => setMenuAbierto(true)}
-          className="fixed left-2 top-16 z-50 md:hidden bg-gray-800 text-white px-3 py-2 rounded-r-2xl rounded-l shadow-lg active:scale-95 transition"
+          className="fixed left-2 top-16 z-50 md:hidden bg-[#111111] text-white px-3 py-2 rounded-r-2xl rounded-l shadow-lg active:scale-95 transition border border-[#2a2a2a]"
         >
           ☰
         </button>
       )}
 
-      <div className="bg-gray-950">
+      <div className="bg-black">
         {/* Sidebar */}
         <aside
           id="mobile-categorias"
-          className={`fixed left-0 top-14 h-[calc(100dvh-56px)] w-64 bg-gray-900 text-white rounded-r-2xl shadow-lg transform transition-transform duration-300 z-40 flex flex-col ${
+          className={`fixed left-0 top-14 h-[calc(100dvh-56px)] w-64 bg-[#111111] text-white rounded-r-2xl shadow-lg transform transition-transform duration-300 z-40 flex flex-col ${
             menuAbierto ? "translate-x-0" : "-translate-x-full"
           } md:translate-x-0 md:top-19 md:left-0 md:fixed md:w-56 md:h-[calc(100vh-56px)]`}
           role="dialog"
@@ -182,7 +182,9 @@ export default function MenuPage() {
                 setMenuAbierto(false);
               }}
               className={`block w-full text-left px-2.5 py-1.5 rounded text-sm transition-colors duration-200 ${
-                categoriaSeleccionada === null ? "bg-gray-700" : "hover:bg-gray-700"
+                categoriaSeleccionada === null
+                  ? "bg-[#1a1a1a] text-[#D1933E] border-l-2 border-[#D1933E] pl-2"
+                  : "hover:bg-[#1a1a1a]"
               }`}
             >
               Todas
@@ -200,8 +202,10 @@ export default function MenuPage() {
                     setMenuAbierto(false);
                   }}
                   className={`block w-full text-left px-2.5 py-1.5 rounded text-sm transition-colors duration-200 ${
-                    categoriaSeleccionada === cat ? "bg-gray-700" : "hover:bg-gray-700"
-                  } ${cat === "Mis favoritos" ? "border-t border-gray-700 mt-2 pt-2" : ""}`}
+                    categoriaSeleccionada === cat
+                      ? "bg-[#1a1a1a] text-[#D1933E] border-l-2 border-[#D1933E] pl-2"
+                      : "hover:bg-[#1a1a1a]"
+                  } ${cat === "Mis favoritos" ? "border-t border-[#2a2a2a] mt-2 pt-2" : ""}`}
                 >
                   {cat}
                 </button>
@@ -211,7 +215,7 @@ export default function MenuPage() {
         </aside>
 
         {/* Contenido */}
-        <main className="min-h-screen p-6 text-center bg-gray-950 md:ml-56">
+          <main className="min-h-screen p-6 text-center bg-black md:ml-56">
           {/* Buscador */}
           <div className="sticky top-21 z-30 mb-3 flex justify-center">
             <div className="w-11/12 max-w-[19rem] sm:max-w-xs md:max-w-2xl">
@@ -226,7 +230,7 @@ export default function MenuPage() {
                   onChange={(e) => setBusqueda(e.target.value)}
                   placeholder="Buscar por nombre, ingrediente o código…"
                   autoComplete="off"
-                  className="w-full rounded-lg md:rounded-xl bg-gray-800 text-white placeholder-gray-400 text-sm md:text-base h-9 md:h-11 px-3 md:px-4 pr-8 md:pr-10 shadow-inner outline-none ring-1 ring-gray-700 focus:ring-2 focus:ring-emerald-500 transition"
+                  className="w-full rounded-lg md:rounded-xl bg-[#1a1a1a] text-white placeholder-gray-500 text-sm md:text-base h-9 md:h-11 px-3 md:px-4 pr-8 md:pr-10 shadow-inner outline-none ring-1 ring-[#333] focus:ring-2 focus:ring-[#93C021] transition"
                   aria-describedby="hint-busqueda"
                 />
                 {busqueda && (

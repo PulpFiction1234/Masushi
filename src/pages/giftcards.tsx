@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useUser } from '@supabase/auth-helpers-react';
@@ -77,11 +77,11 @@ export default function GiftCardsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white flex flex-col">
+    <div className="min-h-screen bg-black text-white flex flex-col">
       <Seo title="Gift Cards — Masushi" canonicalPath="/giftcards" />
       <Navbar />
       <main className="flex-1 max-w-4xl mx-auto px-4 py-8 space-y-6 w-full">
-        <div className="bg-neutral-900/80 border border-white/10 rounded-2xl p-6 space-y-4">
+        <div className="bg-[#111111]/80 border border-white/10 rounded-2xl p-6 space-y-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-amber-300">Regala Masushi</p>
             <h1 className="text-2xl font-bold">Gift Cards</h1>
@@ -93,7 +93,7 @@ export default function GiftCardsPage() {
                 key={amount}
                 type="button"
                 onClick={() => setSelectedAmount(amount)}
-                className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${selectedAmount === amount ? 'border-green-400 bg-green-500/10 text-green-100' : 'border-white/10 bg-neutral-800 text-white hover:border-white/20'}`}
+                className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${selectedAmount === amount ? 'border-[#93C021] bg-[#93C021]/10 text-[#93C021]' : 'border-white/10 bg-[#1a1a1a] text-white hover:border-white/20'}`}
               >
                 {fmt(amount)}
               </button>
@@ -107,7 +107,7 @@ export default function GiftCardsPage() {
                 value={recipientEmail}
                 onChange={(e) => setRecipientEmail(e.target.value)}
                 placeholder="si no lo llenas, te llegará a ti"
-                className="mt-1 w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#93C021]"
               />
             </div>
             <div>
@@ -116,18 +116,18 @@ export default function GiftCardsPage() {
                 type="text"
                 value={recipientName}
                 onChange={(e) => setRecipientName(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="mt-1 w-full rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#93C021]"
               />
             </div>
           </div>
           {error ? <p className="text-sm text-red-400">{error}</p> : null}
-          {success ? <p className="text-sm text-green-300">{success}</p> : null}
+          {success ? <p className="text-sm text-[#93C021]">{success}</p> : null}
           <div className="flex gap-3">
             <button
               type="button"
               onClick={handleCreate}
               disabled={creating || !user}
-              className="rounded-full bg-red-700 px-5 py-3 font-semibold text-white hover:bg-red-600 disabled:opacity-60"
+              className="rounded-full bg-[#D1933E] px-5 py-3 font-semibold text-white hover:bg-[#b87a32] disabled:opacity-60"
             >
               {creating ? 'Creando...' : 'Comprar gift card'}
             </button>
@@ -142,10 +142,10 @@ export default function GiftCardsPage() {
           
         </div>
 
-        <div className="bg-neutral-900/80 border border-white/10 rounded-2xl p-6 space-y-3">
+        <div className="bg-[#111111]/80 border border-white/10 rounded-2xl p-6 space-y-3">
           <h2 className="text-xl font-semibold">Paga por transferencia</h2>
-          <div className="rounded-xl border border-white/10 bg-neutral-800/60 p-4 text-sm text-neutral-100 leading-relaxed space-y-1">
-            <p className="font-semibold text-green-200">Datos bancarios</p>
+          <div className="rounded-xl border border-white/10 bg-[#1a1a1a]/60 p-4 text-sm text-neutral-100 leading-relaxed space-y-1">
+            <p className="font-semibold text-[#93C021]">Datos bancarios</p>
             <p>Titular: Sociedad Masushi Spa</p>
             <p>RUT: 78.229.101-7</p>
             <p>Banco: Banco Bci</p>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+﻿import { useState, useEffect, useMemo, useCallback } from "react";
 import type { IconType } from "react-icons";
 import { FaBirthdayCake, FaCalendarCheck, FaStore, FaIdCard, FaShoppingBag, FaTruck, FaChevronDown } from "react-icons/fa";
 import { useRouter } from "next/router";
@@ -470,25 +470,25 @@ export default function ProfilePage() {
 
   if (!user || !profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white">
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
         <p>Cargando...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-950 text-white">
+    <div className="min-h-screen flex flex-col bg-black text-white">
       <Seo title="Mi Perfil — Masushi" canonicalPath="/profile" noIndex />
       <Navbar />
       
       <main className="flex-1 p-6 max-w-4xl mx-auto w-full">
-        <div className="bg-gray-900 p-6 rounded-xl shadow space-y-6">
+        <div className="bg-[#111111] p-6 rounded-xl shadow space-y-6">
           {/* Encabezado */}
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold">Mi Perfil</h1>
             <button
               onClick={handleLogout}
-              className="px-4 py-2 rounded bg-red-500 hover:bg-red-600 transition-colors font-semibold text-sm"
+              className="px-4 py-2 rounded bg-[#D1933E] hover:bg-[#b87a32] transition-colors font-semibold text-sm"
             >
               Cerrar sesión
             </button>
@@ -503,7 +503,7 @@ export default function ProfilePage() {
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
+                  className="w-full px-3 py-2 rounded bg-[#1a1a1a] placeholder-gray-400"
                 />
               </div>
 
@@ -513,7 +513,7 @@ export default function ProfilePage() {
                   type="text"
                   value={apellidoPaterno}
                   onChange={(e) => setApellidoPaterno(e.target.value)}
-                  className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
+                  className="w-full px-3 py-2 rounded bg-[#1a1a1a] placeholder-gray-400"
                 />
               </div>
 
@@ -523,7 +523,7 @@ export default function ProfilePage() {
                   type="text"
                   value={apellidoMaterno}
                   onChange={(e) => setApellidoMaterno(e.target.value)}
-                  className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
+                  className="w-full px-3 py-2 rounded bg-[#1a1a1a] placeholder-gray-400"
                 />
               </div>
 
@@ -533,7 +533,7 @@ export default function ProfilePage() {
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full px-3 py-2 rounded bg-gray-800 placeholder-gray-400"
+                  className="w-full px-3 py-2 rounded bg-[#1a1a1a] placeholder-gray-400"
                 />
               </div>
 
@@ -545,7 +545,7 @@ export default function ProfilePage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-4 py-2 rounded bg-green-500 hover:bg-green-600 transition-colors font-semibold disabled:opacity-60"
+                  className="px-4 py-2 rounded bg-[#93C021] hover:bg-[#93C021] transition-colors font-semibold disabled:opacity-60"
                 >
                   {saving ? "Guardando..." : "Guardar"}
                 </button>
@@ -559,7 +559,7 @@ export default function ProfilePage() {
                     setApellidoMaterno(profile.apellido_materno || "");
                     setErrorMessage("");
                   }}
-                  className="px-4 py-2 rounded bg-gray-700 hover:bg-gray-600 transition-colors"
+                  className="px-4 py-2 rounded bg-[#222] hover:bg-[#2a2a2a] transition-colors"
                 >
                   Cancelar
                 </button>
@@ -584,7 +584,7 @@ export default function ProfilePage() {
 
               <button
                 onClick={() => setEditing(true)}
-                className="px-4 py-2 rounded bg-gray-700 hover:bg-gray-600 transition-colors font-semibold"
+                className="px-4 py-2 rounded bg-[#222] hover:bg-[#2a2a2a] transition-colors font-semibold"
               >
                 Editar perfil
               </button>
@@ -592,17 +592,17 @@ export default function ProfilePage() {
           )}
         </div>
 
-        <div className="bg-gray-900 p-6 rounded-xl shadow space-y-5 mt-6">
+        <div className="bg-[#111111] p-6 rounded-xl shadow space-y-5 mt-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <button
               type="button"
               onClick={() => setBirthdayDetailsOpen((open) => !open)}
-              className="flex w-full flex-1 items-start justify-between gap-3 rounded-lg border border-white/10 bg-gray-800/60 px-4 py-3 text-left transition-colors hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500/60"
+              className="flex w-full flex-1 items-start justify-between gap-3 rounded-lg border border-white/10 bg-[#1a1a1a]/60 px-4 py-3 text-left transition-colors hover:bg-[#1a1a1a] focus:outline-none focus:ring-2 focus:ring-[#93C021]/60"
               aria-expanded={birthdayDetailsOpen}
               aria-controls="birthday-discount-details"
             >
               <div className="flex items-start gap-3">
-                <FaBirthdayCake className="mt-1 h-6 w-6 text-green-300" aria-hidden="true" />
+                <FaBirthdayCake className="mt-1 h-6 w-6 text-[#93C021]" aria-hidden="true" />
                 <div>
                   <h2 className="text-xl font-bold">Descuento de cumpleaños</h2>
                   <p className="mt-1 text-sm text-gray-400">
@@ -616,7 +616,7 @@ export default function ProfilePage() {
               />
             </button>
             {profile.birthday ? (
-              <div className="self-start rounded-full bg-green-500/20 px-4 py-1 text-sm text-green-200">
+              <div className="self-start rounded-full bg-[#93C021]/20 px-4 py-1 text-sm text-[#93C021]">
                 Cumpleaños: {formattedBirthday ?? profile.birthday}
               </div>
             ) : (
@@ -627,7 +627,7 @@ export default function ProfilePage() {
                   setBirthdayError("");
                   setBirthdayInput("");
                 }}
-                className="self-start rounded bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-500"
+                className="self-start rounded bg-[#93C021] px-4 py-2 text-sm font-semibold text-white hover:bg-[#93C021]"
               >
                 Registrar cumpleaños
               </button>
@@ -643,12 +643,12 @@ export default function ProfilePage() {
                   birthdayRequirements.map((req) => {
                     const RequirementIcon = requirementIcons[req.key];
                     return (
-                      <div key={req.key} className="flex items-center justify-between rounded-lg border border-white/5 bg-gray-800 px-3 py-2">
-                        <div className={`flex items-center gap-3 text-sm ${req.met ? "text-green-200" : "text-gray-400"}`}>
-                          <span className={`h-2.5 w-2.5 rounded-full ${req.met ? "bg-green-400" : "bg-gray-600"}`} />
+                      <div key={req.key} className="flex items-center justify-between rounded-lg border border-white/5 bg-[#1a1a1a] px-3 py-2">
+                        <div className={`flex items-center gap-3 text-sm ${req.met ? "text-[#93C021]" : "text-gray-400"}`}>
+                          <span className={`h-2.5 w-2.5 rounded-full ${req.met ? "bg-[#93C021]" : "bg-[#2a2a2a]"}`} />
                           {RequirementIcon ? (
                             <RequirementIcon
-                              className={`h-4 w-4 ${req.met ? "text-green-300" : "text-gray-500"}`}
+                              className={`h-4 w-4 ${req.met ? "text-[#93C021]" : "text-gray-500"}`}
                               aria-hidden="true"
                             />
                           ) : null}
@@ -663,16 +663,16 @@ export default function ProfilePage() {
 
               {profile.birthday ? (
                 birthdayStatusLoading ? (
-                  <div className="rounded-lg border border-white/10 bg-gray-800 p-4 text-sm text-gray-300">
+                  <div className="rounded-lg border border-white/10 bg-[#1a1a1a] p-4 text-sm text-gray-300">
                     Verificando tu estado de descuento de cumpleaños…
                   </div>
                 ) : birthdayStatus ? (
                   birthdayEligibleNow ? (
-                    <div className="rounded-lg border border-green-500/40 bg-green-500/10 p-4 text-sm text-green-100">
+                    <div className="rounded-lg border border-[#7fa01c]/40 bg-[#93C021]/10 p-4 text-sm text-[#93C021]">
                       ¡Listo! El descuento se aplicará automáticamente en tu primera compra de esta semana de cumpleaños.
                     </div>
                   ) : (
-                    <div className="rounded-lg border border-white/10 bg-gray-800 p-4 text-sm text-gray-300">
+                    <div className="rounded-lg border border-white/10 bg-[#1a1a1a] p-4 text-sm text-gray-300">
                       El descuento se activará automáticamente cuando cumplas todos los requisitos y aplicará a tu primera compra de la semana de cumpleaños. Puedes revisarlo aquí cuando quieras.
                     </div>
                   )
@@ -691,9 +691,9 @@ export default function ProfilePage() {
         </div>
 
         {/* Últimos pedidos */}
-        <div className="bg-gray-900 p-6 rounded-xl shadow space-y-4 mt-6">
+        <div className="bg-[#111111] p-6 rounded-xl shadow space-y-4 mt-6">
           <h2 className="flex items-center gap-2 text-xl font-bold">
-            <FaStore className="h-5 w-5 text-green-300" aria-hidden="true" />
+            <FaStore className="h-5 w-5 text-[#93C021]" aria-hidden="true" />
             <span>Mis últimos pedidos</span>
           </h2>
 
@@ -704,7 +704,7 @@ export default function ProfilePage() {
           ) : (
             <div className="space-y-4">
               {recentOrders.map((order) => (
-                <div key={order.id} className="bg-gray-800 p-4 rounded-lg">
+                <div key={order.id} className="bg-[#1a1a1a] p-4 rounded-lg">
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <p className="text-sm text-gray-400">
@@ -756,7 +756,7 @@ export default function ProfilePage() {
 
                   <button
                     onClick={() => repeatOrder(order)}
-                    className="w-full px-4 py-2 rounded bg-green-600 hover:bg-green-700 transition-colors font-semibold text-sm"
+                    className="w-full px-4 py-2 rounded bg-[#93C021] hover:bg-[#93C021] transition-colors font-semibold text-sm"
                   >
                     Repetir pedido
                   </button>
@@ -768,7 +768,7 @@ export default function ProfilePage() {
           {recentOrders.length > 0 && (
             <button
               onClick={() => router.push("/menu")}
-              className="w-full px-4 py-2 rounded bg-gray-700 hover:bg-gray-600 transition-colors font-semibold"
+              className="w-full px-4 py-2 rounded bg-[#222] hover:bg-[#2a2a2a] transition-colors font-semibold"
             >
               Ver menú completo
             </button>
@@ -788,10 +788,10 @@ export default function ProfilePage() {
             }}
             aria-hidden="true"
           />
-          <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-gray-900/95 p-6 text-white shadow-2xl">
+          <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-[#111111]/95 p-6 text-white shadow-2xl">
             <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-green-300">Cupón de cumpleaños</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#93C021]">Cupón de cumpleaños</p>
                 <h2 className="mt-2 text-xl font-semibold">Registra tu cumpleaños</h2>
               </div>
               <button
@@ -823,7 +823,7 @@ export default function ProfilePage() {
                   onChange={(e) => setBirthdayInput(e.target.value)}
                   max={birthdayMaxDate}
                   required
-                  className="mt-2 w-full rounded-xl border border-white/10 bg-gray-800/80 px-3 py-2 text-sm text-white shadow-inner focus:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-500/40"
+                  className="mt-2 w-full rounded-xl border border-white/10 bg-[#1a1a1a]/80 px-3 py-2 text-sm text-white shadow-inner focus:border-[#93C021] focus:outline-none focus:ring-2 focus:ring-[#93C021]/40"
                 />
               </div>
               {birthdayError ? <p className="text-sm text-red-400">{birthdayError}</p> : null}
@@ -844,7 +844,7 @@ export default function ProfilePage() {
                 <button
                   type="submit"
                   disabled={birthdaySaving}
-                  className="rounded-xl bg-green-500 px-4 py-2 text-sm font-semibold text-gray-900 transition hover:bg-green-400 disabled:opacity-60"
+                  className="rounded-xl bg-[#93C021] px-4 py-2 text-sm font-semibold text-gray-900 transition hover:bg-[#93C021] disabled:opacity-60"
                 >
                   {birthdaySaving ? "Guardando..." : "Guardar"}
                 </button>

@@ -1,4 +1,4 @@
-// src/pages/local.tsx
+﻿// src/pages/local.tsx
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -78,7 +78,7 @@ export default function LocalPage() {
 
       <Navbar />
 
-      <main className="bg-gray-950 text-white">
+      <main className="bg-black text-white">
         {/* HERO */}
         <section
           className="relative h-[300px] sm:h-[380px] bg-cover bg-center flex items-center justify-center"
@@ -96,7 +96,7 @@ export default function LocalPage() {
         {/* INFO + MAPA */}
         <section className="max-w-6xl mx-auto px-4 py-10 grid md:grid-cols-2 gap-6">
           {/* Tarjeta de información */}
-          <div className="bg-gray-900 rounded-2xl p-6 shadow-lg">
+          <div className="bg-[#111111] rounded-2xl p-6 shadow-lg">
             <h2 className="text-2xl font-bold mb-4">Visítanos</h2>
 
             <div className="space-y-3 text-gray-200">
@@ -108,7 +108,7 @@ export default function LocalPage() {
               <div className="flex items-center gap-3">
                 <a
                   href={`tel:${LOCAL.telefonoPlain}`}
-                  className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 transition px-3 py-2 rounded-lg text-sm"
+                  className="flex items-center gap-2 bg-[#1a1a1a] hover:bg-[#222] transition px-3 py-2 rounded-lg text-sm"
                 >
                   <FaPhoneAlt className="text-base" aria-hidden="true" />
                   <span>Llamar</span>
@@ -117,7 +117,7 @@ export default function LocalPage() {
                   href={`https://wa.me/${LOCAL.whatsapp}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700 transition px-3 py-2 rounded-lg text-sm"
+                  className="flex items-center gap-2 bg-[#93C021] hover:bg-[#93C021] transition px-3 py-2 rounded-lg text-sm"
                 >
                   <FaWhatsapp className="text-base" aria-hidden="true" />
                   <span>WhatsApp</span>
@@ -137,7 +137,7 @@ export default function LocalPage() {
                 <p className="text-sm text-gray-400 mb-1">Horarios</p>
                 <ul className="space-y-1">
                   {LOCAL.horarios.map((h) => (
-                    <li key={h.dia} className="flex justify-between border-b border-gray-800 py-1">
+                    <li key={h.dia} className="flex justify-between border-b border-[#1a1a1a] py-1">
                       <span className="text-gray-300">{h.dia}</span>
                       <span className="font-medium">{h.horas}</span>
                     </li>
@@ -152,7 +152,7 @@ export default function LocalPage() {
               <div className="pt-4">
                 <Link
                   href="/menu"
-                  className="inline-block bg-red-500 hover:bg-red-600 transition px-4 py-2 rounded-lg font-semibold"
+                  className="inline-block bg-[#D1933E] hover:bg-[#b87a32] transition px-4 py-2 rounded-lg font-semibold"
                 >
                   Ver Menú
                 </Link>
@@ -161,7 +161,7 @@ export default function LocalPage() {
           </div>
 
           {/* Mapa */}
-          <div className="bg-gray-900 rounded-2xl overflow-hidden shadow-lg">
+          <div className="bg-[#111111] rounded-2xl overflow-hidden shadow-lg">
             <LocalMap lat={LOCAL.lat} lng={LOCAL.lng} />
           </div>
         </section>
@@ -175,14 +175,14 @@ export default function LocalPage() {
               alt="Interior del local"
               width={500}
               height={500}
-              className="w-full h-40 sm:h-48 object-cover rounded-xl border border-gray-800"
+              className="w-full h-40 sm:h-48 object-cover rounded-xl border border-[#1a1a1a]"
             />
             <Image
               src="/images/puente-exterior.webp"
               alt="Exterior del local"
               width={500}
               height={500}
-              className="w-full h-40 sm:h-48 object-cover rounded-xl border border-gray-800"
+              className="w-full h-40 sm:h-48 object-cover rounded-xl border border-[#1a1a1a]"
             />
           </div>
         </section>

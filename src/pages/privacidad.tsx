@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Head from "next/head";
 import Navbar from "@/components/Navbar";
@@ -20,7 +20,7 @@ export default function PrivacyPolicyPage() {
   });
 
   return (
-    <div className="bg-gray-950 text-white min-h-screen flex flex-col">
+    <div className="bg-black text-white min-h-screen flex flex-col">
       <Seo
         title="Política de Privacidad | Masushi"
         description="Conoce cómo Masushi recopila, utiliza y protege los datos personales de sus clientes para gestionar pedidos y comunicaciones."
@@ -62,7 +62,7 @@ export default function PrivacyPolicyPage() {
           relación con el tratamiento de esos datos conforme a la legislación chilena vigente, incluida la Ley N°19.628.
         </p>
 
-        <div className="h-px bg-gray-800 my-8" />
+        <div className="h-px bg-[#1a1a1a] my-8" />
 
         <section className="space-y-8">
           <article>

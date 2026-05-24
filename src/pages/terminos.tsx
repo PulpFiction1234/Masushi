@@ -1,4 +1,4 @@
-// src/pages/terminos.tsx
+﻿// src/pages/terminos.tsx
 "use client";
 
 import Head from "next/head";
@@ -21,7 +21,7 @@ export default function TerminosPage() {
   });
 
   return (
-    <div className="bg-gray-950 text-white min-h-screen flex flex-col">
+    <div className="bg-black text-white min-h-screen flex flex-col">
       {/* Metadatos SEO */}
       <Seo
         title="Términos y Condiciones | Masushi"
@@ -102,7 +102,7 @@ export default function TerminosPage() {
           estás de acuerdo con ellos, te recomendamos no usar nuestro servicio.
         </p>
 
-        <div className="h-px bg-gray-800 my-8" />
+        <div className="h-px bg-[#1a1a1a] my-8" />
 
         <ol className="list-decimal pl-6 space-y-8">
           <li>
@@ -282,7 +282,7 @@ export default function TerminosPage() {
           </li>
         </ol>
 
-        <div className="h-px bg-gray-800 my-10" />
+        <div className="h-px bg-[#1a1a1a] my-10" />
 
         <section aria-labelledby="contacto">
           <h2 id="contacto" className="text-2xl font-semibold mb-3">

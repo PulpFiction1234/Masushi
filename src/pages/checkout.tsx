@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import React, { useMemo, useReducer, useEffect, useState, useCallback } from "react";
 import { FaBirthdayCake, FaCheckCircle, FaSpinner, FaTrashAlt, FaGift } from "react-icons/fa";
 import dynamic from "next/dynamic";
@@ -14,8 +14,8 @@ import type { BirthdayEligibility } from "@/types/birthday";
 import { zonaRepartoLngLat } from "@/data/zonaReparto";
 
 // THEME
-const ACCENT_FROM = "from-emerald-500";
-const ACCENT_TO = "to-green-600";
+const ACCENT_FROM = "from-[#93C021]";
+const ACCENT_TO = "to-[#7fa01c]";
 const DELIVERY_MIN_TOTAL = 10_000;
 const DELIVERY_START_HOUR = 18;
 const WEEKDAY_DELIVERY_MESSAGE = "Delivery lun-vie desde las 18:00 hrs (sábado horario completo).";
@@ -805,14 +805,14 @@ export default function Checkout() {
   };
 
   const inputBase =
-    "w-full rounded-xl border border-white/10 bg-neutral-800/80 px-3 py-2 text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent";
-  const card = "border border-white/10 rounded-2xl bg-neutral-900/70 shadow-xl";
+    "w-full rounded-xl border border-white/10 bg-[#1a1a1a]/80 px-3 py-2 text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#93C021] focus:border-transparent";
+  const card = "border border-white/10 rounded-2xl bg-[#111111]/70 shadow-xl";
 
   return (
     <>
     <Seo title="Panel de administración — Masushi" canonicalPath="/admin" noIndex />
       <Navbar />
-      <div className="min-h-screen bg-neutral-950 text-neutral-100">
+      <div className="min-h-screen bg-black text-neutral-100">
   <div className="w-full px-3 lg:px-30 py-6">
           <div className="mb-6">
             <div className={`mt-2 h-1 w-24 bg-gradient-to-r ${ACCENT_FROM} ${ACCENT_TO} rounded-full`} />
@@ -823,21 +823,21 @@ export default function Checkout() {
             {/* Columna izquierda: Delivery / Tipo / Dirección (sin recuadro exterior) */}
             <div className="p-4 lg:pr-2 lg:pl-0"> 
               {/* Estado de apertura */}
-              <div className="rounded-xl bg-neutral-800/70 border border-white/10 p-3 text-sm flex items-center justify-between">
-                <span className={abierto ? "text-emerald-300" : "text-amber-300"}>{statusLabel}</span>
+              <div className="rounded-xl bg-[#1a1a1a]/70 border border-white/10 p-3 text-sm flex items-center justify-between">
+                <span className={abierto ? "text-[#D1933E]" : "text-amber-300"}>{statusLabel}</span>
                 {statusData?.timeZone && <span className="text-neutral-400" />}
               </div>
 
               {/* Delivery form controls (moved here) */}
               <div className="mt-4">
                 <label className="block font-medium mb-2 text-neutral-200">Tipo de entrega</label>
-                <div role="tablist" aria-label="Tipo de entrega" className="w-full inline-flex items-center rounded-full bg-neutral-800/70 p-1 shadow-inner">
+                <div role="tablist" aria-label="Tipo de entrega" className="w-full inline-flex items-center rounded-full bg-[#1a1a1a]/70 p-1 shadow-inner">
                   <button
                     type="button"
                     role="tab"
                     aria-selected={deliveryType === 'delivery'}
                     onClick={() => dispatch({ type: "SET_FIELD", field: "deliveryType", value: 'delivery' })}
-                    className={`flex-1 text-sm font-medium h-10 flex items-center justify-center rounded-full transition-all duration-150 ${deliveryType === 'delivery' ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-300 hover:bg-neutral-700/60'}`}
+                    className={`flex-1 text-sm font-medium h-10 flex items-center justify-center rounded-full transition-all duration-150 ${deliveryType === 'delivery' ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-300 hover:bg-[#222]/60'}`}
                   >
                     Despacho
                   </button>
@@ -847,7 +847,7 @@ export default function Checkout() {
                     role="tab"
                     aria-selected={deliveryType === 'retiro'}
                     onClick={() => dispatch({ type: "SET_FIELD", field: "deliveryType", value: 'retiro' })}
-                    className={`flex-1 text-sm font-medium h-10 flex items-center justify-center rounded-full transition-all duration-150 ${deliveryType === 'retiro' ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-300 hover:bg-neutral-700/60'}`}
+                    className={`flex-1 text-sm font-medium h-10 flex items-center justify-center rounded-full transition-all duration-150 ${deliveryType === 'retiro' ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-300 hover:bg-[#222]/60'}`}
                   >
                     Retiro
                   </button>
@@ -875,7 +875,7 @@ export default function Checkout() {
                           const coordsPair = coordsToLngLat(a.coords);
                           const isSelected = selectedAddressId === a.id;
                           return (
-                            <div key={a.id} className={`block p-3 rounded-md border ${isSelected ? 'border-green-400 bg-neutral-800/60' : 'border-white/5'} mb-2`}>
+                            <div key={a.id} className={`block p-3 rounded-md border ${isSelected ? 'border-[#93C021] bg-[#1a1a1a]/60' : 'border-white/5'} mb-2`}>
                               <div className="flex items-start justify-between">
                                 <label
                                   className="flex-1 cursor-pointer"
@@ -1035,7 +1035,7 @@ export default function Checkout() {
                                   setSaveAddressError('No se pudo guardar la dirección. Intenta nuevamente.');
                                 }
                               }}
-                              className="rounded-md bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-500 disabled:opacity-50"
+                            className="rounded-md bg-[#93C021] px-3 py-1 text-sm text-black font-semibold hover:bg-[#7fa01c] disabled:opacity-50"
                             >Guardar dirección</button>
                             <button
                               type="button"
@@ -1064,28 +1064,28 @@ export default function Checkout() {
                     <span className="sr-only">Verificando descuento de cumpleaños…</span>
                   </div>
                 ) : birthdayCouponEligible ? (
-                    <div className="flex flex-col gap-3 rounded-2xl border border-green-400/40 bg-green-500/10 p-4 text-xs text-green-100 shadow-[0_8px_20px_rgba(16,185,129,0.25)]">
+                    <div className="flex flex-col gap-3 rounded-2xl border border-[#93C021]/40 bg-[#93C021]/10 p-4 text-xs text-[#93C021] shadow-[0_8px_20px_rgba(147,192,33,0.25)]">
                     <div className="flex items-start gap-3">
                       <FaBirthdayCake className="mt-0.5 text-base" aria-hidden="true" />
                       <div className="flex-1">
-                        <p className="text-sm font-semibold text-green-200">{birthdayCardTitle}</p>
+                        <p className="text-sm font-semibold text-[#93C021]">{birthdayCardTitle}</p>
                         <p className="mt-1 leading-relaxed">{birthdayCardBody}</p>
                       </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-green-100">
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-[#93C021]">
                       <button
                         type="button"
                         onClick={birthdayCouponApplied ? handleDeferBirthdayCoupon : handleActivateBirthdayCoupon}
                         className={`rounded-full px-5 py-2 font-semibold transition-all duration-150 ${
                           birthdayCouponApplied
-                            ? "bg-green-700/40 text-green-200 hover:bg-green-700/60"
-                            : "bg-green-600 text-white hover:bg-green-500 shadow-lg shadow-green-500/40"
+                            ? "bg-[#93C021]/40 text-[#93C021] hover:bg-[#93C021]/60"
+                            : "bg-[#93C021] text-white hover:bg-[#93C021] shadow-lg shadow-[#93C021]/40"
                         }`}
                       >
                         {birthdayCouponApplied ? "Guardar para otro pedido" : "Usar en este pedido"}
                       </button>
                       {skipBirthdayCoupon ? (
-                        <span className="text-xs text-green-200">{birthdayValidityReminder}</span>
+                        <span className="text-xs text-[#93C021]">{birthdayValidityReminder}</span>
                       ) : null}
                     </div>
                   </div>
@@ -1141,7 +1141,7 @@ export default function Checkout() {
                   )}
                 </div>
                 {/* Footer dentro del contenedor derecho (parte inferior del card) */}
-                <div className="mt-4 p-4 border-t border-white/5 bg-neutral-900 rounded-b-2xl md:relative md:shadow-none md:mx-0 md:max-w-none sm:fixed sm:bottom-4 sm:left-1/2 sm:-translate-x-1/2 sm:w-[calc(100%-2rem)] lg:left-1/2 lg:-translate-x-1/2 lg:w-[750px] sm:z-50 sm:rounded-2xl sm:shadow-lg md:rounded-b-2xl">
+                <div className="mt-4 p-4 border-t border-white/5 bg-[#111111] rounded-b-2xl md:relative md:shadow-none md:mx-0 md:max-w-none sm:fixed sm:bottom-4 sm:left-1/2 sm:-translate-x-1/2 sm:w-[calc(100%-2rem)] lg:left-1/2 lg:-translate-x-1/2 lg:w-[750px] sm:z-50 sm:rounded-2xl sm:shadow-lg md:rounded-b-2xl">
                   <div className="mb-4 space-y-2">
                     <label className="block text-sm font-medium text-neutral-200">Código de descuento / Gift card</label>
                     <div className="flex flex-col gap-2 sm:flex-row">
@@ -1151,14 +1151,14 @@ export default function Checkout() {
                         onChange={(e) => setGiftCardCodeInput(e.target.value)}
                         placeholder="Ingresa tu código"
                         disabled={!!giftCard}
-                        className={`flex-1 rounded-lg border border-white/10 bg-neutral-800 px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-green-500 ${giftCard ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        className={`flex-1 rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-[#93C021] ${giftCard ? 'opacity-60 cursor-not-allowed' : ''}`}
                       />
                       <div className="flex gap-2">
                         <button
                           type="button"
                           onClick={handleApplyGiftCard}
                           disabled={validatingGiftCard || giftCardLoading || !!giftCard}
-                          className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-500 disabled:opacity-60"
+                          className="rounded-lg bg-[#93C021] px-4 py-2 text-sm font-semibold text-white hover:bg-[#93C021] disabled:opacity-60"
                         >
                           {giftCard ? 'Aplicada' : validatingGiftCard || giftCardLoading ? 'Validando…' : 'Aplicar'}
                         </button>
@@ -1166,7 +1166,7 @@ export default function Checkout() {
                     </div>
                     {giftCardError ? <p className="text-xs text-red-400">{giftCardError}</p> : null}
                     {giftCard ? (
-                      <p className="text-xs text-green-200">Saldo disponible: {fmt(giftCard.amount_remaining)} (monto original {fmt(giftCard.amount_total)})</p>
+                      <p className="text-xs text-[#93C021]">Saldo disponible: {fmt(giftCard.amount_remaining)} (monto original {fmt(giftCard.amount_total)})</p>
                     ) : null}
                   </div>
                   <div className="flex items-center justify-between mb-2">
@@ -1176,17 +1176,17 @@ export default function Checkout() {
                     {birthdayCouponCode && (
                       <div className="flex items-center justify-between mb-2">
                         <div className="text-sm text-neutral-400">Cupón</div>
-                        <div className="text-sm font-semibold text-green-300">{birthdayCouponCode}</div>
+                        <div className="text-sm font-semibold text-[#93C021]">{birthdayCouponCode}</div>
                       </div>
                     )}
                     {birthdayDiscountAmount > 0 && (
-                      <div className="flex items-center justify-between mb-2 text-sm text-green-300">
+                      <div className="flex items-center justify-between mb-2 text-sm text-[#93C021]">
                         <div>Descuento cumpleaños ({birthdayDiscountPercent}%)</div>
                         <div>-{fmt(birthdayDiscountAmount)}</div>
                       </div>
                     )}
                     {giftCardAppliedAmount > 0 && (
-                      <div className="flex items-center justify-between mb-2 text-sm text-green-300">
+                      <div className="flex items-center justify-between mb-2 text-sm text-[#93C021]">
                         <div>Gift card {giftCard?.code}</div>
                         <div>-{fmt(giftCardAppliedAmount)}</div>
                       </div>
@@ -1213,7 +1213,7 @@ export default function Checkout() {
                       type="button"
                       onClick={handleSubmit}
                       disabled={!canSubmit}
-                      className={`w-full rounded-full px-6 py-3 font-medium text-white bg-red-700 hover:bg-red-600 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed`}
+                      className={`w-full rounded-full px-6 py-3 font-medium text-white bg-[#D1933E] hover:bg-[#b87a32] shadow-lg disabled:opacity-60 disabled:cursor-not-allowed`}
                     >
                       {abierto === false
                         ? statusData?.nextOpen
@@ -1232,18 +1232,18 @@ export default function Checkout() {
       </div>
       {showOrderModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-neutral-900 rounded-lg p-6 max-w-md w-full shadow-2xl border border-neutral-800">
+          <div className="bg-[#111111] rounded-lg p-6 max-w-md w-full shadow-2xl border border-[#1a1a1a]">
             <div className="text-center mb-4">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-900/30 mb-3">
-                <FaCheckCircle className="h-8 w-8 text-green-500" aria-hidden="true" />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#93C021]/10 mb-3">
+                <FaCheckCircle className="h-8 w-8 text-[#93C021]" aria-hidden="true" />
               </div>
-              <h3 className="text-2xl font-bold text-green-500 mb-2">¡Pedido Recibido! 🍣</h3>
+              <h3 className="text-2xl font-bold text-[#93C021] mb-2">¡Pedido Recibido! 🍣</h3>
               {lastOrderId && (
                 <p className="text-sm text-neutral-400 mb-3">Orden #{lastOrderId}</p>
               )}
             </div>
             
-            <div className="bg-green-950/50 border border-green-900/50 rounded-lg p-4 mb-4">
+            <div className="bg-[#93C021]/10 border border-[#93C021]/30 rounded-lg p-4 mb-4">
               <p className="text-neutral-200 text-center">
                 <span className="font-semibold text-white">Te llegará un mensaje automático de WhatsApp</span><br />
                 con el tiempo estimado de entrega.
@@ -1257,7 +1257,7 @@ export default function Checkout() {
             <div className="flex justify-center">
               <button 
                 onClick={() => setShowOrderModal(false)} 
-                className="px-6 py-3 rounded-full font-medium text-white bg-red-700 hover:bg-red-600 shadow-lg transition-colors"
+                className="px-6 py-3 rounded-full font-medium text-white bg-[#D1933E] hover:bg-[#b87a32] shadow-lg transition-colors"
               >
                 Entendido
               </button>

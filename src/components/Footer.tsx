@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React from "react";
 import Link from "next/link";
@@ -11,7 +11,7 @@ interface FooterProps {
 
 const Footer: React.FC<FooterProps> = ({ showSocial = true, className = "" }) => {
   return (
-    <footer className={`bg-gray-900 text-white py-6 ${className}`}>
+    <footer className={`bg-black text-white py-6 border-t border-[#222] ${className}`}>
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-3 items-center">
           {/* Left: Social icons */}
@@ -45,7 +45,7 @@ const Footer: React.FC<FooterProps> = ({ showSocial = true, className = "" }) =>
                 className="transition hover:scale-110 "
                 title="WhatsApp"
               >
-                <FaWhatsapp className="text-2xl text-green-500 hover:text-gray-100" aria-hidden="true" />
+                <FaWhatsapp className="text-2xl text-[#93C021] hover:text-gray-100" aria-hidden="true" />
               </a>
             </div>
           ) : (

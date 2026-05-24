@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 type Series = {
   months: string[];
@@ -29,7 +29,7 @@ export function StackedBarOrders({ months, delivery, pickup }: { months: string[
   const contentMinWidth = Math.max(months.length * minBarWidth, 320);
 
   return (
-    <div className="w-full bg-gray-900 p-4 rounded-lg">
+    <div className="w-full bg-[#111111] p-4 rounded-lg">
       <h3 className="text-sm font-semibold mb-2">Pedidos (Delivery vs Retiro)</h3>
       <div className="overflow-x-auto">
         <div className="flex gap-3 items-end h-40" style={{ minWidth: `${contentMinWidth}px` }}>
@@ -48,7 +48,7 @@ export function StackedBarOrders({ months, delivery, pickup }: { months: string[
                 
                 <div className="w-full flex items-end justify-center gap-1 h-full min-h-[28px]">
                   <div className="w-1/2 h-full flex flex-col justify-end items-center">
-                    <div style={{ height: `${dPx}px` }} className="bg-emerald-500 w-full flex items-center justify-center">
+                    <div style={{ height: `${dPx}px` }} className="bg-[#93C021] w-full flex items-center justify-center">
                       {dPx > 18 && <span className="text-[10px] text-white">{d}</span>}
                     </div>
                   </div>
@@ -65,7 +65,7 @@ export function StackedBarOrders({ months, delivery, pickup }: { months: string[
         </div>
       </div>
       <div className="flex gap-3 mt-3 text-xs text-gray-400">
-        <div className="flex items-center gap-2"><span className="w-3 h-3 bg-emerald-500 inline-block rounded-sm"/> Delivery</div>
+        <div className="flex items-center gap-2"><span className="w-3 h-3 bg-[#93C021] inline-block rounded-sm"/> Delivery</div>
         <div className="flex items-center gap-2"><span className="w-3 h-3 bg-indigo-600 inline-block rounded-sm"/> Retiro</div>
       </div>
     </div>
@@ -93,7 +93,7 @@ export function RevenueLine({ months, revenue }: { months: string[]; revenue: nu
   });
 
   return (
-    <div className="w-full bg-gray-900 p-4 rounded-lg">
+    <div className="w-full bg-[#111111] p-4 rounded-lg">
       <h3 className="text-sm font-semibold mb-2">Ingresos (CLP)</h3>
       <div className="overflow-x-auto">
         <svg width="100%" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet">

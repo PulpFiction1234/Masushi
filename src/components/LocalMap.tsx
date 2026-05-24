@@ -59,7 +59,7 @@ export default function LocalMap({ lat, lng }: LocalMapProps) {
     });
 
     // Marker del local
-    new mapboxgl.Marker({ color: "#ef4444" /* rojo tailwind 500 */ })
+    new mapboxgl.Marker({ color: "#D1933E" /* amber paleta Masushi */ })
       .setLngLat([lng, lat])
       .addTo(map);
 

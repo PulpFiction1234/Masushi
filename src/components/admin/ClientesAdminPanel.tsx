@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useMemo, useState } from "react";
 import { FiAlertCircle, FiCalendar, FiCheckCircle, FiGift, FiPhone } from "react-icons/fi";
@@ -135,10 +135,10 @@ export default function ClientesAdminPanel() {
 
     if (verified) {
       return {
-  icon: <FiCheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" aria-hidden />,
+  icon: <FiCheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#93C021]" aria-hidden />,
         content: (
           <div className="flex flex-col gap-1 text-xs text-gray-200">
-          <span className="inline-flex items-center gap-1 self-start rounded-full bg-emerald-700/80 px-2 py-1 font-semibold text-white">
+          <span className="inline-flex items-center gap-1 self-start rounded-full bg-[#93C021]/80 px-2 py-1 font-semibold text-white">
             ✓ Verificada
           </span>
           {cliente.verification?.confirmed_at && (
@@ -192,12 +192,12 @@ export default function ClientesAdminPanel() {
           value={query} 
           onChange={(e) => setQuery(e.target.value)} 
           placeholder="Buscar por nombre, correo o teléfono..." 
-          className="bg-gray-800 placeholder-gray-400 text-xs md:text-sm px-3 py-2 rounded w-full sm:w-64 md:w-80" 
+          className="bg-[#1a1a1a] placeholder-gray-400 text-xs md:text-sm px-3 py-2 rounded w-full sm:w-64 md:w-80" 
         />
       </div>
 
       {filtered.length === 0 ? (
-        <div className="bg-gray-800 p-6 rounded text-center">
+        <div className="bg-[#1a1a1a] p-6 rounded text-center">
           <p className="text-gray-400">
             {query ? 'No se encontraron clientes con esos criterios de búsqueda.' : 'No hay clientes registrados.'}
           </p>
@@ -206,8 +206,8 @@ export default function ClientesAdminPanel() {
         <div className="overflow-x-auto">
           {/* Vista de tabla para pantallas medianas y grandes */}
           <div className="hidden md:block">
-            <table className="w-full bg-gray-800 rounded-lg overflow-hidden">
-              <thead className="bg-gray-900">
+            <table className="w-full bg-[#1a1a1a] rounded-lg overflow-hidden">
+              <thead className="bg-[#111111]">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Nombre</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Correo</th>
@@ -222,7 +222,7 @@ export default function ClientesAdminPanel() {
                 {filtered.map((cliente) => {
                   const verification = getVerificationInfo(cliente);
                   return (
-                    <tr key={cliente.id} className="hover:bg-gray-750">
+                    <tr key={cliente.id} className="hover:bg-[#1c1c1c]">
                     <td className="px-4 py-3 text-sm text-white">
                       {cliente.full_name || <span className="text-gray-500 italic">Sin nombre</span>}
                     </td>
@@ -243,15 +243,15 @@ export default function ClientesAdminPanel() {
                           </div>
                           <div className="flex flex-col gap-0.5 text-[10px]">
                             <div className="flex items-center gap-1">
-                              <span className={`inline-block h-1.5 w-1.5 rounded-full ${cliente.isInBirthdayWeek ? 'bg-green-500' : 'bg-red-500'}`} />
+                              <span className={`inline-block h-1.5 w-1.5 rounded-full ${cliente.isInBirthdayWeek ? 'bg-[#93C021]' : 'bg-red-500'}`} />
                               <span className="text-gray-400">Semana cumple</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <span className={`inline-block h-1.5 w-1.5 rounded-full ${cliente.meetsMinMonths ? 'bg-green-500' : 'bg-red-500'}`} />
+                              <span className={`inline-block h-1.5 w-1.5 rounded-full ${cliente.meetsMinMonths ? 'bg-[#93C021]' : 'bg-red-500'}`} />
                               <span className="text-gray-400">+1 mes ({cliente.monthsRegistered}m)</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <span className={`inline-block h-1.5 w-1.5 rounded-full ${cliente.meetsMinOrders ? 'bg-green-500' : 'bg-red-500'}`} />
+                              <span className={`inline-block h-1.5 w-1.5 rounded-full ${cliente.meetsMinOrders ? 'bg-[#93C021]' : 'bg-red-500'}`} />
                               <span className="text-gray-400">+3 pedidos ({cliente.orderCount})</span>
                             </div>
                           </div>
@@ -264,7 +264,7 @@ export default function ClientesAdminPanel() {
                       <span className={`px-2 py-1 rounded text-xs font-semibold ${
                         cliente.role === 'admin' 
                           ? 'bg-purple-700 text-white' 
-                          : 'bg-gray-700 text-gray-300'
+                          : 'bg-[#222] text-gray-300'
                       }`}>
                         {cliente.role}
                       </span>
@@ -285,7 +285,7 @@ export default function ClientesAdminPanel() {
             {filtered.map((cliente) => {
               const verification = getVerificationInfo(cliente);
               return (
-                <div key={cliente.id} className="bg-gray-800 p-4 rounded-lg">
+                <div key={cliente.id} className="bg-[#1a1a1a] p-4 rounded-lg">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">
                     <div className="font-semibold text-sm text-white mb-1">
@@ -296,7 +296,7 @@ export default function ClientesAdminPanel() {
                   <span className={`px-2 py-1 rounded text-xs font-semibold ${
                     cliente.role === 'admin' 
                       ? 'bg-purple-700 text-white' 
-                      : 'bg-gray-700 text-gray-300'
+                      : 'bg-[#222] text-gray-300'
                   }`}>
                     {cliente.role}
                   </span>
@@ -322,15 +322,15 @@ export default function ClientesAdminPanel() {
                         </div>
                         <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px]">
                           <div className="flex items-center gap-1">
-                            <span className={`inline-block h-1.5 w-1.5 rounded-full ${cliente.isInBirthdayWeek ? 'bg-green-500' : 'bg-red-500'}`} />
+                            <span className={`inline-block h-1.5 w-1.5 rounded-full ${cliente.isInBirthdayWeek ? 'bg-[#93C021]' : 'bg-red-500'}`} />
                             <span className="text-gray-400">Semana</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <span className={`inline-block h-1.5 w-1.5 rounded-full ${cliente.meetsMinMonths ? 'bg-green-500' : 'bg-red-500'}`} />
+                            <span className={`inline-block h-1.5 w-1.5 rounded-full ${cliente.meetsMinMonths ? 'bg-[#93C021]' : 'bg-red-500'}`} />
                             <span className="text-gray-400">{cliente.monthsRegistered}m</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <span className={`inline-block h-1.5 w-1.5 rounded-full ${cliente.meetsMinOrders ? 'bg-green-500' : 'bg-red-500'}`} />
+                            <span className={`inline-block h-1.5 w-1.5 rounded-full ${cliente.meetsMinOrders ? 'bg-[#93C021]' : 'bg-red-500'}`} />
                             <span className="text-gray-400">{cliente.orderCount} ped.</span>
                           </div>
                         </div>
@@ -369,7 +369,7 @@ export default function ClientesAdminPanel() {
             <button
               key={pageNumber}
               onClick={() => goToPage(pageNumber)}
-              className={`min-w-[36px] rounded px-3 py-1 text-sm ${pageNumber === page ? 'bg-lime-600 text-white' : 'border border-white/10 text-gray-200 hover:border-lime-400/50'}`}
+              className={`min-w-[36px] rounded px-3 py-1 text-sm ${pageNumber === page ? 'bg-[#93C021] text-white' : 'border border-white/10 text-gray-200 hover:border-[#93C021]/50'}`}
             >
               {pageNumber}
             </button>

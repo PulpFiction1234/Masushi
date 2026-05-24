@@ -4,9 +4,9 @@
 import Link from "next/link";
 import Image, { type StaticImageData } from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import hero1 from "@/public/images/hero-1.webp";
-import hero2 from "@/public/images/hero-2.webp";
-import hero3 from "@/public/images/hero-3.webp";
+import hero1 from "@/public/images/hero-cumpleanos.webp";
+import hero2 from "@/public/images/hero-promo.webp";
+import hero3 from "@/public/images/hero-nuevos.webp";
 
 interface HeroCarouselProps {
   slides?: StaticImageData[];
@@ -15,7 +15,7 @@ interface HeroCarouselProps {
 }
 
 export default function HeroCarousel({
-  slides = [hero2, hero1, hero3],
+  slides = [hero1, hero2, hero3],
   intervalMs = 5000,
   heightClass = "h-[500px] md:h-[600px]",
 }: HeroCarouselProps) {

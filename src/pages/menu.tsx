@@ -18,7 +18,7 @@ const ORIGIN =
   process.env.SITE_URL ||
   "";
 
-const ogImage = ORIGIN ? `${ORIGIN}/images/hero-1.webp` : "/images/hero-1.webp";
+const ogImage = ORIGIN ? `${ORIGIN}/images/hero-cumpleanos.webp` : "/images/cumpleanos.webp";
 
 const categorias = [
   "Mis favoritos", // Nueva categoría especial

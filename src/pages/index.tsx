@@ -29,7 +29,7 @@ const ORIGIN =
   process.env.SITE_URL ||
   "";
 
-const ogImage = ORIGIN ? `${ORIGIN}/images/hero-2.webp` : "/images/hero-2.webp";
+const ogImage = ORIGIN ? `${ORIGIN}/images/hero-promo.webp` : "/images/hero-promo.webp";
 
 
 // ----- Lógica de datos de SEO -----

@@ -158,7 +158,7 @@ export default function Home() {
       <HeroCarousel intervalMs={9000} />
       <ProductSection
         title="Top Rolls"
-        productIds={[1, 3, 50, 56]}
+        productIds={[4, 21, 50, 69]}
         linkBase="/menu?producto="
       />
 

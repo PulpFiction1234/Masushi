@@ -1,6 +1,6 @@
-export const BIRTHDAY_DISCOUNT_PERCENT = 10;
+export const BIRTHDAY_DISCOUNT_PERCENT = 20;
 export const BIRTHDAY_WEEK_LENGTH_DAYS = 7;
-export const BIRTHDAY_COUPON_CODE = 'BIRTHDAY10';
+export const BIRTHDAY_COUPON_CODE = 'BIRTHDAY20';
 export const BIRTHDAY_MIN_MONTHS = 1;
 export const BIRTHDAY_MIN_ORDERS = 3;
 export const BIRTHDAY_TIME_ZONE = 'America/Santiago';

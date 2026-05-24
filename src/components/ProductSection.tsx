@@ -62,7 +62,7 @@ export default function ProductSection({ title, productIds, linkBase }: ProductS
               key={p.id}
               className="bg-[#1a1a1a] rounded-lg overflow-hidden shadow flex flex-col h-full min-h-[480px]"
             >
-              <div className="overflow-hidden bg-[#2d2d2d] h-72 sm:h-80">
+              <div className="overflow-hidden bg-black h-72 sm:h-80">
               <Image
                 src={p.imagen}
                 alt={p.nombre}

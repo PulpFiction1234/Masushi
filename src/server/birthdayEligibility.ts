@@ -33,7 +33,7 @@ export const computeBirthdayEligibility = async (
 ): Promise<BirthdayEligibilityResult> => {
   const { data: profileData, error: profileError } = await supabaseAdmin
     .from('profiles')
-    .select('birthday, created_at')
+    .select('birthday, created_at, legacy_order_count')
     .eq('id', userId)
     .maybeSingle();
 
@@ -53,7 +53,8 @@ export const computeBirthdayEligibility = async (
   const birthday: string | null = profileData?.birthday ?? null;
   const referenceNormalized = normalizeDateToBirthdayZone(reference);
   const accountAgeMonths = monthsBetween(profileData?.created_at ?? null, referenceNormalized);
-  const orderCount = typeof orderCountRaw === 'number' ? orderCountRaw : 0;
+  const legacyCount = typeof profileData?.legacy_order_count === 'number' ? profileData.legacy_order_count : 0;
+  const orderCount = (typeof orderCountRaw === 'number' ? orderCountRaw : 0) + legacyCount;
   const withinWindow = birthday ? isWithinBirthdayWindow(birthday, referenceNormalized) : false;
 
   const windowRaw = birthday ? getBirthdayWindow(birthday, referenceNormalized) : null;

@@ -51,7 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { data: profiles, error: profilesError } = await supabaseAdmin
       .from('profiles')
-      .select('id, full_name, phone, role, created_at, apellido_paterno, apellido_materno, birthday')
+      .select('id, full_name, phone, role, created_at, apellido_paterno, apellido_materno, birthday, legacy_order_count')
       .in('id', userIds);
 
     // Fetch order counts per user for birthday eligibility
@@ -124,7 +124,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Calcular elegibilidad para descuento de cumpleaños
       const birthday = profile?.birthday || null;
       const userCreatedAt = profile?.created_at || user.created_at;
-      const orderCount = orderCountMap.get(user.id) || 0;
+      const legacyOrderCount = typeof (profile as any)?.legacy_order_count === 'number' ? (profile as any).legacy_order_count : 0;
+      const orderCount = (orderCountMap.get(user.id) || 0) + legacyOrderCount;
       const monthsRegistered = monthsBetween(userCreatedAt, new Date());
       const meetsMinMonths = monthsRegistered >= BIRTHDAY_MIN_MONTHS;
       const meetsMinOrders = orderCount >= BIRTHDAY_MIN_ORDERS;

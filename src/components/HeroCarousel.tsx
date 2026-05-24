@@ -11,13 +11,13 @@ import hero3 from "@/public/images/hero-nuevos.webp";
 interface HeroCarouselProps {
   slides?: StaticImageData[];
   intervalMs?: number;
-  heightClass?: string; // para ajustar altura si quieres␊
+  heightClass?: string;
 }
 
 export default function HeroCarousel({
   slides = [hero1, hero2, hero3],
   intervalMs = 5000,
-  heightClass = "h-[500px] md:h-[600px]",
+  heightClass = "h-[56vw] min-h-[200px] max-h-[600px]",
 }: HeroCarouselProps) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);

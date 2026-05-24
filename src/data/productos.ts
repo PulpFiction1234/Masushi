@@ -30,6 +30,7 @@ import vegiOrientalImg from "@/public/images/NuevasImagenes/SinArroz/VegiOrienta
 import CaliforniaVegetarianoImg from "@/public/images/NuevasImagenes/vegetariano/CaliforniaVegetariano.webp";
 import FunjiRollImg from "@/public/images/NuevasImagenes/vegetariano/FunjiRoll.webp";
 import FunjiPankoImg from "@/public/images/NuevasImagenes/vegetariano/FunjiPanko.webp";
+import FunjiAlmondPankoImg from "@/public/images/NuevasImagenes/vegetariano/FunjyAlmodnPanko.png";
 import MazorcaRollImg from "@/public/images/NuevasImagenes/vegetariano/MazorcaRoll.webp";
 import CaliforniaVeganoImg from "@/public/images/NuevasImagenes/vegetariano/CaliforniaVegano.webp";
 import PalmaRollImg from "@/public/images/NuevasImagenes/vegetariano/PalmaRoll.webp";
@@ -175,7 +176,6 @@ const PROTEINAS: ProductoOpcion[] = [
   { id: "camaron",         label: "Camarón" },
   { id: "pollo",           label: "Pollo" },
   { id: "champinon",       label: "Champiñón" },
-  { id: "ostion",          label: "Ostión" },
   { id: "salmon_ahumado",  label: "Salmón ahumado" },
   { id: "mechada",         label: "Carne mechada" },
 ];
@@ -383,7 +383,7 @@ const _productos: Producto[] = [
     { id: 41, codigo: "041", nombre: "Palma Roll", descripcion: "Palmito - Palta - Cebollin - En palta.", valor: 5990, imagen: PalmaRollImg, categoria: "Rolls vegetarianos" },
     { id: 42, codigo: "042", nombre: "Mazorca roll", descripcion: "Choclo baby - Queso crema - Palta - En palta.", valor: 5990, imagen: MazorcaRollImg, categoria: "Rolls vegetarianos" },
     { id: 43, codigo: "043", nombre: "Funji Roll", descripcion: "Champiñon - Palta - Cebollin - En queso crema.", valor: 6190, imagen: FunjiRollImg, categoria: "Rolls vegetarianos" },
-    { id: 44, codigo: "044", nombre: "Funji almond panko", descripcion: "Champiñon - Queso crema - Almendras - En panko.", valor: 6190, imagen: FunjiPankoImg, categoria: "Rolls vegetarianos" },
+    { id: 44, codigo: "044", nombre: "Funji almond panko", descripcion: "Champiñon - Queso crema - Almendras - En panko.", valor: 6190, imagen: FunjiAlmondPankoImg, categoria: "Rolls vegetarianos" },
     { id: 45, codigo: "045", nombre: "Funji cheese panko", descripcion: "Champiñon - Queso crema - Cebollin - En panko.", valor: 6190, imagen: FunjiPankoImg, categoria: "Rolls vegetarianos" },
 
 

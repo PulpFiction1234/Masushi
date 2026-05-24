@@ -20,3 +20,7 @@ SET legacy_order_count = (
 
 -- Paso 3: Eliminar historial de pedidos
 DELETE FROM public.orders;
+
+-- Paso 4: Eliminar favoritos guardados
+-- (la carta cambió, los códigos de productos anteriores pueden no corresponder)
+DELETE FROM public.favorites;

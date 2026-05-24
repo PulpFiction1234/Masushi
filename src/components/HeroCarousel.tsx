@@ -17,7 +17,7 @@ interface HeroCarouselProps {
 export default function HeroCarousel({
   slides = [hero1, hero2, hero3],
   intervalMs = 5000,
-  heightClass = "h-[56vw] min-h-[200px] max-h-[600px]",
+  heightClass = "w-full aspect-[2079/756]",
 }: HeroCarouselProps) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);

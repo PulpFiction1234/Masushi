@@ -4,20 +4,31 @@
 import Link from "next/link";
 import Image, { type StaticImageData } from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import hero1 from "@/public/images/hero-cumpleanos.webp";
-import hero2 from "@/public/images/hero-promo.webp";
-import hero3 from "@/public/images/hero-nuevos.webp";
+import heroCumpleanosDesktop from "@/public/images/hero-cumpleanos.webp";
+import heroCumpleanosMobile from "@/public/images/hero-cumpleanos-celular.webp";
+import heroNuevosDesktop from "@/public/images/hero-nuevos.webp";
+import heroNuevosMobile from "@/public/images/hero-nuevos-celular.webp";
+
+interface SlideData {
+  desktop: StaticImageData;
+  mobile: StaticImageData;
+}
 
 interface HeroCarouselProps {
-  slides?: StaticImageData[];
+  slides?: SlideData[];
   intervalMs?: number;
   heightClass?: string;
 }
 
+const defaultSlides: SlideData[] = [
+  { desktop: heroCumpleanosDesktop, mobile: heroCumpleanosMobile },
+  { desktop: heroNuevosDesktop, mobile: heroNuevosMobile },
+];
+
 export default function HeroCarousel({
-  slides = [hero1, hero2, hero3],
+  slides = defaultSlides,
   intervalMs = 5000,
-  heightClass = "w-full aspect-[2079/756]",
+  heightClass = "w-full aspect-[2079/756] max-h-[650px]",
 }: HeroCarouselProps) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -50,20 +61,29 @@ export default function HeroCarousel({
     >
       {/* Slides como fondos */}
        <div className="absolute inset-0">
-        {slides.map((src, i) => (
-          <Image
-            key={src.src}
-            src={src}
-            alt=""
-            fill
-            placeholder="blur"
-            quality={60}
-            className={`object-cover transition-opacity duration-700 ease-in-out ${
-              i === index ? "opacity-100" : "opacity-0"
-            }`}
-            aria-hidden={i !== index}
-            priority={i === 0}
-          />
+        {slides.map((slide, i) => (
+          <div key={i} className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${i === index ? "opacity-100" : "opacity-0"}`} aria-hidden={i !== index}>
+            {/* Imagen móvil */}
+            <Image
+              src={slide.mobile}
+              alt=""
+              fill
+              placeholder="blur"
+              quality={60}
+              className="object-cover md:hidden"
+              priority={i === 0}
+            />
+            {/* Imagen desktop */}
+            <Image
+              src={slide.desktop}
+              alt=""
+              fill
+              placeholder="blur"
+              quality={60}
+              className="object-cover hidden md:block"
+              priority={i === 0}
+            />
+          </div>
         ))}
         {/* Oscurecedor para legibilidad */}
         <div className="absolute inset-0 bg-black/10" />

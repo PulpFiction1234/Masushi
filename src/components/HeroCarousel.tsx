@@ -55,6 +55,7 @@ export default function HeroCarousel({
   }, [index, paused, next, intervalMs]);
 
   return (
+    <div>
     <section
       className={`relative ${heightClass} overflow-hidden`}
       onMouseEnter={() => setPaused(true)}
@@ -91,8 +92,8 @@ export default function HeroCarousel({
         <div className="absolute inset-0 bg-black/10" />
       </div>
 
-      {/* Contenido centrado (lo mismo que tenías) */}
-      <div className="relative z-10 h-full bottom-15 flex items-end justify-center text-center px-4">
+      {/* Contenido centrado - solo desktop */}
+      <div className="hidden md:flex relative z-10 h-full bottom-15 items-end justify-center text-center px-4">
           <Link href={slides[index]?.href ?? "/menu"} className="inline-block">
             <button className="bg-[#D1933E] hover:bg-[#b87d34] px-8 py-3 rounded text-black font-bold tracking-wide shadow-lg transition-colors">
               {slides[index]?.label ?? "Ver Carta"}
@@ -129,6 +130,16 @@ export default function HeroCarousel({
         ))}
       </div>
     </section>
+
+    {/* Botón móvil - debajo de la imagen, solo en celular */}
+    <div className="md:hidden flex justify-center py-4 bg-black">
+      <Link href={slides[index]?.href ?? "/menu"} className="inline-block">
+        <button className="bg-[#D1933E] hover:bg-[#b87d34] px-8 py-3 rounded text-black font-bold tracking-wide shadow-lg transition-colors">
+          {slides[index]?.label ?? "Ver Carta"}
+        </button>
+      </Link>
+    </div>
+    </div>
   );
 }
 

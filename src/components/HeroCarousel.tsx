@@ -30,7 +30,7 @@ const defaultSlides: SlideData[] = [
 export default function HeroCarousel({
   slides = defaultSlides,
   intervalMs = 5000,
-  heightClass = "w-full aspect-[2079/756] max-h-[650px]",
+  heightClass = "w-full aspect-[1122/1402] md:aspect-[2079/756] md:max-h-[650px]",
 }: HeroCarouselProps) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);

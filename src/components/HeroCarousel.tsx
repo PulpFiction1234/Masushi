@@ -12,6 +12,8 @@ import heroNuevosMobile from "@/public/images/hero-nuevos-celular.webp";
 interface SlideData {
   desktop: StaticImageData;
   mobile: StaticImageData;
+  href: string;
+  label: string;
 }
 
 interface HeroCarouselProps {
@@ -21,8 +23,8 @@ interface HeroCarouselProps {
 }
 
 const defaultSlides: SlideData[] = [
-  { desktop: heroCumpleanosDesktop, mobile: heroCumpleanosMobile },
-  { desktop: heroNuevosDesktop, mobile: heroNuevosMobile },
+  { desktop: heroCumpleanosDesktop, mobile: heroCumpleanosMobile, href: "/profile?openBirthday=1", label: "Registrar Cumpleaños" },
+  { desktop: heroNuevosDesktop, mobile: heroNuevosMobile, href: "/menu", label: "Ver Carta" },
 ];
 
 export default function HeroCarousel({
@@ -62,7 +64,7 @@ export default function HeroCarousel({
       {/* Slides como fondos */}
        <div className="absolute inset-0">
         {slides.map((slide, i) => (
-          <div key={i} className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${i === index ? "opacity-100" : "opacity-0"}`} aria-hidden={i !== index}>
+          <Link key={i} href={slide.href} className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${i === index ? "opacity-100" : "opacity-0"}`} aria-hidden={i !== index} tabIndex={i === index ? 0 : -1}>
             {/* Imagen móvil */}
             <Image
               src={slide.mobile}
@@ -83,7 +85,7 @@ export default function HeroCarousel({
               className="object-cover hidden md:block"
               priority={i === 0}
             />
-          </div>
+          </Link>
         ))}
         {/* Oscurecedor para legibilidad */}
         <div className="absolute inset-0 bg-black/10" />
@@ -91,9 +93,9 @@ export default function HeroCarousel({
 
       {/* Contenido centrado (lo mismo que tenías) */}
       <div className="relative z-10 h-full bottom-15 flex items-end justify-center text-center px-4">
-          <Link href="/menu" className="inline-block">
+          <Link href={slides[index]?.href ?? "/menu"} className="inline-block">
             <button className="bg-[#D1933E] hover:bg-[#b87d34] px-8 py-3 rounded text-black font-bold tracking-wide shadow-lg transition-colors">
-              Ver Carta
+              {slides[index]?.label ?? "Ver Carta"}
             </button>
           </Link>        
       </div>

@@ -35,6 +35,9 @@ export default function HeroCarousel({
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchStartX = useRef<number | null>(null);
+  const dragStartX = useRef<number | null>(null);
+  const wasDragged = useRef(false);
 
   const clear = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -47,6 +50,30 @@ export default function HeroCarousel({
   const prev = () => setIndex((i) => (i - 1 + slides.length) % slides.length);
   const goTo = (i: number) => setIndex(i);
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(delta) > 50) delta < 0 ? next() : prev();
+    touchStartX.current = null;
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    dragStartX.current = e.clientX;
+    wasDragged.current = false;
+  };
+  const handleMouseUp = (e: React.MouseEvent) => {
+    if (dragStartX.current === null) return;
+    const delta = e.clientX - dragStartX.current;
+    if (Math.abs(delta) > 50) {
+      wasDragged.current = true;
+      delta < 0 ? next() : prev();
+    }
+    dragStartX.current = null;
+  };
+
   useEffect(() => {
     if (paused) return;
     clear();
@@ -57,15 +84,19 @@ export default function HeroCarousel({
   return (
     <div>
     <section
-      className={`relative ${heightClass} overflow-hidden`}
+      className={`relative ${heightClass} overflow-hidden select-none cursor-grab active:cursor-grabbing`}
       onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
+      onMouseLeave={() => { setPaused(false); dragStartX.current = null; }}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       aria-roledescription="carousel"
     >
       {/* Slides como fondos */}
        <div className="absolute inset-0">
         {slides.map((slide, i) => (
-          <Link key={i} href={slide.href} className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${i === index ? "opacity-100" : "opacity-0"}`} aria-hidden={i !== index} tabIndex={i === index ? 0 : -1}>
+          <Link key={i} href={slide.href} onClick={(e) => { if (wasDragged.current) e.preventDefault(); }} className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${i === index ? "opacity-100" : "opacity-0"}`} aria-hidden={i !== index} tabIndex={i === index ? 0 : -1}>
             {/* Imagen móvil */}
             <Image
               src={slide.mobile}

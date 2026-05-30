@@ -9,6 +9,7 @@ import { normalizePhone } from '@/utils/phone';
 import { getEstimateRange, formatEstimate, getEstimateWindow, formatWindow } from '@/utils/estimateTimes';
 import { fmt, paymentLabel } from '@/utils/checkout';
 import { computeBirthdayEligibility, BIRTHDAY_COUPON_CODE } from '@/server/birthdayEligibility';
+import { productos as staticProductos } from '@/data/productos';
 
 const DELIVERY_MIN_TOTAL = 10_000;
 const DELIVERY_START_HOUR = 18;
@@ -60,6 +61,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const originalTotal = typeof total === 'number' ? total : Number(total);
     if (!Number.isFinite(originalTotal)) {
       return res.status(400).json({ error: 'Invalid total amount' });
+    }
+
+    // Validate item prices against the current product catalog
+    // This prevents orders submitted with stale (outdated) prices from the cart
+    if (Array.isArray(items)) {
+      for (const item of items) {
+        const rawCodigo = typeof item.codigo === 'string' ? item.codigo : '';
+        const codigoLimpio = rawCodigo.replace(/\s*\|\s*$/, '').trim();
+        if (!codigoLimpio) continue; // item without code – skip price check
+
+        const catalogProduct = staticProductos.find(p => p.codigo === codigoLimpio);
+        if (!catalogProduct) continue; // unknown product – let it pass (will be visible in order)
+
+        if (catalogProduct.enabled === false) {
+          return res.status(400).json({
+            error: `El producto "${item.nombre ?? codigoLimpio}" ya no está disponible. Por favor actualiza tu carrito.`,
+          });
+        }
+
+        const expectedPrice = catalogProduct.valor;
+        const sentPrice = typeof item.valor === 'number' ? item.valor : Number(item.valor);
+        if (Number.isFinite(sentPrice) && sentPrice !== expectedPrice) {
+          console.warn(
+            `[orders] Price mismatch for "${codigoLimpio}": client sent ${sentPrice}, catalog has ${expectedPrice}`
+          );
+          return res.status(400).json({
+            error: `El precio de "${item.nombre ?? codigoLimpio}" ha cambiado. Por favor recarga la página e intenta nuevamente.`,
+          });
+        }
+      }
     }
 
     // Map delivery_type to smallint expected by DB: 0 = retiro, 1 = delivery

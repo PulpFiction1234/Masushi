@@ -14,6 +14,7 @@ import type { StaticImageData } from "next/image";
 import type { Producto } from "@/data/productos";
 import { normalizeImageUrl, extractBlurDataUrl } from "@/utils/imageHelpers";
 import { getProductByCode } from "@/utils/productLookup";
+import { productos as staticProductos } from "@/data/productos";
 
 export type CartOpcion = { id: string; label: string };
 
@@ -214,7 +215,22 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const { items, updatedAt } = loadCartFromStorage();
     if (items.length) {
-      dispatch({ type: SET_CART, payload: items });
+      // Re-sync prices from the current catalog to prevent stale prices
+      const refreshed = items.reduce<CartItem[]>((acc, item) => {
+        if (!item.codigo) {
+          acc.push(item);
+          return acc;
+        }
+        const codigoLimpio = item.codigo.replace(/\s*\|\s*$/, "").trim();
+        const catalogProd = staticProductos.find((p) => p.codigo === codigoLimpio);
+        if (!catalogProd || catalogProd.enabled === false) {
+          // Product removed or disabled – drop from cart silently
+          return acc;
+        }
+        acc.push({ ...item, precioUnit: catalogProd.valor });
+        return acc;
+      }, []);
+      dispatch({ type: SET_CART, payload: refreshed });
     }
     lastSavedAtRef.current = updatedAt;
     setReady(true);

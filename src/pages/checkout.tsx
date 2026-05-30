@@ -786,7 +786,8 @@ export default function Checkout() {
       const json = await resp.json().catch(() => null);
       if (!resp.ok) {
         console.error("Error saving order:", json);
-        alert("No se pudo guardar el pedido. Intenta de nuevo.");
+        const serverMsg = typeof json?.error === "string" ? json.error : null;
+        alert(serverMsg ?? "No se pudo guardar el pedido. Intenta de nuevo.");
         return;
       }
 

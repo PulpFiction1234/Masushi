@@ -87,7 +87,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             `[orders] Price mismatch for "${codigoLimpio}": client sent ${sentPrice}, catalog has ${expectedPrice}`
           );
           return res.status(400).json({
-            error: `El precio de "${item.nombre ?? codigoLimpio}" ha cambiado. Por favor recarga la página e intenta nuevamente.`,
+            error: `El precio de "${item.nombre ?? codigoLimpio}" ha cambiado. Por favor revisa la carta actualizada, vacía tu carrito e intenta nuevamente.`,
           });
         }
       }

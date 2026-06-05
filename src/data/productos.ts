@@ -126,7 +126,6 @@ import TakoCheeseSalmonImg from "@/public/images/NuevasImagenes/en salmon/TakoCh
 // Bebidas
 import LataNormalImg from "@/public/images/NuevasImagenes/Bebidas/LataNormal.webp";
 import LataZeroImg from "@/public/images/NuevasImagenes/Bebidas/LataZero.webp";
-import LataSpriteImg from "@/public/images/NuevasImagenes/Bebidas/LataSprite.webp";
 import JumexMangoImg from "@/public/images/NuevasImagenes/Bebidas/JumexMango.webp";
 import JumexPinaImg from "@/public/images/NuevasImagenes/Bebidas/JumexPina.webp";
 import JumexPinaCocoImg from "@/public/images/NuevasImagenes/Bebidas/JumexPinaCoco.webp";
@@ -136,7 +135,6 @@ import ArizonaUvaImg from "@/public/images/NuevasImagenes/Bebidas/ArizonaUva.web
 import MonsterImg from "@/public/images/NuevasImagenes/Bebidas/Monster.webp";
 import NormalBotellaImg from "@/public/images/NuevasImagenes/Bebidas/NormalBotella.webp";
 import ZeroBotellaImg from "@/public/images/NuevasImagenes/Bebidas/ZeroBotella.webp";
-import SpriteBotellaImg from "@/public/images/NuevasImagenes/Bebidas/SpriteBotella.webp";
 
 
 export interface ProductoOpcion {
@@ -524,7 +522,6 @@ const _productos: Producto[] = [
 
     { id: 301, codigo: "082", nombre: "Coca Cola Original lata", descripcion: "Bebida gaseosa en lata 350 ml", valor: 1690, imagen: LataNormalImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
     { id: 302, codigo: "082", nombre: "Coca Cola Zero lata", descripcion: "Bebida gaseosa en lata 350 ml", valor: 1690, imagen: LataZeroImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
-    { id: 303, codigo: "082", nombre: "Sprite lata", descripcion: "Bebida gaseosa en lata 350 ml", valor: 1690, imagen: LataSpriteImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
     { id: 304, codigo: "083", nombre: "Jumex mango lata", descripcion: "Nectar jumex mango 335ml", valor: 1690, imagen: JumexMangoImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
     { id: 305, codigo: "083", nombre: "Jumex piña lata", descripcion: "Nectar jumex piña 335ml", valor: 1690, imagen: JumexPinaImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
     { id: 306, codigo: "083", nombre: "Jumex piña-coco lata", descripcion: "Nectar jumex piña coco 335ml", valor: 1690, imagen: JumexPinaCocoImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
@@ -534,7 +531,6 @@ const _productos: Producto[] = [
     { id: 310, codigo: "085", nombre: "Monster verde", descripcion: "Bebida energética 473 ml", valor: 2590, imagen: MonsterImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
     { id: 311, codigo: "086", nombre: "Coca Cola Original 1.5 L", descripcion: "Bebida gaseosa botella 1.5 L", valor: 2990, imagen: NormalBotellaImg, categoria: "Bebidas", salsasGratis: 0 ,topePalitosGratis: 0 },
     { id: 312, codigo: "086", nombre: "Coca Cola Zero 1.5 L", descripcion: "Bebida gaseosa botella 1.5 L", valor: 2990, imagen: ZeroBotellaImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
-    { id: 313, codigo: "086", nombre: "Sprite 1.5 L", descripcion: "Bebida gaseosa botella 1.5 L", valor: 2990, imagen: SpriteBotellaImg, categoria: "Bebidas", salsasGratis: 0,topePalitosGratis: 0 },
 
 
  

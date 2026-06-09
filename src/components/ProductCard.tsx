@@ -20,13 +20,14 @@ interface Props {
   product: Producto;
   selectedOptionId: string;
   onSelectOption(id: string): void;
-  onAdd(e: React.MouseEvent<HTMLButtonElement>): void;
+  onAdd(e: React.MouseEvent<HTMLElement>): void;
   fitMode?: FitMode;
   onFitChange(mode: FitMode): void;
   isAvailable?: boolean;
   showAddButton?: boolean;
   showPrice?: boolean;
   showInlineSelectors?: boolean;
+  imageTapOpensAdd?: boolean;
   addButtonLabel?: string;
   adminControls?: React.ReactNode;
 }
@@ -42,6 +43,7 @@ const ProductCard: React.FC<Props> = ({
   showAddButton = true,
   showPrice = true,
   showInlineSelectors = true,
+  imageTapOpensAdd = false,
   addButtonLabel,
   adminControls,
 }) => {
@@ -87,7 +89,22 @@ const ProductCard: React.FC<Props> = ({
 
   return (
     <div className="bg-[#111111] rounded-lg shadow p-2.5 md:p-4 flex flex-col h-full border border-[#1e1e1e] hover:border-[#2a2a2a] transition-colors">
-      <div className={`relative aspect-[4/3] md:aspect-square w-full overflow-hidden rounded ${product.imagen ? 'bg-black' : 'bg-white'}`}>
+      <div
+        className={`relative aspect-[4/3] md:aspect-square w-full overflow-hidden rounded ${product.imagen ? 'bg-black' : 'bg-white'} ${imageTapOpensAdd && !globallyDisabled ? 'cursor-pointer' : ''}`}
+        onClick={(e) => {
+          if (!imageTapOpensAdd || globallyDisabled) return;
+          onAdd(e);
+        }}
+        role={imageTapOpensAdd && !globallyDisabled ? "button" : undefined}
+        tabIndex={imageTapOpensAdd && !globallyDisabled ? 0 : undefined}
+        onKeyDown={(e) => {
+          if (!imageTapOpensAdd || globallyDisabled) return;
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onAdd(e as unknown as React.MouseEvent<HTMLElement>);
+          }
+        }}
+      >
         {product.imagen && (
         <Image
           src={product.imagen}

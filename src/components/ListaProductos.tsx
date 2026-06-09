@@ -182,7 +182,7 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada, 
   }, [productosFiltrados]);
 
   const addToCartWithSelection = useCallback(
-    (prod: Producto, selId: string, e?: React.MouseEvent<HTMLButtonElement>) => {
+    (prod: Producto, selId: string, e?: React.MouseEvent<HTMLElement>) => {
       // caso configurable ("armalo")
   // caso configurable ("armalo")
 if (prod.configuracion?.tipo === "armalo") {
@@ -408,6 +408,7 @@ if (prod.configuracion?.tipo === "armalo") {
               showAddButton={!hideAddButton}
               showPrice={!hideAddButton}
               showInlineSelectors={!isMobileViewport}
+              imageTapOpensAdd={isMobileViewport && !hideAddButton}
               adminControls={renderExtra ? renderExtra(prod, isProductAvailable(prod)) : undefined}
             />
           </div>

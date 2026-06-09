@@ -74,7 +74,7 @@ export default function ProductQuickAddModal({
           type="button"
           onClick={onClose}
           aria-label="Cerrar"
-          className="absolute right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-20 rounded-full bg-black/50 px-2 py-1 text-sm text-white"
+          className="absolute right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-20 rounded-full bg-[#D1933E] px-3 py-1.5 text-base text-white"
         >
           ✕
         </button>
@@ -93,7 +93,7 @@ export default function ProductQuickAddModal({
             />
           )}
           {product.codigo && (
-            <div className="absolute top-3 right-3 bg-[#93C021] text-black text-xs font-bold px-2 py-0.5 rounded">
+            <div className="absolute top-3 left-3 bg-[#93C021] text-black text-sm md:text-base font-bold px-2.5 py-1 rounded-md">
               {product.codigo}
             </div>
           )}

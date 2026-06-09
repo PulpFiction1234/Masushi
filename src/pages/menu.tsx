@@ -144,7 +144,7 @@ export default function MenuPage() {
           aria-expanded={menuAbierto}
           aria-controls="mobile-categorias"
           onClick={() => setMenuAbierto(true)}
-          className="fixed left-2 top-16 z-50 md:hidden bg-[#111111] text-white px-3 py-2 rounded-r-2xl rounded-l shadow-lg active:scale-95 transition border border-[#2a2a2a]"
+          className="fixed left-2 top-16 z-50 md:hidden bg-[#111111] text-white w-10 h-10 flex items-center justify-center rounded-r-2xl rounded-l shadow-lg active:scale-95 transition border border-[#2a2a2a]"
         >
           ☰
         </button>
@@ -217,8 +217,8 @@ export default function MenuPage() {
         {/* Contenido */}
           <main className="min-h-screen p-6 text-center bg-black md:ml-56">
           {/* Buscador */}
-          <div className="sticky top-21 z-30 mb-3 flex justify-center">
-            <div className="w-11/12 max-w-[19rem] sm:max-w-xs md:max-w-2xl">
+          <div className="sticky top-16 md:top-21 z-30 mb-3 flex justify-start md:justify-center">
+            <div className="ml-11 md:ml-0 w-[calc(100%-2.75rem)] sm:w-11/12 max-w-none sm:max-w-xs md:max-w-2xl">
               <label htmlFor="buscador" className="sr-only">
                 Buscar productos por nombre, ingrediente o código
               </label>
@@ -230,7 +230,7 @@ export default function MenuPage() {
                   onChange={(e) => setBusqueda(e.target.value)}
                   placeholder="Buscar por nombre, ingrediente o código…"
                   autoComplete="off"
-                  className="w-full rounded-lg md:rounded-xl bg-[#1a1a1a] text-white placeholder-gray-500 text-sm md:text-base h-9 md:h-11 px-3 md:px-4 pr-8 md:pr-10 shadow-inner outline-none ring-1 ring-[#333] focus:ring-2 focus:ring-[#93C021] transition"
+                  className="w-full rounded-lg md:rounded-xl bg-[#1a1a1a] text-white placeholder-gray-500 text-sm md:text-base h-10 md:h-11 px-3 md:px-4 pr-8 md:pr-10 shadow-inner outline-none ring-1 ring-[#333] focus:ring-2 focus:ring-[#93C021] transition"
                   aria-describedby="hint-busqueda"
                 />
                 {busqueda && (

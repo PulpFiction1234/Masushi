@@ -6,6 +6,7 @@ import { animateToCart } from "@/utils/animateToCart";
 import { useCart } from "@/context/CartContext";
 import { useUserProfile } from "@/context/UserContext";
 import ProductCard from "./ProductCard";
+import ProductQuickAddModal from "./ProductQuickAddModal";
 import { normalize } from "@/utils/strings";
 import { matchesTokens } from "@/utils/search";
 import { type FitMode } from "@/utils/constants";
@@ -27,6 +28,7 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada, 
   const [fitMap, setFitMap] = useState<Record<number, FitMode>>({});
   const [overridesMap, setOverridesMap] = useState<Record<string, boolean>>({});
   const [productsState, setProductsState] = useState<ReadonlyArray<Readonly<Producto>>>(() => productos);
+  const [activeProductId, setActiveProductId] = useState<number | null>(null);
 
   // 🔎 NUEVO: utilidades búsqueda
   const query = normalize(busqueda).trim();
@@ -179,8 +181,8 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada, 
     return [...productosFiltrados].sort((a, b) => a.id - b.id);
   }, [productosFiltrados]);
 
-  const onAdd = useCallback(
-    (prod: Producto, selId: string, e: React.MouseEvent<HTMLButtonElement>) => {
+  const addToCartWithSelection = useCallback(
+    (prod: Producto, selId: string, e?: React.MouseEvent<HTMLButtonElement>) => {
       // caso configurable ("armalo")
   // caso configurable ("armalo")
 if (prod.configuracion?.tipo === "armalo") {
@@ -285,7 +287,7 @@ if (prod.configuracion?.tipo === "armalo") {
     precioUnit,
   });
 
-  animateToCart(e.nativeEvent as unknown as MouseEvent);
+  if (e) animateToCart(e.nativeEvent as unknown as MouseEvent);
   return;
 }
       // caso normal
@@ -302,10 +304,21 @@ if (prod.configuracion?.tipo === "armalo") {
         prod,
         { opcion: opt ? { id: opt.id, label: opt.label } : undefined, precioUnit }
       );
-      animateToCart(e.nativeEvent as unknown as MouseEvent);
+      if (e) animateToCart(e.nativeEvent as unknown as MouseEvent);
     },
     [addToCart]
   );
+
+  const activeProduct = useMemo(
+    () => (activeProductId == null ? null : productsState.find((p) => p.id === activeProductId) ?? null),
+    [activeProductId, productsState]
+  );
+
+  const isProductAvailable = useCallback((prod: Producto) => {
+    const code = prod.codigo;
+    if (typeof overridesMap[code] === "boolean") return overridesMap[code];
+    return prod.enabled ?? true;
+  }, [overridesMap]);
 
   // -------- Virtualización (sin cambios) --------
   const COLUMN_WIDTH = 380;
@@ -330,17 +343,31 @@ if (prod.configuracion?.tipo === "armalo") {
     return () => ro.disconnect();
   }, []);
 
-  const columnCount = Math.max(1, Math.floor((viewport.width + GAP) / (COLUMN_WIDTH + GAP)));
+  const isMobileViewport = viewport.width > 0 && viewport.width < 768;
+  useEffect(() => {
+    if (!isMobileViewport && activeProductId !== null) {
+      setActiveProductId(null);
+    }
+  }, [isMobileViewport, activeProductId]);
+
+  const gridGap = isMobileViewport ? 8 : GAP;
+  const columnCount = isMobileViewport
+    ? 2
+    : Math.max(1, Math.floor((viewport.width + gridGap) / (COLUMN_WIDTH + gridGap)));
+  const columnWidth = isMobileViewport
+    ? Math.max(140, Math.floor((viewport.width - gridGap * (columnCount - 1)) / columnCount))
+    : COLUMN_WIDTH;
+  const rowHeight = isMobileViewport ? 250 : ROW_HEIGHT;
   const rowCount = Math.ceil(productosOrdenados.length / columnCount);
-  const totalHeight = rowCount * (ROW_HEIGHT + GAP);
+  const totalHeight = rowCount * (rowHeight + gridGap);
 
   const [scrollTop, setScrollTop] = useState(0);
   const onScroll = (e: React.UIEvent<HTMLDivElement>) => {
     setScrollTop(e.currentTarget.scrollTop);
   };
 
-  const startRow = Math.floor(scrollTop / (ROW_HEIGHT + GAP));
-  const endRow = Math.min(rowCount, Math.ceil((scrollTop + viewport.height) / (ROW_HEIGHT + GAP)));
+  const startRow = Math.floor(scrollTop / (rowHeight + gridGap));
+  const endRow = Math.min(rowCount, Math.ceil((scrollTop + viewport.height) / (rowHeight + gridGap)));
 
   const items: React.ReactNode[] = [];
   for (let row = startRow; row < endRow; row++) {
@@ -354,10 +381,10 @@ if (prod.configuracion?.tipo === "armalo") {
           key={`${prod.id}-${prod.codigo ?? "sin-codigo"}`}
           style={{
             position: "absolute",
-            top: row * (ROW_HEIGHT + GAP),
-            left: col * (COLUMN_WIDTH + GAP),
-            width: COLUMN_WIDTH,
-            height: ROW_HEIGHT,
+            top: row * (rowHeight + gridGap),
+            left: col * (columnWidth + gridGap),
+            width: columnWidth,
+            height: rowHeight,
           }}
           className="p-2 box-border"
         >
@@ -370,11 +397,18 @@ if (prod.configuracion?.tipo === "armalo") {
               onFitChange={(mode) =>
                 setFitMap((m) => (m[prod.id] === mode ? m : { ...m, [prod.id]: mode }))
               }
-              onAdd={(e) => onAdd(prod, seleccionActual, e)}
-              isAvailable={typeof overridesMap[prod.codigo] === 'boolean' ? overridesMap[prod.codigo] : (prod.enabled ?? true)}
+              onAdd={(e) => {
+                if (isMobileViewport) {
+                  setActiveProductId(prod.id);
+                  return;
+                }
+                addToCartWithSelection(prod, seleccionActual, e);
+              }}
+              isAvailable={isProductAvailable(prod)}
               showAddButton={!hideAddButton}
               showPrice={!hideAddButton}
-              adminControls={renderExtra ? renderExtra(prod, typeof overridesMap[prod.codigo] === 'boolean' ? overridesMap[prod.codigo] : (prod.enabled ?? true)) : undefined}
+              showInlineSelectors={!isMobileViewport}
+              adminControls={renderExtra ? renderExtra(prod, isProductAvailable(prod)) : undefined}
             />
           </div>
         </div>
@@ -391,13 +425,35 @@ if (prod.configuracion?.tipo === "armalo") {
   }
 
   return (
-    <div
-      ref={containerRef}
-      onScroll={onScroll}
-      className="w-full h-full overflow-y-auto relative"
-    >
-      <div style={{ height: totalHeight, position: "relative" }}>{items}</div>
-    </div>
+    <>
+      <div
+        ref={containerRef}
+        onScroll={onScroll}
+        className="w-full h-full overflow-y-auto relative"
+      >
+        <div style={{ height: totalHeight, position: "relative" }}>{items}</div>
+      </div>
+
+      {!hideAddButton && isMobileViewport && (
+        <ProductQuickAddModal
+          open={activeProductId !== null}
+          product={activeProduct}
+          selectedOptionId={activeProduct ? (seleccion[activeProduct.id] ?? "") : ""}
+          isAvailable={activeProduct ? isProductAvailable(activeProduct) : false}
+          onSelectOption={(id) => {
+            if (!activeProduct) return;
+            setSeleccion((prev) => ({ ...prev, [activeProduct.id]: id }));
+          }}
+          onClose={() => setActiveProductId(null)}
+          onConfirm={(e) => {
+            if (!activeProduct) return;
+            const selectedId = seleccion[activeProduct.id] ?? "";
+            addToCartWithSelection(activeProduct, selectedId, e);
+            setActiveProductId(null);
+          }}
+        />
+      )}
+    </>
   );
 };
 

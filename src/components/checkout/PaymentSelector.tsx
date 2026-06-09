@@ -52,7 +52,6 @@ export default function PaymentSelector({ paymentMethod, pagarCon, totalAPagar, 
           <option value="">Selecciona una opción…</option>
           <option value="efectivo">Efectivo</option>
           <option value="tarjeta">Tarjetas</option>
-          <option value="transferencia">Transferencia</option>
         </select>
         <p className="text-xs text-neutral-400 mt-1">Solo informativo</p>
       </div>
@@ -94,17 +93,6 @@ export default function PaymentSelector({ paymentMethod, pagarCon, totalAPagar, 
         </div>
       )}
 
-      {/* Mensaje informativo para transferencia */}
-      {paymentMethod === "transferencia" && (
-        <div className="bg-blue-900/20 border border-blue-500/30 rounded-xl p-4">
-          <p className="text-sm text-blue-200 font-medium mb-1">
-            Pago por transferencia
-          </p>
-          <p className="text-xs text-blue-300/80">
-            Te enviaremos un mensaje de WhatsApp con los datos bancarios para realizar la transferencia.
-          </p>
-        </div>
-      )}
     </div>
   );
 }

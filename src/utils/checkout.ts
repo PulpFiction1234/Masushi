@@ -40,14 +40,12 @@ export const isValidChileanMobile = (raw: string) => {
   );
 };
 
-export type PaymentMethod = "" | "efectivo" | "tarjeta" | "transferencia";
+export type PaymentMethod = "" | "efectivo" | "tarjeta";
 export const paymentLabel = (pm: PaymentMethod) =>
   pm === "efectivo"
     ? "Efectivo"
     : pm === "tarjeta"
     ? "Tarjeta"
-    : pm === "transferencia"
-    ? "Transferencia"
     : "";
 
 /** ==== Utilidades de carrito ==== */

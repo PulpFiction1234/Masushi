@@ -43,11 +43,11 @@ const Navbar: React.FC = () => {
   const totalItems = cart.reduce((sum, item) => sum + item.cantidad, 0);
   const safeCount = mounted ? totalItems : 0;
 
-   const openCart = useCallback(() => {
+  const openCart = useCallback(() => {
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("open-cart"));
     }
-    }, []);
+  }, []);
 
   const showCartIcon = router.pathname !== "/checkout";
 
@@ -152,7 +152,7 @@ const Navbar: React.FC = () => {
         {showCartIcon && (
           <button
             onClick={openCart}
-            className="relative inline-flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/40"
+            className="relative hidden md:inline-flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/40"
             aria-label={safeCount ? `Abrir carrito, ${safeCount} items` : "Abrir carrito"}
             suppressHydrationWarning
           >
@@ -164,6 +164,7 @@ const Navbar: React.FC = () => {
             )}
           </button>
         )}
+
       </div>
     </nav>
   );

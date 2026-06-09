@@ -35,7 +35,7 @@ function FloatingCartButton({ onClick }: { onClick: () => void }) {
     <button
       data-cart-anchor
       onClick={onClick}
-      className="fixed bottom-6 right-6 bg-[#D1933E] text-white w-14 h-14 rounded-full shadow-lg hover:bg-[#b87a32] transition z-50 flex items-center justify-center"
+      className="fixed right-4 md:right-6 bottom-[max(1rem,env(safe-area-inset-bottom))] md:bottom-6 bg-[#D1933E] text-white w-14 h-14 rounded-full shadow-lg hover:bg-[#b87a32] transition-colors z-50 flex items-center justify-center [transform:translateZ(0)]"
       aria-label={safeCount ? `Abrir carrito, ${safeCount} items` : "Abrir carrito"}
       suppressHydrationWarning
     >

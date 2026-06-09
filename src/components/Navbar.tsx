@@ -79,7 +79,10 @@ const Navbar: React.FC = () => {
       {/* Links + Carrito */}
       <div className="flex items-center gap-2 sm:gap-4 md:gap-6">
         <Link href="/menu" className="hover:text-[#93C021] transition-colors text-sm sm:text-base">Carta</Link>
-        <Link href="/menu?categoria=Promociones" className="hover:text-[#93C021] transition-colors text-sm sm:text-base">Promociones</Link>
+        <Link href="/menu?categoria=Promociones" className="hover:text-[#93C021] transition-colors text-sm sm:text-base">
+          <span className="sm:hidden">Promos</span>
+          <span className="hidden sm:inline">Promociones</span>
+        </Link>
         <Link href="/local" className="hover:text-[#93C021] transition-colors text-sm sm:text-base">Local</Link>
 
         {/* Botón de perfil si está logueado con menú desplegable */}

@@ -203,7 +203,7 @@ export default function ProductSection({ title, productIds, linkBase }: ProductS
         <h2 className="text-2xl font-bold text-center mb-8">{title}</h2>
 
         {isMobileViewport ? (
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 gap-px sm:gap-4">
             {products.map((p) => (
               <div key={p.id} className="h-full">
                 <ProductCard

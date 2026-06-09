@@ -226,7 +226,7 @@ export default function ProductSectionPromo({ title, productIds, linkBase }: Pro
         <h2 className="text-2xl font-bold text-center mb-8">{title}</h2>
 
         {isMobileViewport ? (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-px">
             {products.map((p) => (
               <div key={p.id} className="w-full h-full">
                 <ProductCard

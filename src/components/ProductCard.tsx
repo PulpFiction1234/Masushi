@@ -88,9 +88,9 @@ const ProductCard: React.FC<Props> = ({
   };
 
   return (
-    <div className="bg-[#111111] rounded-lg shadow p-2.5 md:p-4 flex flex-col h-full border border-[#1e1e1e] hover:border-[#2a2a2a] transition-colors">
+    <div className="bg-[#111111] rounded-lg shadow flex flex-col h-full border border-[#1e1e1e] hover:border-[#2a2a2a] transition-colors overflow-hidden md:p-4 md:flex md:flex-col">
       <div
-        className={`relative aspect-[4/3] md:aspect-square w-full overflow-hidden rounded ${product.imagen ? 'bg-black' : 'bg-white'} ${imageTapOpensAdd && !globallyDisabled ? 'cursor-pointer' : ''}`}
+        className={`relative aspect-[4/3] md:aspect-square w-full overflow-hidden md:rounded ${product.imagen ? 'bg-black' : 'bg-white'} ${imageTapOpensAdd && !globallyDisabled ? 'cursor-pointer' : ''}`}
         onClick={(e) => {
           if (!imageTapOpensAdd || globallyDisabled) return;
           onAdd(e);
@@ -148,7 +148,7 @@ const ProductCard: React.FC<Props> = ({
         )}
       </div>
 
-      <h3 className="text-base md:text-lg text-white font-semibold mt-1.5 md:mt-2 leading-tight h-[3.6rem] md:h-auto line-clamp-3 md:line-clamp-none">{product.nombre}</h3>
+      <h3 className="text-base md:text-lg text-white font-semibold mt-1.5 md:mt-2 leading-tight h-[3.6rem] md:h-auto line-clamp-3 md:line-clamp-none px-2 md:px-0">{product.nombre}</h3>
       <p className="hidden md:block text-sm text-gray-400 leading-snug line-clamp-3">{product.descripcion}</p>
 
       {showInlineSelectors && !esArmalo && tieneOpciones && (
@@ -171,7 +171,7 @@ const ProductCard: React.FC<Props> = ({
         />
       )}
 
-      <div className="mt-auto">
+      <div className="mt-auto px-2 pb-2 md:px-0 md:pb-0">
         {showPrice && (
           <p className="hidden md:block font-bold text-[#D1933E] mt-2 md:mt-3 text-base md:text-lg">
             {"$"}

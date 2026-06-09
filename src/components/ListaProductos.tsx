@@ -350,7 +350,7 @@ if (prod.configuracion?.tipo === "armalo") {
     }
   }, [isMobileViewport, activeProductId]);
 
-  const gridGap = isMobileViewport ? 8 : GAP;
+  const gridGap = isMobileViewport ? 1 : GAP;
   const columnCount = isMobileViewport
     ? 2
     : Math.max(1, Math.floor((viewport.width + gridGap) / (COLUMN_WIDTH + gridGap)));
@@ -386,7 +386,7 @@ if (prod.configuracion?.tipo === "armalo") {
             width: columnWidth,
             height: rowHeight,
           }}
-          className="p-2 box-border"
+          className={`${isMobileViewport ? "p-0" : "p-2"} box-border`}
         >
             <div className="flex flex-col h-full">
             <ProductCard

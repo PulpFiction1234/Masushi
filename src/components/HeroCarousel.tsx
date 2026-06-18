@@ -8,6 +8,8 @@ import heroCumpleanosDesktop from "@/public/images/hero-cumpleanos.webp";
 import heroCumpleanosMobile from "@/public/images/hero-cumpleanos-celular.webp";
 import heroNuevosDesktop from "@/public/images/hero-nuevos.webp";
 import heroNuevosMobile from "@/public/images/hero-nuevos-celular.webp";
+import heroSushiDayDesktop from "@/public/images/diadelsushicomputador.png";
+import heroSushiDayMobile from "@/public/images/diadelsushicelular.png";
 
 interface SlideData {
   desktop: StaticImageData;
@@ -27,11 +29,39 @@ const defaultSlides: SlideData[] = [
   { desktop: heroNuevosDesktop, mobile: heroNuevosMobile, href: "/menu", label: "Ver Carta" },
 ];
 
+const SUSHI_DAY_PROMO_DATE = "2026-06-18";
+const SUSHI_DAY_TIME_ZONE = "America/Santiago";
+
+const getYmdInTimeZone = (reference: Date, timeZone: string): string =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(reference);
+
+const isSushiDayPromoActive = (reference: Date = new Date()): boolean =>
+  getYmdInTimeZone(reference, SUSHI_DAY_TIME_ZONE) === SUSHI_DAY_PROMO_DATE;
+
 export default function HeroCarousel({
-  slides = defaultSlides,
+  slides,
   intervalMs = 5000,
   heightClass = "w-full aspect-[1122/1402] md:aspect-[2079/756]",
 }: HeroCarouselProps) {
+  const slidesResolved = slides ?? (
+    isSushiDayPromoActive()
+      ? [
+          {
+            desktop: heroSushiDayDesktop,
+            mobile: heroSushiDayMobile,
+            href: "/menu",
+            label: "Pedir Ahora",
+          },
+          ...defaultSlides,
+        ]
+      : defaultSlides
+  );
+
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -44,11 +74,15 @@ export default function HeroCarousel({
   };
 
   const next = useCallback(() => {
-    setIndex((i) => (i + 1) % slides.length);
-  }, [slides.length]);
+    setIndex((i) => (i + 1) % slidesResolved.length);
+  }, [slidesResolved.length]);
 
-  const prev = () => setIndex((i) => (i - 1 + slides.length) % slides.length);
+  const prev = () => setIndex((i) => (i - 1 + slidesResolved.length) % slidesResolved.length);
   const goTo = (i: number) => setIndex(i);
+
+  useEffect(() => {
+    if (index >= slidesResolved.length) setIndex(0);
+  }, [index, slidesResolved.length]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
@@ -95,7 +129,7 @@ export default function HeroCarousel({
     >
       {/* Slides como fondos */}
        <div className="absolute inset-0">
-        {slides.map((slide, i) => (
+        {slidesResolved.map((slide, i) => (
           <Link key={i} href={slide.href} onClick={(e) => { if (wasDragged.current) e.preventDefault(); }} className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${i === index ? "opacity-100" : "opacity-0"}`} aria-hidden={i !== index} tabIndex={i === index ? 0 : -1}>
             {/* Imagen móvil */}
             <Image
@@ -125,9 +159,9 @@ export default function HeroCarousel({
 
       {/* Contenido centrado - solo desktop */}
       <div className="hidden md:flex relative z-10 h-full bottom-15 items-end justify-center text-center px-4">
-          <Link href={slides[index]?.href ?? "/menu"} className="inline-block">
+          <Link href={slidesResolved[index]?.href ?? "/menu"} className="inline-block">
             <button className="bg-[#D1933E] hover:bg-[#b87d34] px-8 py-3 rounded text-black font-bold tracking-wide shadow-lg transition-colors">
-              {slides[index]?.label ?? "Ver Carta"}
+              {slidesResolved[index]?.label ?? "Ver Carta"}
             </button>
           </Link>        
       </div>
@@ -149,7 +183,7 @@ export default function HeroCarousel({
 
       {/* Indicadores */}
       <div className="absolute bottom-4 inset-x-0 flex items-center justify-center gap-2 z-20">
-        {slides.map((_, i) => (
+        {slidesResolved.map((_, i) => (
           <button
             key={i}
             onClick={() => goTo(i)}
@@ -164,9 +198,9 @@ export default function HeroCarousel({
 
     {/* Botón móvil - debajo de la imagen, solo en celular */}
     <div className="md:hidden flex justify-center py-4 bg-black">
-      <Link href={slides[index]?.href ?? "/menu"} className="inline-block">
+      <Link href={slidesResolved[index]?.href ?? "/menu"} className="inline-block">
         <button className="bg-[#D1933E] hover:bg-[#b87d34] px-8 py-3 rounded text-black font-bold tracking-wide shadow-lg transition-colors">
-          {slides[index]?.label ?? "Ver Carta"}
+          {slidesResolved[index]?.label ?? "Ver Carta"}
         </button>
       </Link>
     </div>

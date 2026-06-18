@@ -10,6 +10,7 @@ import type { AddressRecord, AddressCoords } from "@/context/UserContext";
 import Navbar from "@/components/Navbar";
 import Seo from "@/components/Seo";
 import { BIRTHDAY_COUPON_CODE, BIRTHDAY_DISCOUNT_PERCENT, getBirthdayWeekBounds, formatBirthdayWeekRange } from "@/utils/birthday";
+import { MASUSHI_DAY_CODE, MASUSHI_DAY_PERCENT, isMasushiDayActive } from "@/utils/promos";
 import type { BirthdayEligibility } from "@/types/birthday";
 import { zonaRepartoLngLat } from "@/data/zonaReparto";
 
@@ -431,29 +432,40 @@ export default function Checkout() {
   const [giftCardCodeInput, setGiftCardCodeInput] = useState('');
   const [giftCard, setGiftCard] = useState<{ code: string; amount_total: number; amount_remaining: number } | null>(null);
   const [giftCardError, setGiftCardError] = useState<string | null>(null);
+  const [promoCodeError, setPromoCodeError] = useState<string | null>(null);
+  const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
   const [validatingGiftCard, setValidatingGiftCard] = useState(false);
   const [giftCardLoading, setGiftCardLoading] = useState(false);
   const [giftCardDeferred, setGiftCardDeferred] = useState(false);
 
   const birthdayCouponEligible = birthdayEligibility?.eligibleNow ?? false;
+  const promoCouponApplied = appliedPromoCode === MASUSHI_DAY_CODE;
 
   const birthdayCouponActive = useMemo(
-    () => birthdayCouponEligible && !skipBirthdayCoupon,
-    [birthdayCouponEligible, skipBirthdayCoupon],
+    () => birthdayCouponEligible && !skipBirthdayCoupon && !promoCouponApplied,
+    [birthdayCouponEligible, skipBirthdayCoupon, promoCouponApplied],
   );
 
   const birthdayCouponApplied = birthdayCouponActive;
 
   const birthdayDiscountPercent = birthdayEligibility?.discountPercent ?? BIRTHDAY_DISCOUNT_PERCENT;
+  const discountableTotal = useMemo(() => Math.max(0, totalFinal - deliveryFee), [totalFinal, deliveryFee]);
 
   const birthdayDiscountAmount = useMemo(() => {
     if (!birthdayCouponActive) return 0;
-    return Math.max(0, Math.round(totalFinal * birthdayDiscountPercent / 100));
-  }, [birthdayCouponActive, totalFinal, birthdayDiscountPercent]);
+    return Math.max(0, Math.round(discountableTotal * birthdayDiscountPercent / 100));
+  }, [birthdayCouponActive, discountableTotal, birthdayDiscountPercent]);
+
+  const promoDiscountAmount = useMemo(() => {
+    if (!promoCouponApplied) return 0;
+    return Math.max(0, Math.round(discountableTotal * MASUSHI_DAY_PERCENT / 100));
+  }, [promoCouponApplied, discountableTotal]);
+
+  const couponDiscountAmount = promoDiscountAmount > 0 ? promoDiscountAmount : birthdayDiscountAmount;
 
   const totalAfterDiscount = useMemo(
-    () => Math.max(0, totalFinal - birthdayDiscountAmount),
-    [totalFinal, birthdayDiscountAmount],
+    () => Math.max(0, totalFinal - couponDiscountAmount),
+    [totalFinal, couponDiscountAmount],
   );
 
   const giftCardAppliedAmount = useMemo(() => {
@@ -467,6 +479,7 @@ export default function Checkout() {
   );
 
   const birthdayCouponCode = birthdayCouponActive ? BIRTHDAY_COUPON_CODE : null;
+  const couponCodeToSend = promoCouponApplied ? appliedPromoCode : birthdayCouponCode;
 
   const birthdayWeekRangeLabel = useMemo(() => {
     if (!birthdayEligibility) return null;
@@ -497,13 +510,32 @@ export default function Checkout() {
     setSkipBirthdayCoupon(false);
   }, []);
 
-  const handleApplyGiftCard = useCallback(async () => {
+  const handleApplyDiscountOrGiftCard = useCallback(async () => {
     const code = giftCardCodeInput.trim();
     if (!code) {
       setGiftCardError('Ingresa un código');
+      setPromoCodeError(null);
       return;
     }
+
+    const normalizedCode = code.toUpperCase();
+    if (normalizedCode === MASUSHI_DAY_CODE) {
+      setGiftCardError(null);
+      if (!isMasushiDayActive()) {
+        setPromoCodeError(`${MASUSHI_DAY_CODE} solo es válido por hoy (18/06/2026).`);
+        return;
+      }
+      if (deliveryType !== "retiro") {
+        setPromoCodeError(`${MASUSHI_DAY_CODE} aplica solo para retiro en local.`);
+        return;
+      }
+      setAppliedPromoCode(MASUSHI_DAY_CODE);
+      setPromoCodeError(null);
+      return;
+    }
+
     setGiftCardError(null);
+    setPromoCodeError(null);
     setValidatingGiftCard(true);
     try {
       const resp = await fetch('/api/giftcards/validate', {
@@ -535,7 +567,7 @@ export default function Checkout() {
     } finally {
       setValidatingGiftCard(false);
     }
-  }, [giftCardCodeInput]);
+  }, [giftCardCodeInput, deliveryType]);
 
   // Cargar gift card reclamada y con saldo para el usuario
   useEffect(() => {
@@ -543,6 +575,8 @@ export default function Checkout() {
       setGiftCard(null);
       setGiftCardCodeInput('');
       setGiftCardDeferred(false);
+      setAppliedPromoCode(null);
+      setPromoCodeError(null);
       return;
     }
     const fetchClaimedGiftCard = async () => {
@@ -571,6 +605,13 @@ export default function Checkout() {
     };
     fetchClaimedGiftCard();
   }, [user]);
+
+  useEffect(() => {
+    if (deliveryType !== "retiro" && appliedPromoCode === MASUSHI_DAY_CODE) {
+      setAppliedPromoCode(null);
+      setPromoCodeError(`${MASUSHI_DAY_CODE} aplica solo para retiro en local.`);
+    }
+  }, [deliveryType, appliedPromoCode]);
 
   const fetchBirthdayEligibility = useCallback(async () => {
     if (!user) {
@@ -763,8 +804,7 @@ export default function Checkout() {
             name: `${name} ${lastName}`,
             phone,
           },
-          // include coupon if birthday discount is active
-          ...(birthdayCouponCode ? { coupon_code: birthdayCouponCode } : {}),
+          ...(couponCodeToSend ? { coupon_code: couponCodeToSend } : {}),
             ...(giftCard ? { gift_card_code: giftCard.code } : {}),
           // Agregar extras
           extras: bloqueSalsasPalitos.trim(),
@@ -1151,21 +1191,36 @@ export default function Checkout() {
                         value={giftCardCodeInput}
                         onChange={(e) => setGiftCardCodeInput(e.target.value)}
                         placeholder="Ingresa tu código"
-                        disabled={!!giftCard}
-                        className={`flex-1 rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-[#93C021] ${giftCard ? 'opacity-60 cursor-not-allowed' : ''}`}
+                        className="flex-1 rounded-lg border border-white/10 bg-[#1a1a1a] px-3 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-[#93C021]"
                       />
                       <div className="flex gap-2">
                         <button
                           type="button"
-                          onClick={handleApplyGiftCard}
-                          disabled={validatingGiftCard || giftCardLoading || !!giftCard}
+                          onClick={handleApplyDiscountOrGiftCard}
+                          disabled={validatingGiftCard || giftCardLoading}
                           className="rounded-lg bg-[#93C021] px-4 py-2 text-sm font-semibold text-white hover:bg-[#93C021] disabled:opacity-60"
                         >
-                          {giftCard ? 'Aplicada' : validatingGiftCard || giftCardLoading ? 'Validando…' : 'Aplicar'}
+                          {validatingGiftCard || giftCardLoading ? 'Validando…' : 'Aplicar'}
                         </button>
+                        {promoCouponApplied ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAppliedPromoCode(null);
+                              setPromoCodeError(null);
+                            }}
+                            className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10"
+                          >
+                            Quitar cupón
+                          </button>
+                        ) : null}
                       </div>
                     </div>
                     {giftCardError ? <p className="text-xs text-red-400">{giftCardError}</p> : null}
+                    {promoCodeError ? <p className="text-xs text-red-400">{promoCodeError}</p> : null}
+                    {promoCouponApplied ? (
+                      <p className="text-xs text-[#93C021]">Cupón {MASUSHI_DAY_CODE} aplicado: {MASUSHI_DAY_PERCENT}% para retiro en local.</p>
+                    ) : null}
                     {giftCard ? (
                       <p className="text-xs text-[#93C021]">Saldo disponible: {fmt(giftCard.amount_remaining)} (monto original {fmt(giftCard.amount_total)})</p>
                     ) : null}
@@ -1174,16 +1229,22 @@ export default function Checkout() {
                     <div className="text-sm text-neutral-400">Subtotal</div>
                     <div className="text-sm font-semibold">{fmt(totalProductos)}</div>
                   </div>
-                    {birthdayCouponCode && (
+                    {couponCodeToSend && (
                       <div className="flex items-center justify-between mb-2">
                         <div className="text-sm text-neutral-400">Cupón</div>
-                        <div className="text-sm font-semibold text-[#93C021]">{birthdayCouponCode}</div>
+                        <div className="text-sm font-semibold text-[#93C021]">{couponCodeToSend}</div>
                       </div>
                     )}
                     {birthdayDiscountAmount > 0 && (
                       <div className="flex items-center justify-between mb-2 text-sm text-[#93C021]">
                         <div>Descuento cumpleaños ({birthdayDiscountPercent}%)</div>
                         <div>-{fmt(birthdayDiscountAmount)}</div>
+                      </div>
+                    )}
+                    {promoDiscountAmount > 0 && (
+                      <div className="flex items-center justify-between mb-2 text-sm text-[#93C021]">
+                        <div>Descuento {MASUSHI_DAY_CODE} ({MASUSHI_DAY_PERCENT}%)</div>
+                        <div>-{fmt(promoDiscountAmount)}</div>
                       </div>
                     )}
                     {giftCardAppliedAmount > 0 && (

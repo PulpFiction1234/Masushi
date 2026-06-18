@@ -7,8 +7,9 @@ import supabaseAdmin from '@/server/supabase';
 import { buildFullName } from '@/utils/name';
 import { normalizePhone } from '@/utils/phone';
 import { getEstimateRange, formatEstimate, getEstimateWindow, formatWindow } from '@/utils/estimateTimes';
-import { fmt, paymentLabel } from '@/utils/checkout';
+import { COSTO_DELIVERY, fmt, paymentLabel } from '@/utils/checkout';
 import { computeBirthdayEligibility, BIRTHDAY_COUPON_CODE } from '@/server/birthdayEligibility';
+import { MASUSHI_DAY_CODE, MASUSHI_DAY_DATE, MASUSHI_DAY_PERCENT, getYmdInTimeZone } from '@/utils/promos';
 import { productos as staticProductos } from '@/data/productos';
 
 const DELIVERY_MIN_TOTAL = 10_000;
@@ -127,18 +128,55 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Antes de insertar, validar cupón si es provisto
     const normalizedCoupon = typeof coupon_code === 'string' ? coupon_code.trim().toUpperCase() : null;
+    const discountableBase = deliveryTypeValue === 1 ? Math.max(0, originalTotal - COSTO_DELIVERY) : originalTotal;
   let finalTotal = originalTotal;
-  let appliedCoupon: { id: number | null; code: string; type: 'manual' | 'birthday'; percent?: number; amount?: number } | null = null;
+  let appliedCoupon: { id: number | null; code: string; type: 'manual' | 'birthday' | 'promo-day'; percent?: number; amount?: number } | null = null;
   let appliedGiftCard: { id: number; code: string; amountUsed: number; remainingAfter: number } | null = null;
   let discountAmount = 0;
   let discountLabel: string | null = null;
-    if (normalizedCoupon === BIRTHDAY_COUPON_CODE) {
+    if (normalizedCoupon === MASUSHI_DAY_CODE) {
+      try {
+        const localYmd = getYmdInTimeZone(new Date(), DELIVERY_TIME_ZONE);
+        if (localYmd !== MASUSHI_DAY_DATE) {
+          return res.status(400).json({ error: `El cupón ${MASUSHI_DAY_CODE} solo era válido el 18/06/2026.` });
+        }
+
+        if (deliveryTypeValue !== 0) {
+          return res.status(400).json({ error: `${MASUSHI_DAY_CODE} aplica solo para retiro en local.` });
+        }
+
+        const { count: usageCount, error: usageErr } = await supabaseAdmin
+          .from('promo_code_usages')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .eq('promo_code', MASUSHI_DAY_CODE);
+
+        if (usageErr) {
+          if (usageErr.code === '42P01') {
+            return res.status(500).json({ error: 'Falta la migración de promo_code_usages para validar MASUSHIDAY.' });
+          }
+          throw usageErr;
+        }
+        if ((usageCount ?? 0) > 0) {
+          return res.status(400).json({ error: `Ya utilizaste el cupón ${MASUSHI_DAY_CODE} en tu cuenta.` });
+        }
+
+        const promoDiscount = Math.max(0, Math.round(discountableBase * MASUSHI_DAY_PERCENT / 100));
+        finalTotal = Math.max(0, originalTotal - promoDiscount);
+        discountLabel = `Cupón ${MASUSHI_DAY_CODE} (${MASUSHI_DAY_PERCENT}% desc)`;
+        appliedCoupon = { id: null, code: MASUSHI_DAY_CODE, type: 'promo-day', percent: MASUSHI_DAY_PERCENT };
+      } catch (error) {
+        console.error('Error validating MASUSHIDAY coupon:', error);
+        return res.status(500).json({ error: 'Error validando el cupón MASUSHIDAY' });
+      }
+    } else if (normalizedCoupon === BIRTHDAY_COUPON_CODE) {
       try {
         const eligibility = await computeBirthdayEligibility(userId);
         if (!eligibility.eligibleNow) {
           return res.status(400).json({ error: 'No cumples con los requisitos para el descuento de cumpleaños' });
         }
-        finalTotal = Math.max(0, Math.round(originalTotal * (100 - eligibility.discountPercent) / 100));
+        const birthdayDiscount = Math.max(0, Math.round(discountableBase * eligibility.discountPercent / 100));
+        finalTotal = Math.max(0, originalTotal - birthdayDiscount);
         discountLabel = `Descuento cumpleaños (${eligibility.discountPercent}%)`;
         appliedCoupon = { id: null, code: BIRTHDAY_COUPON_CODE, type: 'birthday', percent: eligibility.discountPercent };
       } catch (error) {
@@ -812,6 +850,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .eq('id', appliedCoupon.id);
       } catch (e) {
         console.error('Error marking coupon used:', e);
+      }
+    }
+
+    if (appliedCoupon?.type === 'promo-day' && data?.id) {
+      try {
+        await supabaseAdmin
+          .from('promo_code_usages')
+          .insert({
+            user_id: userId,
+            promo_code: appliedCoupon.code,
+            order_id: data.id,
+            discount_percent: appliedCoupon.percent ?? null,
+            used_at: new Date().toISOString(),
+          });
+      } catch (e) {
+        console.error('Error saving promo usage:', e);
       }
     }
 

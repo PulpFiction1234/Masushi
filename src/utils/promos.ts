@@ -1,4 +1,4 @@
-export const MASUSHI_DAY_CODE = 'MASUSHIDAY';
+export const MASUSHI_DAY_CODE = 'MASUSHI5';
 export const MASUSHI_DAY_PERCENT = 5;
 export const MASUSHI_DAY_DATE = '2026-06-18';
 export const DEFAULT_PROMO_TIME_ZONE = 'America/Santiago';

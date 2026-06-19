@@ -147,14 +147,22 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada, 
     };
   }, []);
 
+  const isProductAvailable = useCallback((prod: Producto) => {
+    const lookupKeys = getProductOverrideLookupKeys(prod);
+    const matchedKey = lookupKeys.find((k) => typeof overridesMap[k] === "boolean");
+    if (matchedKey) return overridesMap[matchedKey];
+    return prod.enabled ?? true;
+  }, [overridesMap]);
+
   // 1) Filtra por categoría + búsqueda (nombre/desc/código)
   const productosFiltrados = useMemo(() => {
     // Si es categoría "Mis favoritos", filtrar por favoritos
     if (selected === normalize("Mis favoritos")) {
-      return productsState.filter((p) => {
+      const favs = productsState.filter((p) => {
         const code = p.codigo || String(p.id);
         return favorites.has(code);
       });
+      return showDisabled ? favs : favs.filter((p) => isProductAvailable(p));
     }
 
     // base por categoría
@@ -162,9 +170,8 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada, 
       ? productsState.filter((p) => normalize(p.categoria) === selected)
       : productsState;
 
-      // Do NOT remove disabled products from the listing — show the card but
-      // let ProductCard render a disabled "Sin stock" button when appropriate.
-      const baseFiltered = base;
+      // In public menu, hidden products should disappear from the card list.
+      const baseFiltered = showDisabled ? base : base.filter((p) => isProductAvailable(p));
 
       if (tokens.length === 0) return baseFiltered;
 
@@ -174,8 +181,8 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada, 
         console.debug('public-search', { tokens, matchedCount: matched.length, first: matched.slice(0, 10).map((m) => ({ codigo: m.codigo, nombre: m.nombre })) });
       } catch {}
 
-      return matched;
-  }, [selected, tokens, favorites, showDisabled]);
+        return matched;
+      }, [selected, tokens, favorites, showDisabled, productsState, isProductAvailable]);
 
   // 2) Ordena estable
   const productosOrdenados = useMemo(() => {
@@ -314,13 +321,6 @@ if (prod.configuracion?.tipo === "armalo") {
     () => (activeProductId == null ? null : productsState.find((p) => p.id === activeProductId) ?? null),
     [activeProductId, productsState]
   );
-
-  const isProductAvailable = useCallback((prod: Producto) => {
-    const lookupKeys = getProductOverrideLookupKeys(prod);
-    const matchedKey = lookupKeys.find((k) => typeof overridesMap[k] === "boolean");
-    if (matchedKey) return overridesMap[matchedKey];
-    return prod.enabled ?? true;
-  }, [overridesMap]);
 
   // -------- Virtualización (sin cambios) --------
   const COLUMN_WIDTH = 380;

@@ -522,7 +522,7 @@ export default function Checkout() {
     if (normalizedCode === MASUSHI_DAY_CODE) {
       setGiftCardError(null);
       if (!isMasushiDayActive()) {
-        setPromoCodeError(`${MASUSHI_DAY_CODE} solo es válido por hoy (18/06/2026).`);
+        setPromoCodeError('Código expirado, válido el 18 de junio.');
         return;
       }
       if (deliveryType !== "retiro") {

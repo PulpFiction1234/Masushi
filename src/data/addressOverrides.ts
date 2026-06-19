@@ -22,6 +22,22 @@ export const addressOverrides: Record<string, { coords: [number, number]; label?
     coords: [-70.54821010293149, -33.560136525062454],
     label: "Av. Diego Portales 6537, Puente Alto",
   },
+  "av diego portales 07072": {
+    coords: [-70.53717216114084, -33.561839439351495], // [lng, lat]
+    label: "Av. Diego Portales 07072, Puente Alto",
+  },
+  "avenida diego portales 07072": {
+    coords: [-70.53717216114084, -33.561839439351495],
+    label: "Av. Diego Portales 07072, Puente Alto",
+  },
+  "av diego portales 7072": {
+    coords: [-70.53717216114084, -33.561839439351495],
+    label: "Av. Diego Portales 7072, Puente Alto",
+  },
+  "avenida diego portales 7072": {
+    coords: [-70.53717216114084, -33.561839439351495],
+    label: "Av. Diego Portales 7072, Puente Alto",
+  },
 };
 
 export default addressOverrides;

@@ -138,7 +138,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       try {
         const localYmd = getYmdInTimeZone(new Date(), DELIVERY_TIME_ZONE);
         if (localYmd !== MASUSHI_DAY_DATE) {
-          return res.status(400).json({ error: `El cupón ${MASUSHI_DAY_CODE} solo era válido el 18/06/2026.` });
+          return res.status(400).json({ error: 'Código expirado, válido el 18 de junio.' });
         }
 
         if (deliveryTypeValue !== 0) {

@@ -29,19 +29,20 @@ const defaultSlides: SlideData[] = [
   { desktop: heroNuevosDesktop, mobile: heroNuevosMobile, href: "/menu", label: "Ver Carta" },
 ];
 
-const SUSHI_DAY_PROMO_DATE = "2026-06-18";
+const SUSHI_DAY_PROMO_MONTH = 6;
+const SUSHI_DAY_PROMO_DAY = 18;
 const SUSHI_DAY_TIME_ZONE = "America/Santiago";
 
-const getYmdInTimeZone = (reference: Date, timeZone: string): string =>
-  new Intl.DateTimeFormat("en-CA", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(reference);
-
-const isSushiDayPromoActive = (reference: Date = new Date()): boolean =>
-  getYmdInTimeZone(reference, SUSHI_DAY_TIME_ZONE) === SUSHI_DAY_PROMO_DATE;
+const isSushiDayPromoActive = (reference: Date = new Date()): boolean => {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: SUSHI_DAY_TIME_ZONE,
+    month: "numeric",
+    day: "numeric",
+  }).formatToParts(reference);
+  const month = Number(parts.find((p) => p.type === "month")?.value ?? 0);
+  const day = Number(parts.find((p) => p.type === "day")?.value ?? 0);
+  return month === SUSHI_DAY_PROMO_MONTH && day === SUSHI_DAY_PROMO_DAY;
+};
 
 export default function HeroCarousel({
   slides,

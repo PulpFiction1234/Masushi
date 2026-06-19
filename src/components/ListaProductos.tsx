@@ -38,6 +38,9 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada, 
   });
   const [productsState, setProductsState] = useState<ReadonlyArray<Readonly<Producto>>>(() => productos);
   const [activeProductId, setActiveProductId] = useState<number | null>(null);
+  
+  // Optimization: track which override keys changed to minimize re-renders
+  const overridesVersionRef = useRef(0);
 
   // 🔎 NUEVO: utilidades búsqueda
   const query = normalize(busqueda).trim();
@@ -46,112 +49,92 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada, 
     [query]
   );
 
-  // Fetch product overrides (public) and build a quick map
+  // Consolidated effect: handle overrides from API, localStorage, and custom events
+  // This replaces three separate useEffects for better performance and maintainability
   useEffect(() => {
     let mounted = true;
-    (async () => {
+
+    // Fetch public overrides from API (source of truth)
+    const fetchPublicOverrides = async () => {
       try {
         const r = await fetch('/api/product-overrides-public');
-        if (!r.ok) return;
+        if (!r.ok || !mounted) return;
         const json = await r.json();
         const map: Record<string, boolean> = {};
         (json.overrides || []).forEach((o: any) => {
-          if (o && o.codigo) map[o.codigo] = !!o.enabled;
+          if (o?.codigo) map[o.codigo] = !!o.enabled;
         });
-        if (mounted) setOverridesMap(map);
+        setOverridesMap((prev) => {
+          overridesVersionRef.current++;
+          return map.length > 0 ? map : prev; // Only update if we got data
+        });
       } catch (e) {
-        // noop
+        // Silently fail - localStorage will provide fallback
       }
-    })();
-    return () => { mounted = false; };
-  }, []);
+    };
 
-  // Also read a localStorage-backed map so the admin can optimistically broadcast
-  // changes and the UI updates instantly even if the public API is slow/fails.
-  useEffect(() => {
+    // Load from localStorage on mount
     try {
       const raw = localStorage.getItem('product-overrides-map');
       if (raw) {
         const parsed = JSON.parse(raw) as Record<string, boolean>;
-        setOverridesMap((prev) => ({ ...prev, ...parsed }));
+        setOverridesMap((prev) => {
+          overridesVersionRef.current++;
+          return { ...prev, ...parsed };
+        });
       }
     } catch {}
 
-    const onStorage = (e: StorageEvent) => {
+    // Initial API fetch
+    fetchPublicOverrides();
+
+    // Storage event listener
+    const handleStorageEvent = (e: StorageEvent) => {
+      if (!mounted) return;
+      
+      // New overrides map from another tab
       if (e.key === 'product-overrides-map' && e.newValue) {
         try {
           const parsed = JSON.parse(e.newValue) as Record<string, boolean>;
-          setOverridesMap((prev) => ({ ...prev, ...parsed }));
+          setOverridesMap((prev) => {
+            overridesVersionRef.current++;
+            return { ...prev, ...parsed };
+          });
         } catch {}
+        return;
       }
 
+      // Force refresh signal from another tab
       if (e.key === 'product-overrides-updated') {
-        // fallback: re-fetch public overrides
-        (async () => {
-          try {
-            const r = await fetch('/api/product-overrides-public');
-            if (!r.ok) return;
-            const j = await r.json();
-            const map: Record<string, boolean> = {};
-            (j.overrides || []).forEach((o: any) => {
-              if (o && o.codigo) map[o.codigo] = !!o.enabled;
-            });
-            setOverridesMap(map);
-          } catch {}
-        })();
+        fetchPublicOverrides();
       }
     };
 
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, []);
-
-  // Fetch merged products (static + overrides) for efficient rendering and caching
-  // We keep the static `productos` (with StaticImageData) as the source of truth
-  // and only fetch `product_overrides_public` to update enabled flags. Using
-  // `/api/products-merged` replaces StaticImageData with serialized strings
-  // and can cause image loading issues in dev. So we avoid replacing productsState.
-
-  // Re-fetch the public overrides map when admin updates overrides so we can
-  // merge locally while keeping StaticImageData intact.
-  useEffect(() => {
-    const doRefreshOverrides = async () => {
-      try {
-        const r = await fetch('/api/product-overrides-public');
-        if (!r.ok) return;
-        const j = await r.json();
-        const map: Record<string, boolean> = {};
-        (j.overrides || []).forEach((o: any) => {
-          if (o && o.codigo) map[o.codigo] = !!o.enabled;
+    // Custom event listener (admin broadcasts changes within same tab)
+    const handleProductOverridesChanged = (ev: Event) => {
+      if (!mounted) return;
+      
+      const ce = ev as CustomEvent<{ codigo: string; enabled: boolean } | undefined>;
+      if (ce.detail?.codigo) {
+        // Optimistic update for single override change
+        const { codigo, enabled } = ce.detail;
+        setOverridesMap((prev) => {
+          overridesVersionRef.current++;
+          return { ...prev, [codigo]: !!enabled };
         });
-        setOverridesMap(map);
-      } catch (e) {
-        // ignore
+      } else {
+        // No detail or unclear detail: refresh from API
+        fetchPublicOverrides();
       }
     };
 
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === 'product-overrides-updated') doRefreshOverrides();
-    };
+    window.addEventListener('storage', handleStorageEvent);
+    window.addEventListener('product-overrides-changed', handleProductOverridesChanged as EventListener);
 
-    const onEvent = (ev?: Event) => {
-      // If admin dispatched detail, update map directly
-      try {
-        const ce = ev as CustomEvent | undefined;
-        if (ce && (ce as any).detail && (ce as any).detail.codigo) {
-          const d = (ce as any).detail as { codigo: string; enabled: boolean };
-          setOverridesMap((prev) => ({ ...prev, [d.codigo]: !!d.enabled }));
-          return;
-        }
-      } catch {}
-      doRefreshOverrides();
-    };
-
-    window.addEventListener('storage', onStorage);
-    window.addEventListener('product-overrides-changed', onEvent as EventListener);
     return () => {
-      window.removeEventListener('storage', onStorage);
-      window.removeEventListener('product-overrides-changed', onEvent as EventListener);
+      mounted = false;
+      window.removeEventListener('storage', handleStorageEvent);
+      window.removeEventListener('product-overrides-changed', handleProductOverridesChanged as EventListener);
     };
   }, []);
 

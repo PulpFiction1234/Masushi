@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { productos as staticProductos } from '../../data/productos';
+import { getProductOverrideLookupKeys } from '@/utils/productOverrideKey';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const serviceUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -20,7 +21,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     (overrides || []).forEach((o: any) => { if (o && o.codigo) map.set(o.codigo, !!o.enabled); });
 
     const merged = staticProductos.map((p) => {
-      const override = map.get(p.codigo);
+      const lookupKeys = getProductOverrideLookupKeys(p);
+      const matchedKey = lookupKeys.find((k) => map.has(k));
+      const override = matchedKey ? map.get(matchedKey) : undefined;
       // Normalize image to a string URL for JSON transport
       let imagen: string | undefined;
       if (typeof p.imagen === 'string') imagen = p.imagen;

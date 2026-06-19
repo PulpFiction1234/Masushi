@@ -10,6 +10,7 @@ import ProductQuickAddModal from "./ProductQuickAddModal";
 import { normalize } from "@/utils/strings";
 import { matchesTokens } from "@/utils/search";
 import { type FitMode } from "@/utils/constants";
+import { getProductOverrideLookupKeys } from "@/utils/productOverrideKey";
 
 interface ListaProductosProps {
   categoriaSeleccionada: string | null;
@@ -315,8 +316,9 @@ if (prod.configuracion?.tipo === "armalo") {
   );
 
   const isProductAvailable = useCallback((prod: Producto) => {
-    const code = prod.codigo;
-    if (typeof overridesMap[code] === "boolean") return overridesMap[code];
+    const lookupKeys = getProductOverrideLookupKeys(prod);
+    const matchedKey = lookupKeys.find((k) => typeof overridesMap[k] === "boolean");
+    if (matchedKey) return overridesMap[matchedKey];
     return prod.enabled ?? true;
   }, [overridesMap]);
 

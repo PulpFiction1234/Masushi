@@ -7,6 +7,7 @@ import ProductCard from "@/components/ProductCard";
 import ProductQuickAddModal from "@/components/ProductQuickAddModal";
 import { type FitMode } from "@/utils/constants";
 import { formatCLP } from "@/utils/format";
+import { getProductOverrideLookupKeys } from "@/utils/productOverrideKey";
 
 interface ProductSectionProps {
   title: string;
@@ -90,7 +91,9 @@ export default function ProductSectionPromo({ title, productIds, linkBase }: Pro
   }, [isMobileViewport, activeProductId]);
 
   const isProductAvailable = useCallback((prod: Producto) => {
-    if (typeof overridesMap[prod.codigo] === "boolean") return overridesMap[prod.codigo];
+    const lookupKeys = getProductOverrideLookupKeys(prod);
+    const matchedKey = lookupKeys.find((k) => typeof overridesMap[k] === "boolean");
+    if (matchedKey) return overridesMap[matchedKey];
     return prod.enabled ?? true;
   }, [overridesMap]);
 

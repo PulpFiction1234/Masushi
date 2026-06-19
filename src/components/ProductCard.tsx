@@ -10,6 +10,7 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
 import { TbShoppingBagPlus } from "react-icons/tb";
 import useProductOverrides from '@/hooks/useProductOverrides';
+import { getProductOverrideLookupKeys } from '@/utils/productOverrideKey';
 
 function parseArmalo(encoded?: string) {
   if (!encoded || !encoded.startsWith("armalo:")) return null;
@@ -67,7 +68,9 @@ const ProductCard: React.FC<Props> = ({
 
   // global override: if admin disabled this product, treat as out of stock
   const { map: overrides } = useProductOverrides();
-  const globallyDisabled = !isAvailable || overrides[product.codigo ?? String(product.id)] === false;
+  const overrideKeys = getProductOverrideLookupKeys(product);
+  const matchedOverrideKey = overrideKeys.find((k) => Object.prototype.hasOwnProperty.call(overrides, k));
+  const globallyDisabled = !isAvailable || (matchedOverrideKey ? overrides[matchedOverrideKey] === false : false);
   const selectionBlocked = showInlineSelectors && (esArmalo ? !armalo?.valid : (tieneOpciones && !selectedOptionId));
 
   const productCode = product.codigo || String(product.id);

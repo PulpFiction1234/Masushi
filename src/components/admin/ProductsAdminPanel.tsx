@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import useSWR from "swr";
 import { productos, type Producto } from "@/data/productos";
 import { normalize } from "@/utils/strings";
+import { getProductOverrideKey, getProductOverrideLookupKeys } from "@/utils/productOverrideKey";
 
 type AdminProducto = Producto & { enabled?: boolean };
 
@@ -13,7 +14,7 @@ type RawOverride = {
 };
 
 const DEFAULT_ENABLED_MAP: Record<string, boolean> = productos.reduce((acc, producto) => {
-  const clave = typeof producto.codigo === 'string' ? producto.codigo : String(producto.codigo ?? '');
+  const clave = getProductOverrideKey(producto);
   if (!clave) return acc;
   const enabled = (producto as AdminProducto).enabled;
   acc[clave] = enabled === undefined ? true : Boolean(enabled);
@@ -62,19 +63,20 @@ export default function ProductsAdminPanel() {
 
   const items = useMemo<AdminProducto[]>(() => {
     return productos.map((producto: Producto) => {
-      const codigo = typeof producto.codigo === 'string' ? producto.codigo : String(producto.codigo ?? '');
-      const defaultEnabled = DEFAULT_ENABLED_MAP[codigo] ?? true;
-      const hasOverride = Object.prototype.hasOwnProperty.call(overrideMap, codigo);
-      const enabled = hasOverride ? Boolean(overrideMap[codigo]) : defaultEnabled;
+      const overrideKey = getProductOverrideKey(producto);
+      const lookupKeys = getProductOverrideLookupKeys(producto);
+      const defaultEnabled = DEFAULT_ENABLED_MAP[overrideKey] ?? true;
+      const matchedKey = lookupKeys.find((k) => Object.prototype.hasOwnProperty.call(overrideMap, k));
+      const enabled = matchedKey ? Boolean(overrideMap[matchedKey]) : defaultEnabled;
       return { ...(producto as AdminProducto), enabled };
     });
   }, [overrideMap]);
 
-  const getEffectiveEnabled = (codigo: string) => {
-    if (Object.prototype.hasOwnProperty.call(overrideMap, codigo)) {
-      return Boolean(overrideMap[codigo]);
+  const getEffectiveEnabledByKey = (overrideKey: string) => {
+    if (Object.prototype.hasOwnProperty.call(overrideMap, overrideKey)) {
+      return Boolean(overrideMap[overrideKey]);
     }
-    return DEFAULT_ENABLED_MAP[codigo] ?? true;
+    return DEFAULT_ENABLED_MAP[overrideKey] ?? true;
   };
 
   const persistLocalOverride = (codigo: string, enabled: boolean) => {
@@ -98,40 +100,40 @@ export default function ProductsAdminPanel() {
     }
   };
 
-  const toggle = (codigo: string) => {
-    const previousEnabled = getEffectiveEnabled(codigo);
+  const toggle = (overrideKey: string) => {
+    const previousEnabled = getEffectiveEnabledByKey(overrideKey);
     const nextEnabled = !previousEnabled;
 
-    setLoadingMap((m) => ({ ...m, [codigo]: true }));
-    persistLocalOverride(codigo, nextEnabled);
+    setLoadingMap((m) => ({ ...m, [overrideKey]: true }));
+    persistLocalOverride(overrideKey, nextEnabled);
 
     mutate(
       async (current) => {
         const response = await fetch('/api/admin/product-overrides', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ codigo, enabled: nextEnabled }),
+          body: JSON.stringify({ codigo: overrideKey, enabled: nextEnabled }),
         });
         if (!response.ok) {
           throw new Error('Failed to persist override');
         }
         const nextMap = { ...(current ?? {}) };
-        nextMap[codigo] = nextEnabled;
+        nextMap[overrideKey] = nextEnabled;
         return nextMap;
       },
       {
-        optimisticData: { ...(overrideMap ?? {}), [codigo]: nextEnabled },
+        optimisticData: { ...(overrideMap ?? {}), [overrideKey]: nextEnabled },
         rollbackOnError: true,
         revalidate: false,
         populateCache: true,
       },
     ).catch(() => {
-      persistLocalOverride(codigo, previousEnabled);
+      persistLocalOverride(overrideKey, previousEnabled);
       alert('Error guardando override en el servidor (si el servidor está configurado). Cambio revertido.');
     }).finally(() => {
       setLoadingMap((m) => {
         const copy = { ...m };
-        delete copy[codigo];
+        delete copy[overrideKey];
         return copy;
       });
     });
@@ -162,7 +164,7 @@ export default function ProductsAdminPanel() {
       <div className="mt-4">
         <div className="grid gap-3">
           {filtered.map((p) => {
-            const codigoKey = typeof p.codigo === 'string' ? p.codigo : String(p.codigo ?? '');
+            const overrideKey = getProductOverrideKey(p);
             return (
             <div key={p.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-[#1a1a1a] p-3 rounded gap-3">
               <div className="flex-1">
@@ -171,8 +173,8 @@ export default function ProductsAdminPanel() {
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <div className={`px-2 md:px-3 py-1 rounded text-xs md:text-sm font-semibold flex-1 sm:flex-none text-center ${p.enabled ? 'bg-[#93C021] text-white' : 'bg-[#555555] text-white'}`}>{p.enabled ? 'HABILITADO' : 'DESHABILITADO'}</div>
-                <button disabled={!!loadingMap[codigoKey]} onClick={() => toggle(codigoKey)} className={`px-2 md:px-3 py-1 ${loadingMap[codigoKey] ? 'bg-yellow-500' : 'bg-[#D1933E] hover:bg-[#b87a32]'} rounded text-xs md:text-sm font-semibold flex-1 sm:flex-none whitespace-nowrap`}>
-                  {loadingMap[codigoKey] ? (p.enabled ? 'Deshabilitando...' : 'Habilitando...') : (p.enabled ? 'Deshabilitar' : 'Habilitar')}
+                <button disabled={!!loadingMap[overrideKey]} onClick={() => toggle(overrideKey)} className={`px-2 md:px-3 py-1 ${loadingMap[overrideKey] ? 'bg-yellow-500' : 'bg-[#D1933E] hover:bg-[#b87a32]'} rounded text-xs md:text-sm font-semibold flex-1 sm:flex-none whitespace-nowrap`}>
+                  {loadingMap[overrideKey] ? (p.enabled ? 'Deshabilitando...' : 'Habilitando...') : (p.enabled ? 'Deshabilitar' : 'Habilitar')}
                 </button>
               </div>
             </div>

@@ -27,7 +27,16 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada, 
 
   const [seleccion, setSeleccion] = useState<Record<number, string>>({});
   const [fitMap, setFitMap] = useState<Record<number, FitMode>>({});
-  const [overridesMap, setOverridesMap] = useState<Record<string, boolean>>({});
+  const [overridesMap, setOverridesMap] = useState<Record<string, boolean>>(() => {
+    if (typeof window === 'undefined') return {};
+    try {
+      const raw = localStorage.getItem('product-overrides-map');
+      return raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [overridesLoaded, setOverridesLoaded] = useState(false);
   const [productsState, setProductsState] = useState<ReadonlyArray<Readonly<Producto>>>(() => productos);
   const [activeProductId, setActiveProductId] = useState<number | null>(null);
 
@@ -53,6 +62,8 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada, 
         if (mounted) setOverridesMap(map);
       } catch (e) {
         // noop
+      } finally {
+        if (mounted) setOverridesLoaded(true);
       }
     })();
     return () => { mounted = false; };
@@ -156,6 +167,10 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada, 
 
   // 1) Filtra por categoría + búsqueda (nombre/desc/código)
   const productosFiltrados = useMemo(() => {
+    if (!showDisabled && !overridesLoaded) {
+      return [] as ReadonlyArray<Readonly<Producto>>;
+    }
+
     // Si es categoría "Mis favoritos", filtrar por favoritos
     if (selected === normalize("Mis favoritos")) {
       const favs = productsState.filter((p) => {
@@ -182,7 +197,7 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada, 
       } catch {}
 
         return matched;
-      }, [selected, tokens, favorites, showDisabled, productsState, isProductAvailable]);
+      }, [selected, tokens, favorites, showDisabled, productsState, isProductAvailable, overridesLoaded]);
 
   // 2) Ordena estable
   const productosOrdenados = useMemo(() => {

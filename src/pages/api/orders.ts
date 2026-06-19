@@ -9,7 +9,7 @@ import { normalizePhone } from '@/utils/phone';
 import { getEstimateRange, formatEstimate, getEstimateWindow, formatWindow } from '@/utils/estimateTimes';
 import { COSTO_DELIVERY, fmt, paymentLabel } from '@/utils/checkout';
 import { computeBirthdayEligibility, BIRTHDAY_COUPON_CODE } from '@/server/birthdayEligibility';
-import { MASUSHI_DAY_CODE, MASUSHI_DAY_DATE, MASUSHI_DAY_PERCENT, getYmdInTimeZone } from '@/utils/promos';
+import { MASUSHI_DAY_CODE, MASUSHI_DAY_PERCENT, isMasushiDayActive } from '@/utils/promos';
 import { productos as staticProductos } from '@/data/productos';
 
 const DELIVERY_MIN_TOTAL = 10_000;
@@ -136,8 +136,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let discountLabel: string | null = null;
     if (normalizedCoupon === MASUSHI_DAY_CODE) {
       try {
-        const localYmd = getYmdInTimeZone(new Date(), DELIVERY_TIME_ZONE);
-        if (localYmd !== MASUSHI_DAY_DATE) {
+        if (!isMasushiDayActive(new Date(), DELIVERY_TIME_ZONE)) {
           return res.status(400).json({ error: 'Código expirado, válido el 18 de junio.' });
         }
 

@@ -66,7 +66,7 @@ const ListaProductos: React.FC<ListaProductosProps> = ({ categoriaSeleccionada, 
         });
         setOverridesMap((prev) => {
           overridesVersionRef.current++;
-          return map.length > 0 ? map : prev; // Only update if we got data
+          return map;
         });
       } catch (e) {
         // Silently fail - localStorage will provide fallback

@@ -55,6 +55,7 @@ export default function ProductSection({ title, productIds, linkBase }: ProductS
   const products: Producto[] = productIds
     .map((id) => source.find((p) => p.id === id))
     .filter((p): p is Producto => Boolean(p));
+  const visibleProducts = useMemo(() => products.filter((p) => p.enabled !== false), [products]);
 
   useEffect(() => {
     const updateViewport = () => {
@@ -193,8 +194,8 @@ export default function ProductSection({ title, productIds, linkBase }: ProductS
   );
 
   const activeProduct = useMemo(
-    () => (activeProductId == null ? null : products.find((p) => p.id === activeProductId) ?? null),
-    [activeProductId, products]
+    () => (activeProductId == null ? null : visibleProducts.find((p) => p.id === activeProductId) ?? null),
+    [activeProductId, visibleProducts]
   );
 
   return (
@@ -204,7 +205,7 @@ export default function ProductSection({ title, productIds, linkBase }: ProductS
 
         {isMobileViewport ? (
           <div className="grid grid-cols-2 gap-px sm:gap-4">
-            {products.map((p) => (
+            {visibleProducts.map((p) => (
               <div key={p.id} className="h-full">
                 <ProductCard
                   product={p}
@@ -226,7 +227,7 @@ export default function ProductSection({ title, productIds, linkBase }: ProductS
           </div>
         ) : (
           <div className="grid gap-4 justify-center items-stretch [grid-template-columns:repeat(auto-fit,minmax(240px,300px))] sm:[grid-template-columns:repeat(auto-fit,minmax(260px,320px))]">
-            {products.map((p) => (
+            {visibleProducts.map((p) => (
               <div
                 key={p.id}
                 className="bg-[#1a1a1a] rounded-lg overflow-hidden shadow flex flex-col h-full min-h-[480px]"

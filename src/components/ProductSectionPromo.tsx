@@ -97,6 +97,8 @@ export default function ProductSectionPromo({ title, productIds, linkBase }: Pro
     return prod.enabled ?? true;
   }, [overridesMap]);
 
+  const visibleProducts = useMemo(() => products.filter((p) => isProductAvailable(p)), [products, isProductAvailable]);
+
   const addToCartWithSelection = useCallback(
     (prod: Producto, selId: string, e?: React.MouseEvent<HTMLElement>) => {
       if (prod.configuracion?.tipo === "armalo") {
@@ -219,8 +221,8 @@ export default function ProductSectionPromo({ title, productIds, linkBase }: Pro
   );
 
   const activeProduct = useMemo(
-    () => (activeProductId == null ? null : products.find((p) => p.id === activeProductId) ?? null),
-    [activeProductId, products]
+    () => (activeProductId == null ? null : visibleProducts.find((p) => p.id === activeProductId) ?? null),
+    [activeProductId, visibleProducts]
   );
 
   return (
@@ -230,7 +232,7 @@ export default function ProductSectionPromo({ title, productIds, linkBase }: Pro
 
         {isMobileViewport ? (
           <div className="grid grid-cols-2 gap-px">
-            {products.map((p) => (
+            {visibleProducts.map((p) => (
               <div key={p.id} className="w-full h-full">
                 <ProductCard
                   product={p}
@@ -252,7 +254,7 @@ export default function ProductSectionPromo({ title, productIds, linkBase }: Pro
           </div>
         ) : (
           <div className="flex gap-4 overflow-x-auto pb-2">
-            {products.map((p) => (
+            {visibleProducts.map((p) => (
               <div
                 key={p.id}
                 className="flex-none w-[78vw] sm:w-[45vw] md:w-[32vw] lg:flex-1 lg:w-0 bg-[#1a1a1a] rounded-lg overflow-hidden shadow flex flex-col"
@@ -285,7 +287,7 @@ export default function ProductSectionPromo({ title, productIds, linkBase }: Pro
                     <span className="font-bold">{formatCLP(p.valor)}</span>
 
                     {p.configuracion?.tipo !== "armalo" ? (
-                      p.enabled === false ? (
+                      !isProductAvailable(p) ? (
                         <button className="bg-[#2a2a2a] text-white px-3 py-1 rounded text-xs w-full cursor-not-allowed" disabled aria-disabled title="Sin stock">Sin stock</button>
                       ) : (
                         <button

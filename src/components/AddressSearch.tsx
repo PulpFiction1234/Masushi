@@ -90,6 +90,7 @@ const AddressSearch: React.FC<AddressSearchProps> = ({ polygonCoords, onValidAdd
           .normalize("NFD")
           .replace(/\p{Diacritic}/gu, "")
           .replace(/[\.,#\-]/g, "")
+          .replace(/\b\d+\b/g, (match) => String(Number.parseInt(match, 10)))
           .replace(/\s+/g, " ")
           .trim();
 

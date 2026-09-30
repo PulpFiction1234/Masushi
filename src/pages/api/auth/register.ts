@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import supabaseAdmin from '@/server/supabase';
 import createAndSendCustomVerification from '@/server/customVerification';
 import { buildFullName } from '@/utils/name';
+import { ensureSupabasePassword } from '@/utils/strings';
 
 const attemptVerificationSend = async (userId: string, email: string) => {
   const normalized = email.trim().toLowerCase();
@@ -34,9 +35,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   };
 
   const normalizedEmail = (email || '').trim().toLowerCase();
-  if (!normalizedEmail || !password) {
+  const rawPassword = String(password ?? '').trim();
+
+  if (!normalizedEmail || !rawPassword) {
     return res.status(400).json({ error: 'Email y contraseña son obligatorios' });
   }
+
+  if (!/^\d{4}$/.test(rawPassword)) {
+    return res.status(400).json({ error: 'El pin debe tener exactamente 4 dígitos.' });
+  }
+
+  const safePassword = ensureSupabasePassword(rawPassword);
 
   try {
     const findUserByEmail = async () => {
@@ -68,7 +77,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const nombreCompleto = buildFullName(name?.trim() || '', apellidoPaterno?.trim() || '', apellidoMaterno?.trim() || '') || 'Usuario';
 
       const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
-        password,
+        password: safePassword,
         email_confirm: false,
         user_metadata: {
           full_name: nombreCompleto,
@@ -93,7 +102,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email: normalizedEmail,
-      password,
+      password: safePassword,
       email_confirm: false,
       user_metadata: {
         full_name: nombreCompleto,

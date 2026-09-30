@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import supabaseAdmin from '@/server/supabase';
+import { ensureSupabasePassword } from '@/utils/strings';
 
 // Protected admin endpoint to create a user using the service role key.
 // Protect with ADMIN_SECRET env var: pass { adminSecret } in the JSON body.
@@ -12,9 +13,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!adminSecret || adminSecret !== ADMIN_SECRET) return res.status(401).json({ error: 'Unauthorized' });
   if (!email || !password) return res.status(400).json({ error: 'email and password required' });
 
+  if (!/^\d{4}$/.test(String(password).trim())) {
+    return res.status(400).json({ error: 'El pin debe tener exactamente 4 dígitos.' });
+  }
+
   try {
+    const safePassword = ensureSupabasePassword(String(password).trim());
     // create user via admin API
-    const createParams: any = { email, password };
+    const createParams: any = { email, password: safePassword };
     if (full_name || phone) createParams.user_metadata = { full_name: full_name || undefined, phone: phone || undefined };
 
     const { data, error } = await supabaseAdmin.auth.admin.createUser(createParams as any);

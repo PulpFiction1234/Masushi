@@ -6,6 +6,7 @@ import Link from 'next/link';
 // 👇 useSupabaseClient viene de *react*
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import Seo from "@/components/Seo"; 
+import { getSupabasePasswordCandidates } from "@/utils/strings";
 
 
 export default function LoginPage() {
@@ -79,6 +80,20 @@ export default function LoginPage() {
     }
   };
 
+  const signInWithCompatiblePassword = async (emailAddress: string, passwordValue: string) => {
+    let lastError: Error | null = null;
+
+    for (const candidate of getSupabasePasswordCandidates(passwordValue)) {
+      const result = await supabase.auth.signInWithPassword({ email: emailAddress, password: candidate });
+      if (!result.error) {
+        return result;
+      }
+      lastError = result.error;
+    }
+
+    return { data: null, error: lastError };
+  };
+
   const handleVerifyCode = async () => {
     setVerificationError(null);
     const raw = verificationCode.trim();
@@ -116,7 +131,7 @@ export default function LoginPage() {
         throw new Error('Código inválido o expirado');
       }
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      const { error: signInError } = await signInWithCompatiblePassword(email, password);
       if (signInError) {
         throw signInError;
       }
@@ -137,7 +152,7 @@ export default function LoginPage() {
     e.preventDefault();
     setErrorMessage("");
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await signInWithCompatiblePassword(email, password);
     if (error) {
       const message = (error.message || '').toLowerCase();
       if (message.includes('email not confirmed') || message.includes('not confirmed')) {

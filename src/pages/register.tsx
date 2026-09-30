@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import Link from 'next/link';
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import Seo from "@/components/Seo";
+import { getSupabasePasswordCandidates } from "@/utils/strings";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -94,6 +95,20 @@ export default function RegisterPage() {
     }
   };
 
+  const signInWithCompatiblePassword = async (emailAddress: string, currentPassword: string) => {
+    let lastError: Error | null = null;
+
+    for (const candidate of getSupabasePasswordCandidates(currentPassword)) {
+      const result = await supabase.auth.signInWithPassword({ email: emailAddress, password: candidate });
+      if (!result.error) {
+        return result;
+      }
+      lastError = result.error;
+    }
+
+    return { data: null, error: lastError };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage("");
@@ -109,7 +124,7 @@ export default function RegisterPage() {
       return;
     }
 
-    if (password.length !== 4) {
+    if (!/^\d{4}$/.test(password)) {
       setErrorMessage("El pin debe tener exactamente 4 dígitos.");
       return;
     }
@@ -125,7 +140,7 @@ export default function RegisterPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           email, 
-          password, 
+          password,
           name, 
           apellidoPaterno, 
           apellidoMaterno, 
@@ -195,7 +210,7 @@ export default function RegisterPage() {
         verificationUserId = otpResult.data?.user?.id || createdUserId;
 
         if (!otpResult.data?.session && password) {
-          const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+          const { error: signInError } = await signInWithCompatiblePassword(email, password);
           if (signInError) {
             console.warn('Auto sign-in after verifyOtp failed', signInError);
           }
@@ -220,7 +235,7 @@ export default function RegisterPage() {
           verificationUserId = json?.userId || verificationUserId || createdUserId;
 
           if (password) {
-            const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+            const { error: signInError } = await signInWithCompatiblePassword(email, password);
             if (signInError) {
               console.warn('Auto sign-in after custom verification failed', signInError);
             }

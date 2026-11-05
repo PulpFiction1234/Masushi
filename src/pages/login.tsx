@@ -212,6 +212,11 @@ export default function LoginPage() {
             Entrar
           </button>
           
+          <div className="text-right text-sm">
+            <Link href="/forgot-password" className="text-[#93C021] hover:text-[#93C021]">
+              ¿Olvidaste tu PIN?
+            </Link>
+          </div>
           <div className="text-center text-sm text-gray-400">
             ¿No tienes cuenta?{' '}
             <Link href="/register" className="text-[#93C021] hover:text-[#93C021]">

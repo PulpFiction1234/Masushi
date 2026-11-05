@@ -23,6 +23,7 @@ import {
   formatBirthdayWeekRange,
 } from "@/utils/birthday";
 import type { BirthdayEligibility } from "@/types/birthday";
+import { ensureSupabasePassword, getSupabasePasswordCandidates } from "@/utils/strings";
 
 const PLACEHOLDER_IMAGE =
   'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="100%" height="100%" fill="%23222"/><text x="50%" y="50%" font-size="14" fill="%23fff" text-anchor="middle" alignment-baseline="central">Sin imagen</text></svg>';
@@ -155,6 +156,13 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPin, setCurrentPin] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [confirmNewPin, setConfirmNewPin] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordMessage, setPasswordMessage] = useState("");
   const [totalOrders, setTotalOrders] = useState(0);
   const [birthdayStatus, setBirthdayStatus] = useState<BirthdayEligibility | null>(null);
   const [birthdayStatusLoading, setBirthdayStatusLoading] = useState(true);
@@ -407,6 +415,39 @@ export default function ProfilePage() {
     }
   };
 
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError("");
+    setPasswordMessage("");
+    if (!/^\d{4}$/.test(currentPin) || !/^\d{4}$/.test(newPin)) {
+      setPasswordError("El PIN actual y el nuevo deben tener exactamente 4 dígitos.");
+      return;
+    }
+    if (newPin !== confirmNewPin) {
+      setPasswordError("Los PIN nuevos no coinciden.");
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      let authenticated = false;
+      for (const candidate of getSupabasePasswordCandidates(currentPin)) {
+        const { error } = await supabase.auth.signInWithPassword({ email: user?.email || "", password: candidate });
+        if (!error) { authenticated = true; break; }
+      }
+      if (!authenticated) throw new Error("El PIN actual no es correcto.");
+      const { error } = await supabase.auth.updateUser({ password: ensureSupabasePassword(newPin) });
+      if (error) throw error;
+      setPasswordMessage("PIN actualizado correctamente.");
+      setCurrentPin("");
+      setNewPin("");
+      setConfirmNewPin("");
+    } catch (error) {
+      setPasswordError(error instanceof Error ? error.message : "No pudimos cambiar el PIN.");
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -592,6 +633,11 @@ export default function ProfilePage() {
           )}
         </div>
 
+        <div className="mt-6 flex flex-col gap-4 rounded-xl bg-[#111111] p-6 shadow sm:flex-row sm:items-center sm:justify-between">
+          <div><h2 className="text-xl font-bold">Seguridad</h2><p className="mt-1 text-sm text-gray-400">Cambia el PIN de tu cuenta.</p></div>
+          <button type="button" onClick={() => setShowPasswordModal(true)} className="rounded bg-[#222] px-4 py-2 text-sm font-semibold hover:bg-[#2a2a2a]">Cambiar PIN</button>
+        </div>
+
         <div className="bg-[#111111] p-6 rounded-xl shadow space-y-5 mt-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <button
@@ -775,6 +821,24 @@ export default function ProfilePage() {
           )}
         </div>
       </main>
+
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowPasswordModal(false)} />
+          <form onSubmit={handlePasswordChange} className="relative w-full max-w-md space-y-4 rounded-3xl border border-white/10 bg-[#111111] p-6">
+            <h2 className="text-xl font-semibold">Cambiar PIN</h2>
+            <input type="password" inputMode="numeric" maxLength={4} placeholder="PIN actual" value={currentPin} onChange={(e) => setCurrentPin(e.target.value.replace(/\D/g, "").slice(0, 4))} className="w-full rounded bg-[#1a1a1a] px-3 py-2 text-center tracking-widest" />
+            <input type="password" inputMode="numeric" maxLength={4} placeholder="Nuevo PIN" value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 4))} className="w-full rounded bg-[#1a1a1a] px-3 py-2 text-center tracking-widest" />
+            <input type="password" inputMode="numeric" maxLength={4} placeholder="Repite el nuevo PIN" value={confirmNewPin} onChange={(e) => setConfirmNewPin(e.target.value.replace(/\D/g, "").slice(0, 4))} className="w-full rounded bg-[#1a1a1a] px-3 py-2 text-center tracking-widest" />
+            {passwordError && <p className="text-sm text-red-400">{passwordError}</p>}
+            {passwordMessage && <p className="text-sm text-[#93C021]">{passwordMessage}</p>}
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setShowPasswordModal(false)} className="rounded border border-white/10 px-4 py-2">Cancelar</button>
+              <button type="submit" disabled={changingPassword} className="rounded bg-[#93C021] px-4 py-2 font-semibold text-gray-900">{changingPassword ? "Guardando..." : "Cambiar PIN"}</button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {showBirthdayModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8">

@@ -56,24 +56,31 @@ export default function ResetPasswordPage() {
         if (authError) {
           cleanRecoveryUrl();
           if (active) setRecoveryError(authError);
+          if (active) setChecking(false);
           return;
         }
 
         const code = url.searchParams.get("code");
-        if (code) {
+        const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
+        const accessToken = hashParams.get("access_token");
+        const refreshToken = hashParams.get("refresh_token");
+        const { data: existingSession } = await supabase.auth.getSession();
+
+        if (code && !existingSession.session) {
           const { error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) throw error;
+        } else if (accessToken && refreshToken && !existingSession.session) {
+          const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+          if (error) throw error;
+        }
+
+        if (code || (accessToken && refreshToken)) {
           cleanRecoveryUrl();
         } else if (url.hash) {
           const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
-          const accessToken = hashParams.get("access_token");
-          const refreshToken = hashParams.get("refresh_token");
-          if (accessToken && refreshToken) {
-            const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
-            if (error) throw error;
-            cleanRecoveryUrl();
-          }
+          if (hashParams.has("error") || hashParams.has("error_code")) cleanRecoveryUrl();
         }
+
         const { data } = await supabase.auth.getSession();
         if (active && !data.session) setReady(false);
       } catch (error) {

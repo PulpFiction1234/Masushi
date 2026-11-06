@@ -59,7 +59,7 @@ export default function App({ Component, pageProps }: AppProps) {
     createPagesBrowserClient({
       options: {
         auth: {
-          flowType: "implicit",
+          flowType: "pkce",
           detectSessionInUrl: false,
         },
       },

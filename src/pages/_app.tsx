@@ -55,7 +55,16 @@ export default function App({ Component, pageProps }: AppProps) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const router = useRouter();
 
-  const [supabaseClient] = useState(() => createPagesBrowserClient());
+  const [supabaseClient] = useState(() =>
+    createPagesBrowserClient({
+      options: {
+        auth: {
+          flowType: "implicit",
+          detectSessionInUrl: false,
+        },
+      },
+    }),
+  );
 
   useEffect(() => {
     const open = () => setIsCartOpen(true);

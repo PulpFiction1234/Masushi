@@ -5,6 +5,19 @@ import Footer from "@/components/Footer";
 import Seo from "@/components/Seo";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 
+const PRODUCTION_SITE_URL = "https://www.masushi.cl";
+
+const getRecoveryRedirect = () => {
+  const configured = (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "");
+  if (process.env.NODE_ENV === "production") {
+    return `${PRODUCTION_SITE_URL}/reset-password`;
+  }
+  if (configured && configured !== "http://localhost:3000") {
+    return `${configured}/reset-password`;
+  }
+  return `${window.location.origin}/reset-password`;
+};
+
 export default function ForgotPasswordPage() {
   const supabase = useSupabaseClient();
   const [email, setEmail] = useState("");
@@ -24,8 +37,7 @@ export default function ForgotPasswordPage() {
 
     setSubmitting(true);
     try {
-      const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || window.location.origin).replace(/\/$/, "");
-      const redirectTo = `${siteUrl}/reset-password`;
+      const redirectTo = getRecoveryRedirect();
       const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, { redirectTo });
       if (error) throw error;
       setMessage("Si el correo está registrado, recibirás un enlace para crear un nuevo PIN.");

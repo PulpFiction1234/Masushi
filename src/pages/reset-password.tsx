@@ -16,6 +16,35 @@ export default function ResetPasswordPage() {
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [success, setSuccess] = useState(false);
+  const [recoveryError, setRecoveryError] = useState("");
+
+  const cleanRecoveryUrl = () => {
+    window.history.replaceState(null, "", window.location.pathname);
+  };
+
+  const readAuthError = (url: URL) => {
+    const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
+    const allParams = [url.searchParams, hashParams];
+    for (const params of allParams) {
+      const errorCode = params.get("error_code");
+      const error = params.get("error");
+      const description = params.get("error_description");
+      if (!errorCode && !error && !description) continue;
+
+      const normalized = `${errorCode || error || ""} ${description || ""}`.toLowerCase();
+      if (normalized.includes("expired") || normalized.includes("otp_expired")) {
+        return "El enlace de recuperación expiró. Solicita uno nuevo.";
+      }
+      if (normalized.includes("reuse") || normalized.includes("used")) {
+        return "Este enlace ya fue utilizado. Solicita uno nuevo.";
+      }
+      if (normalized.includes("access_denied") || normalized.includes("invalid")) {
+        return "El enlace de recuperación es inválido.";
+      }
+      return "No pudimos validar el enlace de recuperación.";
+    }
+    return "";
+  };
 
   useEffect(() => {
     let active = true;
@@ -23,10 +52,18 @@ export default function ResetPasswordPage() {
     const initializeRecovery = async () => {
       try {
         const url = new URL(window.location.href);
+        const authError = readAuthError(url);
+        if (authError) {
+          cleanRecoveryUrl();
+          if (active) setRecoveryError(authError);
+          return;
+        }
+
         const code = url.searchParams.get("code");
         if (code) {
           const { error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) throw error;
+          cleanRecoveryUrl();
         } else if (url.hash) {
           const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
           const accessToken = hashParams.get("access_token");
@@ -34,15 +71,19 @@ export default function ResetPasswordPage() {
           if (accessToken && refreshToken) {
             const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
             if (error) throw error;
+            cleanRecoveryUrl();
           }
         }
-
-        window.history.replaceState(null, "", `${url.pathname}${url.search}`);
         const { data } = await supabase.auth.getSession();
-        if (active) setReady(Boolean(data.session));
+        if (active && !data.session) setReady(false);
       } catch (error) {
         if (active) {
-          setErrorMessage(error instanceof Error ? error.message : "El enlace de recuperación no es válido o expiró.");
+          const message = error instanceof Error ? error.message.toLowerCase() : "";
+          setRecoveryError(
+            message.includes("expired")
+              ? "El enlace de recuperación expiró. Solicita uno nuevo."
+              : "El enlace de recuperación es inválido o ya fue utilizado.",
+          );
         }
       } finally {
         if (active) setChecking(false);
@@ -50,7 +91,13 @@ export default function ResetPasswordPage() {
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (active && (event === "PASSWORD_RECOVERY" || session)) setReady(Boolean(session));
+      if (!active) return;
+      if (event === "PASSWORD_RECOVERY" && session) {
+        setRecoveryError("");
+        setReady(true);
+      } else if (event === "SIGNED_OUT") {
+        setReady(false);
+      }
     });
 
     void initializeRecovery();
@@ -76,6 +123,8 @@ export default function ResetPasswordPage() {
     try {
       const { error } = await supabase.auth.updateUser({ password: ensureSupabasePassword(pin) });
       if (error) throw error;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("La sesión de recuperación finalizó.");
       setSuccess(true);
       await supabase.auth.signOut();
     } catch (error) {
@@ -96,7 +145,7 @@ export default function ResetPasswordPage() {
           </div>
         ) : !ready ? (
           <div className="w-full max-w-sm rounded-xl bg-[#111111] p-6 text-center">
-            <p className="text-gray-300">El enlace de recuperación no es válido o expiró.</p>
+            <p className="text-gray-300">{recoveryError || "El enlace de recuperación no es válido o expiró."}</p>
             {errorMessage && <p className="mt-2 text-sm text-red-400">{errorMessage}</p>}
             <button type="button" onClick={() => router.push("/forgot-password")} className="mt-4 text-sm text-[#93C021]">Solicitar un enlace nuevo</button>
           </div>

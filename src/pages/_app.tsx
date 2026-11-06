@@ -12,7 +12,7 @@ import CarritoPanel from "@/components/CarritoPanel";
 import { Analytics } from "@vercel/analytics/react";
 
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
-import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@supabase/supabase-js";
 
 const inclusiveSans = Inclusive_Sans({
   subsets: ["latin"],
@@ -56,14 +56,18 @@ export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
 
   const [supabaseClient] = useState(() =>
-    createPagesBrowserClient({
-      options: {
+    createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
         auth: {
           flowType: "pkce",
           detectSessionInUrl: false,
+          persistSession: true,
+          autoRefreshToken: true,
         },
-      },
-    }),
+      }
+    )
   );
 
   useEffect(() => {

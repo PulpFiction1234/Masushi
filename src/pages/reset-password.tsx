@@ -6,6 +6,20 @@ import Seo from "@/components/Seo";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { ensureSupabasePassword } from "@/utils/strings";
 
+const RECOVERY_FLAG_KEY = "masushi:pin-recovery";
+
+const setRecoveryFlag = () => {
+  try { sessionStorage.setItem(RECOVERY_FLAG_KEY, "1"); } catch {}
+};
+
+const hasRecoveryFlag = () => {
+  try { return sessionStorage.getItem(RECOVERY_FLAG_KEY) === "1"; } catch { return false; }
+};
+
+const clearRecoveryFlag = () => {
+  try { sessionStorage.removeItem(RECOVERY_FLAG_KEY); } catch {}
+};
+
 export default function ResetPasswordPage() {
   const router = useRouter();
   const supabase = useSupabaseClient();
@@ -55,8 +69,10 @@ export default function ResetPasswordPage() {
         const authError = readAuthError(url);
         if (authError) {
           cleanRecoveryUrl();
-          if (active) setRecoveryError(authError);
-          if (active) setChecking(false);
+          if (active) {
+            setRecoveryError(authError);
+            setChecking(false);
+          }
           return;
         }
 
@@ -64,26 +80,37 @@ export default function ResetPasswordPage() {
         const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
         const accessToken = hashParams.get("access_token");
         const refreshToken = hashParams.get("refresh_token");
-        const { data: existingSession } = await supabase.auth.getSession();
-
-        if (code && !existingSession.session) {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) throw error;
-        } else if (accessToken && refreshToken && !existingSession.session) {
-          const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
-          if (error) throw error;
-        }
 
         if (code || (accessToken && refreshToken)) {
+          // El enlace de recuperación prevalece sobre cualquier sesión previa.
+          // No llamar signOut antes: eliminaría el code verifier PKCE.
+          if (code) {
+            const { error } = await supabase.auth.exchangeCodeForSession(code);
+            if (error) throw error;
+          } else if (accessToken && refreshToken) {
+            const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+            if (error) throw error;
+          }
+
+          setRecoveryFlag();
           cleanRecoveryUrl();
-        } else if (url.hash) {
-          const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
-          if (hashParams.has("error") || hashParams.has("error_code")) cleanRecoveryUrl();
+          if (active) {
+            setRecoveryError("");
+            setReady(true);
+          }
+          return;
         }
 
+        if (url.hash) {
+          const params = new URLSearchParams(url.hash.replace(/^#/, ""));
+          if (params.has("error") || params.has("error_code")) cleanRecoveryUrl();
+        }
+
+        // Sin parámetros en la URL: solo continuar si esta pestaña ya estaba en recuperación.
         const { data } = await supabase.auth.getSession();
-        if (active && !data.session) setReady(false);
+        if (active) setReady(Boolean(data.session) && hasRecoveryFlag());
       } catch (error) {
+        clearRecoveryFlag();
         if (active) {
           const message = error instanceof Error ? error.message.toLowerCase() : "";
           setRecoveryError(
@@ -91,6 +118,7 @@ export default function ResetPasswordPage() {
               ? "El enlace de recuperación expiró. Solicita uno nuevo."
               : "El enlace de recuperación es inválido o ya fue utilizado.",
           );
+          setReady(false);
         }
       } finally {
         if (active) setChecking(false);
@@ -100,9 +128,11 @@ export default function ResetPasswordPage() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) return;
       if (event === "PASSWORD_RECOVERY" && session) {
+        setRecoveryFlag();
         setRecoveryError("");
         setReady(true);
       } else if (event === "SIGNED_OUT") {
+        clearRecoveryFlag();
         setReady(false);
       }
     });
@@ -132,6 +162,7 @@ export default function ResetPasswordPage() {
       if (error) throw error;
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("La sesión de recuperación finalizó.");
+      clearRecoveryFlag();
       setSuccess(true);
       await supabase.auth.signOut();
     } catch (error) {
@@ -150,17 +181,17 @@ export default function ResetPasswordPage() {
           <div className="w-full max-w-sm rounded-xl bg-[#111111] p-6 text-center">
             <p className="text-gray-300">Validando enlace de recuperación...</p>
           </div>
-        ) : !ready ? (
-          <div className="w-full max-w-sm rounded-xl bg-[#111111] p-6 text-center">
-            <p className="text-gray-300">{recoveryError || "El enlace de recuperación no es válido o expiró."}</p>
-            {errorMessage && <p className="mt-2 text-sm text-red-400">{errorMessage}</p>}
-            <button type="button" onClick={() => router.push("/forgot-password")} className="mt-4 text-sm text-[#93C021]">Solicitar un enlace nuevo</button>
-          </div>
         ) : success ? (
           <div className="w-full max-w-sm space-y-4 rounded-xl bg-[#111111] p-6 text-center">
             <h1 className="text-2xl font-bold">PIN actualizado</h1>
             <p className="text-sm text-gray-300">Ya puedes iniciar sesión con tu nuevo PIN.</p>
             <button type="button" onClick={() => router.replace("/login")} className="w-full rounded bg-[#D1933E] py-2 font-semibold">Ir a iniciar sesión</button>
+          </div>
+        ) : !ready ? (
+          <div className="w-full max-w-sm rounded-xl bg-[#111111] p-6 text-center">
+            <p className="text-gray-300">{recoveryError || "El enlace de recuperación no es válido o expiró."}</p>
+            {errorMessage && <p className="mt-2 text-sm text-red-400">{errorMessage}</p>}
+            <button type="button" onClick={() => router.push("/forgot-password")} className="mt-4 text-sm text-[#93C021]">Solicitar un enlace nuevo</button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4 rounded-xl bg-[#111111] p-6 shadow">

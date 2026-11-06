@@ -2,7 +2,24 @@
 
 Fecha: 2026-11-06
 
-## Resumen ejecutivo
+## Resolución aplicada (2026-11-06, segunda revisión)
+
+Se corrigieron todos los hallazgos bloqueantes y altos:
+
+1. **Envío de correo reescrito**: nuevo endpoint `POST /api/auth/request-password-reset` que genera el enlace con `admin.generateLink` y lo envía por el SMTP propio (nodemailer), el mismo canal que ya funciona para los códigos de verificación. Fallback al correo de Supabase si el SMTP falla. Ver [PASSWORD-RESET-SETUP.md](PASSWORD-RESET-SETUP.md).
+2. **Bug crítico en `/reset-password`**: el formulario dependía del evento `PASSWORD_RECOVERY`, que nunca se emite con `detectSessionInUrl: false` + intercambio manual (`exchangeCodeForSession`/`setSession` emiten `SIGNED_IN`). Ahora la página habilita el formulario directamente al establecer la sesión desde la URL.
+3. **PKCE cross-device resuelto**: el enlace generado en servidor redirige con tokens en el hash, válidos en cualquier dispositivo/navegador.
+4. **Sesión previa**: el enlace de recuperación ahora prevalece sobre una sesión ordinaria activa (antes se omitía el intercambio y se mostraba "enlace inválido").
+5. **Refresh de la página**: se mantiene el acceso al formulario con una marca en `sessionStorage`; una sesión ordinaria sin la marca sigue siendo rechazada.
+6. **Pantalla de éxito**: se reordenó el render para que el `signOut` posterior a actualizar el PIN no reemplace el mensaje de éxito por "enlace inválido".
+7. **Rate limit y privacidad**: cooldown de 60 s por correo y respuesta genérica que no revela si el correo está registrado.
+
+Pendiente de verificación manual fuera del repositorio:
+
+- Plantilla **Reset Password** de Supabase con `{{ .ConfirmationURL }}` (solo se usa en el fallback).
+- Variables `SMTP_*`/`FROM_EMAIL` presentes en Vercel.
+
+## Resumen ejecutivo (revisión original)
 
 Se encontraron dos problemas bloqueantes:
 

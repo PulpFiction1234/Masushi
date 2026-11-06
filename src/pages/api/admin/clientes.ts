@@ -1,6 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import type { User } from '@supabase/supabase-js';
 import supabaseAdmin from '@/server/supabase';
 import { buildFullName } from '@/utils/name';
+import { normalize } from '@/utils/strings';
 import { isWithinBirthdayWindow, BIRTHDAY_MIN_MONTHS, BIRTHDAY_MIN_ORDERS } from '@/utils/birthday';
 import { monthsBetween } from '@/utils/birthday';
 
@@ -12,8 +14,182 @@ type VerificationRow = {
   created_at: string | null;
 };
 
+type ProfileLite = {
+  id: string;
+  full_name: string | null;
+  apellido_paterno: string | null;
+  apellido_materno: string | null;
+  phone: string | null;
+};
+
+type ProfileRow = ProfileLite & {
+  role: string | null;
+  created_at: string | null;
+  birthday: string | null;
+  legacy_order_count: number | null;
+};
+
 // Protected admin endpoint to list all registered users (clients).
 // Returns: id, email, full_name, phone, created_at, role
+
+// In-memory cache (best-effort in serverless) so a global search does not
+// re-read auth.users and profiles on every keystroke.
+const SEARCH_CACHE_TTL_MS = 60_000;
+let searchCache: { at: number; users: User[]; profiles: ProfileLite[] } | null = null;
+
+const fetchAllAuthUsers = async (): Promise<User[]> => {
+  const all: User[] = [];
+  const perPage = 200;
+  for (let page = 1; page <= 50; page += 1) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+    if (error) throw error;
+    const users = data?.users || [];
+    all.push(...users);
+    if (users.length < perPage) break;
+  }
+  return all;
+};
+
+const fetchAllProfilesLite = async (): Promise<ProfileLite[]> => {
+  const all: ProfileLite[] = [];
+  const pageSize = 1000;
+  for (let from = 0; from < 50_000; from += pageSize) {
+    const { data, error } = await supabaseAdmin
+      .from('profiles')
+      .select('id, full_name, apellido_paterno, apellido_materno, phone')
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    const rows = data || [];
+    all.push(...rows);
+    if (rows.length < pageSize) break;
+  }
+  return all;
+};
+
+const getSearchDataset = async () => {
+  const now = Date.now();
+  if (searchCache && now - searchCache.at < SEARCH_CACHE_TTL_MS) return searchCache;
+  const [users, profiles] = await Promise.all([fetchAllAuthUsers(), fetchAllProfilesLite()]);
+  searchCache = { at: now, users, profiles };
+  return searchCache;
+};
+
+// Enriches a slice of auth users with profile, order count and verification data.
+const enrichUsers = async (users: User[]) => {
+  const userIds = users.map((u) => u.id);
+  if (userIds.length === 0) return [];
+
+  // Get corresponding profiles from public.profiles
+  const { data: profiles, error: profilesError } = await supabaseAdmin
+    .from('profiles')
+    .select('id, full_name, phone, role, created_at, apellido_paterno, apellido_materno, birthday, legacy_order_count')
+    .in('id', userIds);
+
+  // Fetch order counts per user for birthday eligibility
+  const { data: orderCounts, error: orderCountError } = await supabaseAdmin
+    .from('orders')
+    .select('user_id')
+    .in('user_id', userIds);
+
+  if (orderCountError) {
+    console.error('[admin:clientes] error fetching order counts', orderCountError);
+  }
+
+  // Count orders per user
+  const orderCountMap = new Map<string, number>();
+  if (Array.isArray(orderCounts)) {
+    for (const order of orderCounts) {
+      const count = orderCountMap.get(order.user_id) || 0;
+      orderCountMap.set(order.user_id, count + 1);
+    }
+  }
+
+  if (profilesError) {
+    console.error('[admin:clientes] error fetching profiles', profilesError);
+    // Continue without profiles data
+  }
+
+  // Fetch latest verification codes (if any) for these users
+  const { data: verifications, error: verificationError } = await supabaseAdmin
+    .from('email_verifications')
+    .select('user_id, code, used, expires_at, created_at')
+    .in('user_id', userIds)
+    .order('created_at', { ascending: false });
+
+  if (verificationError) {
+    console.error('[admin:clientes] error fetching verifications', verificationError);
+  }
+
+  const verificationMap = new Map<string, VerificationRow>();
+  if (Array.isArray(verifications)) {
+    for (const row of verifications as VerificationRow[]) {
+      if (!verificationMap.has(row.user_id)) {
+        verificationMap.set(row.user_id, row);
+      }
+    }
+  }
+
+  // Merge auth users with profile data
+  const profilesMap = new Map<string, ProfileRow>((profiles || []).map((p: ProfileRow) => [p.id, p]));
+
+  const clientes = users.map((user) => {
+    const profile = profilesMap.get(user.id);
+    const verificationRow = verificationMap.get(user.id);
+    const nowTs = Date.now();
+    let pendingCode: string | null = null;
+    let pendingExpiresAt: string | null = null;
+
+    if (verificationRow && !verificationRow.used && verificationRow.code) {
+      const expiresAtTs = verificationRow.expires_at ? new Date(verificationRow.expires_at).getTime() : null;
+      if (!expiresAtTs || expiresAtTs >= nowTs) {
+        pendingCode = verificationRow.code;
+        pendingExpiresAt = verificationRow.expires_at;
+      }
+    }
+
+    // Construir nombre completo de forma segura evitando duplicados
+    const apellidoPaterno = profile?.apellido_paterno || user.user_metadata?.apellido_paterno || '';
+    const apellidoMaterno = profile?.apellido_materno || user.user_metadata?.apellido_materno || '';
+    const nombreCompleto = buildFullName(profile?.full_name || user.user_metadata?.full_name || '', apellidoPaterno, apellidoMaterno);
+
+    // Calcular elegibilidad para descuento de cumpleaños
+    const birthday = profile?.birthday || null;
+    const userCreatedAt = profile?.created_at || user.created_at;
+    const legacyOrderCount = typeof profile?.legacy_order_count === 'number' ? profile.legacy_order_count : 0;
+    const orderCount = (orderCountMap.get(user.id) || 0) + legacyOrderCount;
+    const monthsRegistered = monthsBetween(userCreatedAt, new Date());
+    const meetsMinMonths = monthsRegistered >= BIRTHDAY_MIN_MONTHS;
+    const meetsMinOrders = orderCount >= BIRTHDAY_MIN_ORDERS;
+    const isInBirthdayWeek = birthday ? isWithinBirthdayWindow(birthday) : false;
+    const birthdayEligible = birthday && meetsMinMonths && meetsMinOrders && isInBirthdayWeek;
+
+    return {
+      id: user.id,
+      email: user.email || '',
+      full_name: nombreCompleto,
+      phone: profile?.phone || user.user_metadata?.phone || '',
+      role: profile?.role || 'user',
+      created_at: userCreatedAt,
+      birthday,
+      birthdayEligible,
+      orderCount,
+      isInBirthdayWeek,
+      meetsMinMonths,
+      meetsMinOrders,
+      monthsRegistered,
+      verification: {
+        verified: Boolean(user.email_confirmed_at),
+        confirmed_at: user.email_confirmed_at || null,
+        pending_code: pendingCode,
+        pending_expires_at: pendingExpiresAt,
+      },
+    };
+  });
+
+  // Sort by created_at desc (newest first)
+  clientes.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  return clientes;
+};
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
@@ -23,6 +199,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const parsedPerPage = Number(req.query.perPage || 50);
     const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
     const perPage = Number.isFinite(parsedPerPage) ? Math.min(Math.max(parsedPerPage, 1), 200) : 50;
+    const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+
+    // Búsqueda global: recorre todos los usuarios y agrupa los resultados
+    // antes de paginar, en vez de filtrar solo la página visible.
+    if (q) {
+      const tokens = normalize(q).split(/\s+/).filter(Boolean);
+      const { users, profiles } = await getSearchDataset();
+      const profilesMap = new Map<string, ProfileLite>(profiles.map((p) => [p.id, p]));
+
+      const matched = users.filter((user) => {
+        const profile = profilesMap.get(user.id);
+        const nombre = normalize(
+          buildFullName(
+            profile?.full_name || user.user_metadata?.full_name || '',
+            profile?.apellido_paterno || user.user_metadata?.apellido_paterno || '',
+            profile?.apellido_materno || user.user_metadata?.apellido_materno || '',
+          ),
+        );
+        const correo = normalize(user.email || '');
+        const telefono = normalize(profile?.phone || user.user_metadata?.phone || '');
+        return tokens.every((t) => nombre.includes(t) || correo.includes(t) || telefono.includes(t));
+      });
+
+      matched.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      const total = matched.length;
+      const slice = matched.slice((page - 1) * perPage, page * perPage);
+      const clientes = await enrichUsers(slice);
+      return res.status(200).json({ clientes, page, perPage, total });
+    }
 
     // Count total profiles to build pagination metadata
     const { count: totalCount, error: countError } = await supabaseAdmin
@@ -34,133 +240,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Get all users from auth.users
     const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
-    
+
     if (authError) {
       console.error('[admin:clientes] error listing users', authError);
       return res.status(500).json({ error: authError.message || String(authError) });
     }
 
     const users = authUsers?.users || [];
-    
-    // Get corresponding profiles from public.profiles
-    const userIds = users.map(u => u.id);
-    
-    if (userIds.length === 0) {
-      return res.status(200).json({ clientes: [], page, perPage, total: totalCount || 0 });
-    }
-
-    const { data: profiles, error: profilesError } = await supabaseAdmin
-      .from('profiles')
-      .select('id, full_name, phone, role, created_at, apellido_paterno, apellido_materno, birthday, legacy_order_count')
-      .in('id', userIds);
-
-    // Fetch order counts per user for birthday eligibility
-    const { data: orderCounts, error: orderCountError } = await supabaseAdmin
-      .from('orders')
-      .select('user_id')
-      .in('user_id', userIds);
-
-    if (orderCountError) {
-      console.error('[admin:clientes] error fetching order counts', orderCountError);
-    }
-
-    // Count orders per user
-    const orderCountMap = new Map<string, number>();
-    if (Array.isArray(orderCounts)) {
-      for (const order of orderCounts) {
-        const count = orderCountMap.get(order.user_id) || 0;
-        orderCountMap.set(order.user_id, count + 1);
-      }
-    }
-
-    if (profilesError) {
-      console.error('[admin:clientes] error fetching profiles', profilesError);
-      // Continue without profiles data
-    }
-
-    // Fetch latest verification codes (if any) for these users
-    const { data: verifications, error: verificationError } = await supabaseAdmin
-      .from('email_verifications')
-      .select('user_id, code, used, expires_at, created_at')
-      .in('user_id', userIds)
-      .order('created_at', { ascending: false });
-
-    if (verificationError) {
-      console.error('[admin:clientes] error fetching verifications', verificationError);
-    }
-
-    const verificationMap = new Map<string, VerificationRow>();
-    if (Array.isArray(verifications)) {
-      for (const row of verifications as VerificationRow[]) {
-        if (!verificationMap.has(row.user_id)) {
-          verificationMap.set(row.user_id, row);
-        }
-      }
-    }
-
-    // Merge auth users with profile data
-    const profilesMap = new Map(profiles?.map(p => [p.id, p]) || []);
-    
-    const clientes = users.map(user => {
-      const profile = profilesMap.get(user.id) as any;
-      const verificationRow = verificationMap.get(user.id);
-      const nowTs = Date.now();
-      let pendingCode: string | null = null;
-      let pendingExpiresAt: string | null = null;
-
-      if (verificationRow && !verificationRow.used && verificationRow.code) {
-        const expiresAtTs = verificationRow.expires_at ? new Date(verificationRow.expires_at).getTime() : null;
-        if (!expiresAtTs || expiresAtTs >= nowTs) {
-          pendingCode = verificationRow.code;
-          pendingExpiresAt = verificationRow.expires_at;
-        }
-      }
-      
-      // Construir nombre completo de forma segura evitando duplicados
-      const apellidoPaterno = profile?.apellido_paterno || user.user_metadata?.apellido_paterno || '';
-      const apellidoMaterno = profile?.apellido_materno || user.user_metadata?.apellido_materno || '';
-      const nombreCompleto = buildFullName(profile?.full_name || user.user_metadata?.full_name || '', apellidoPaterno, apellidoMaterno);
-      
-      // Calcular elegibilidad para descuento de cumpleaños
-      const birthday = profile?.birthday || null;
-      const userCreatedAt = profile?.created_at || user.created_at;
-      const legacyOrderCount = typeof (profile as any)?.legacy_order_count === 'number' ? (profile as any).legacy_order_count : 0;
-      const orderCount = (orderCountMap.get(user.id) || 0) + legacyOrderCount;
-      const monthsRegistered = monthsBetween(userCreatedAt, new Date());
-      const meetsMinMonths = monthsRegistered >= BIRTHDAY_MIN_MONTHS;
-      const meetsMinOrders = orderCount >= BIRTHDAY_MIN_ORDERS;
-      const isInBirthdayWeek = birthday ? isWithinBirthdayWindow(birthday) : false;
-      const birthdayEligible = birthday && meetsMinMonths && meetsMinOrders && isInBirthdayWeek;
-
-      return {
-        id: user.id,
-        email: user.email || '',
-        full_name: nombreCompleto,
-        phone: profile?.phone || user.user_metadata?.phone || '',
-        role: profile?.role || 'user',
-        created_at: userCreatedAt,
-        birthday,
-        birthdayEligible,
-        orderCount,
-        isInBirthdayWeek,
-        meetsMinMonths,
-        meetsMinOrders,
-        monthsRegistered,
-        verification: {
-          verified: Boolean(user.email_confirmed_at),
-          confirmed_at: user.email_confirmed_at || null,
-          pending_code: pendingCode,
-          pending_expires_at: pendingExpiresAt,
-        },
-      };
-    });
-
-    // Sort by created_at desc (newest first)
-    clientes.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    const clientes = await enrichUsers(users);
 
     return res.status(200).json({ clientes, page, perPage, total: totalCount || clientes.length });
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('[admin:clientes] exception', e);
-    return res.status(500).json({ error: e?.message || String(e) });
+    const message = e instanceof Error ? e.message : String(e);
+    return res.status(500).json({ error: message });
   }
 }

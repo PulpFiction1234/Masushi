@@ -24,6 +24,7 @@ import {
 } from "@/utils/birthday";
 import type { BirthdayEligibility } from "@/types/birthday";
 import { ensureSupabasePassword, getSupabasePasswordCandidates } from "@/utils/strings";
+import { PASSWORD_RECOVERY_ENABLED } from "@/utils/featureFlags";
 
 const PLACEHOLDER_IMAGE =
   'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="100%" height="100%" fill="%23222"/><text x="50%" y="50%" font-size="14" fill="%23fff" text-anchor="middle" alignment-baseline="central">Sin imagen</text></svg>';
@@ -633,10 +634,12 @@ export default function ProfilePage() {
           )}
         </div>
 
-        <div className="mt-6 flex flex-col gap-4 rounded-xl bg-[#111111] p-6 shadow sm:flex-row sm:items-center sm:justify-between">
-          <div><h2 className="text-xl font-bold">Seguridad</h2><p className="mt-1 text-sm text-gray-400">Cambia el PIN de tu cuenta.</p></div>
-          <button type="button" onClick={() => setShowPasswordModal(true)} className="rounded bg-[#222] px-4 py-2 text-sm font-semibold hover:bg-[#2a2a2a]">Cambiar PIN</button>
-        </div>
+        {PASSWORD_RECOVERY_ENABLED && (
+          <div className="mt-6 flex flex-col gap-4 rounded-xl bg-[#111111] p-6 shadow sm:flex-row sm:items-center sm:justify-between">
+            <div><h2 className="text-xl font-bold">Seguridad</h2><p className="mt-1 text-sm text-gray-400">Cambia el PIN de tu cuenta.</p></div>
+            <button type="button" onClick={() => setShowPasswordModal(true)} className="rounded bg-[#222] px-4 py-2 text-sm font-semibold hover:bg-[#2a2a2a]">Cambiar PIN</button>
+          </div>
+        )}
 
         <div className="bg-[#111111] p-6 rounded-xl shadow space-y-5 mt-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -822,7 +825,7 @@ export default function ProfilePage() {
         </div>
       </main>
 
-      {showPasswordModal && (
+      {PASSWORD_RECOVERY_ENABLED && showPasswordModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowPasswordModal(false)} />
           <form onSubmit={handlePasswordChange} className="relative w-full max-w-md space-y-4 rounded-3xl border border-white/10 bg-[#111111] p-6">

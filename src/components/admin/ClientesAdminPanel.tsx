@@ -2,7 +2,6 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { FiAlertCircle, FiCalendar, FiCheckCircle, FiGift, FiPhone } from "react-icons/fi";
-import { normalize } from "@/utils/strings";
 
 interface Cliente {
   id: string;
@@ -30,15 +29,27 @@ export default function ClientesAdminPanel() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(50);
   const [total, setTotal] = useState(0);
+
+  // Debounce: la búsqueda se envía al servidor para agrupar resultados de todas las páginas.
+  useEffect(() => {
+    const handle = setTimeout(() => setDebouncedQuery(query.trim()), 350);
+    return () => clearTimeout(handle);
+  }, [query]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedQuery]);
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
         const params = new URLSearchParams({ page: String(page), perPage: String(perPage) });
+        if (debouncedQuery) params.set('q', debouncedQuery);
         const r = await fetch(`/api/admin/clientes?${params.toString()}`);
         if (!r.ok) {
           console.error('Error fetching clientes');
@@ -54,7 +65,10 @@ export default function ClientesAdminPanel() {
         if (mounted) setLoading(false);
       }
     })();
-  }, [page, perPage]);
+    return () => {
+      mounted = false;
+    };
+  }, [page, perPage, debouncedQuery]);
 
   const totalPages = Math.max(1, Math.ceil(total / perPage || 1));
 
@@ -70,19 +84,6 @@ export default function ClientesAdminPanel() {
     for (let n = start; n <= end; n++) nums.push(n);
     return nums;
   }, [page, totalPages]);
-
-  const queryNorm = normalize(query).trim();
-  const tokens = useMemo(() => queryNorm.split(/\s+/).filter(Boolean), [queryNorm]);
-
-  const filtered = useMemo(() => {
-    if (tokens.length === 0) return clientes;
-    return clientes.filter((c) => {
-      const nombre = normalize(c.full_name || "");
-      const correo = normalize(c.email || "");
-      const telefono = normalize(c.phone || "");
-      return tokens.every((t) => nombre.includes(t) || correo.includes(t) || telefono.includes(t));
-    });
-  }, [clientes, tokens]);
 
   const formatDate = (dateStr: string) => {
     try {
@@ -185,7 +186,9 @@ export default function ClientesAdminPanel() {
             Total de clientes registrados: <span className="font-semibold text-white">{total || clientes.length}</span>
           </p>
           <p className="text-xs text-gray-400">
-            Mostrando: {filtered.length} cliente{filtered.length !== 1 ? 's' : ''} (página {page} de {totalPages})
+            {debouncedQuery
+              ? `Resultados para "${debouncedQuery}": ${total} (página ${page} de ${totalPages})`
+              : `Mostrando: ${clientes.length} cliente${clientes.length !== 1 ? 's' : ''} (página ${page} de ${totalPages})`}
           </p>
         </div>
         <input 
@@ -196,7 +199,7 @@ export default function ClientesAdminPanel() {
         />
       </div>
 
-      {filtered.length === 0 ? (
+      {clientes.length === 0 ? (
         <div className="bg-[#1a1a1a] p-6 rounded text-center">
           <p className="text-gray-400">
             {query ? 'No se encontraron clientes con esos criterios de búsqueda.' : 'No hay clientes registrados.'}
@@ -219,7 +222,7 @@ export default function ClientesAdminPanel() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-700">
-                {filtered.map((cliente) => {
+                {clientes.map((cliente) => {
                   const verification = getVerificationInfo(cliente);
                   return (
                     <tr key={cliente.id} className="hover:bg-[#1c1c1c]">
@@ -282,7 +285,7 @@ export default function ClientesAdminPanel() {
 
           {/* Vista de tarjetas para móviles */}
           <div className="md:hidden grid gap-3">
-            {filtered.map((cliente) => {
+            {clientes.map((cliente) => {
               const verification = getVerificationInfo(cliente);
               return (
                 <div key={cliente.id} className="bg-[#1a1a1a] p-4 rounded-lg">

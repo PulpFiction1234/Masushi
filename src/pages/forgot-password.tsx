@@ -3,23 +3,8 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Seo from "@/components/Seo";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
-
-const PRODUCTION_SITE_URL = "https://www.masushi.cl";
-
-const getRecoveryRedirect = () => {
-  const configured = (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "");
-  if (process.env.NODE_ENV === "production") {
-    return `${PRODUCTION_SITE_URL}/reset-password`;
-  }
-  if (configured && configured !== "http://localhost:3000") {
-    return `${configured}/reset-password`;
-  }
-  return `${window.location.origin}/reset-password`;
-};
 
 export default function ForgotPasswordPage() {
-  const supabase = useSupabaseClient();
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
@@ -37,12 +22,31 @@ export default function ForgotPasswordPage() {
 
     setSubmitting(true);
     try {
-      const redirectTo = getRecoveryRedirect();
-      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, { redirectTo });
-      if (error) throw error;
-      setMessage("Si el correo está registrado, recibirás un enlace para crear un nuevo PIN.");
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "No pudimos enviar el correo de recuperación.");
+      const resp = await fetch("/api/auth/request-password-reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalizedEmail }),
+      });
+      const json = await resp.json().catch(() => null);
+
+      if (resp.ok) {
+        setMessage("Si el correo está registrado, recibirás un enlace para crear un nuevo PIN.");
+        return;
+      }
+
+      if (resp.status === 429) {
+        const retry = json?.retry_after;
+        setErrorMessage(
+          retry && Number.isFinite(retry)
+            ? `Ya enviamos un enlace. Puedes solicitar uno nuevo en ${retry} segundos.`
+            : "Ya enviamos un enlace recientemente. Intenta nuevamente en un minuto."
+        );
+        return;
+      }
+
+      setErrorMessage(json?.error || "No pudimos enviar el correo de recuperación.");
+    } catch {
+      setErrorMessage("Error de conexión. Intenta nuevamente.");
     } finally {
       setSubmitting(false);
     }

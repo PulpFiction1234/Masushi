@@ -13,6 +13,7 @@ import { Analytics } from "@vercel/analytics/react";
 
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { capturePasswordRecoveryUrl } from "@/utils/passwordRecovery";
 
 const inclusiveSans = Inclusive_Sans({
   subsets: ["latin"],
@@ -55,6 +56,8 @@ export default function App({ Component, pageProps }: AppProps) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const router = useRouter();
 
+  // The auth helper reads the URL while its client is being constructed.
+  if (typeof window !== "undefined") capturePasswordRecoveryUrl(window);
   const [supabaseClient] = useState(() => createPagesBrowserClient());
 
   useEffect(() => {

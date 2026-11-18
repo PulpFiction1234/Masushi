@@ -1,153 +1,147 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
+import { createClient, type SupportedStorage } from "@supabase/supabase-js";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Seo from "@/components/Seo";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { ensureSupabasePassword } from "@/utils/strings";
+import { updateVerifiedRecoveryPin } from "@/utils/passwordRecoverySession";
+import {
+  classifyRecoveryError,
+  isValidPin,
+  recoveryErrorMessage,
+  takePasswordRecoveryUrl,
+} from "@/utils/passwordRecovery";
+import { PIN_RECOVERY_ENABLED } from "@/utils/featureFlags";
 
-const RECOVERY_FLAG_KEY = "masushi:pin-recovery";
-
-const setRecoveryFlag = () => {
-  try { sessionStorage.setItem(RECOVERY_FLAG_KEY, "1"); } catch {}
+type ResetPasswordProps = {
+  enabled: boolean;
 };
 
-const hasRecoveryFlag = () => {
-  try { return sessionStorage.getItem(RECOVERY_FLAG_KEY) === "1"; } catch { return false; }
+type RecoveryStatus =
+  | "checking"
+  | "disabled"
+  | "missing"
+  | "pending"
+  | "verifying"
+  | "verified"
+  | "expired"
+  | "used"
+  | "invalid"
+  | "temporary-error"
+  | "saving"
+  | "success";
+
+export const getServerSideProps: GetServerSideProps<ResetPasswordProps> = async () => {
+  const { isPasswordResetRequestConfigured } = await import(
+    "@/server/passwordResetRateLimitConfig"
+  );
+  return {
+    props: {
+      enabled:
+        PIN_RECOVERY_ENABLED &&
+        process.env.PIN_RECOVERY_SERVER_ENABLED === "true" &&
+        isPasswordResetRequestConfigured(),
+    },
+  };
 };
 
-const clearRecoveryFlag = () => {
-  try { sessionStorage.removeItem(RECOVERY_FLAG_KEY); } catch {}
-};
-
-export default function ResetPasswordPage() {
+export default function ResetPasswordPage({ enabled }: ResetPasswordProps) {
   const router = useRouter();
-  const supabase = useSupabaseClient();
+  const [recoveryClient] = useState(() => {
+    const sessions = new Map<string, string>();
+    const storage: SupportedStorage = {
+      getItem: (key) => sessions.get(key) ?? null,
+      setItem: (key, value) => {
+        sessions.set(key, value);
+      },
+      removeItem: (key) => {
+        sessions.delete(key);
+      },
+    };
+
+    return createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          flowType: "pkce",
+          detectSessionInUrl: false,
+          persistSession: true,
+          autoRefreshToken: false,
+          storage,
+          storageKey: "masushi-pin-recovery-session",
+        },
+      },
+    );
+  });
+  const [status, setStatus] = useState<RecoveryStatus>("checking");
+  const [pendingTokenHash, setPendingTokenHash] = useState<string | null>(null);
+  const [verifiedUserId, setVerifiedUserId] = useState<string | null>(null);
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
-  const [ready, setReady] = useState(false);
-  const [checking, setChecking] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [success, setSuccess] = useState(false);
-  const [recoveryError, setRecoveryError] = useState("");
-
-  const cleanRecoveryUrl = () => {
-    window.history.replaceState(null, "", window.location.pathname);
-  };
-
-  const readAuthError = (url: URL) => {
-    const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
-    const allParams = [url.searchParams, hashParams];
-    for (const params of allParams) {
-      const errorCode = params.get("error_code");
-      const error = params.get("error");
-      const description = params.get("error_description");
-      if (!errorCode && !error && !description) continue;
-
-      const normalized = `${errorCode || error || ""} ${description || ""}`.toLowerCase();
-      if (normalized.includes("expired") || normalized.includes("otp_expired")) {
-        return "El enlace de recuperación expiró. Solicita uno nuevo.";
-      }
-      if (normalized.includes("reuse") || normalized.includes("used")) {
-        return "Este enlace ya fue utilizado. Solicita uno nuevo.";
-      }
-      if (normalized.includes("access_denied") || normalized.includes("invalid")) {
-        return "El enlace de recuperación es inválido.";
-      }
-      return "No pudimos validar el enlace de recuperación.";
-    }
-    return "";
-  };
+  const initialized = useRef(false);
 
   useEffect(() => {
-    let active = true;
+    if (initialized.current) return;
+    initialized.current = true;
+    const result = takePasswordRecoveryUrl();
+    if (!enabled) {
+      setStatus("disabled");
+      return;
+    }
 
-    const initializeRecovery = async () => {
-      try {
-        const url = new URL(window.location.href);
-        const authError = readAuthError(url);
-        if (authError) {
-          cleanRecoveryUrl();
-          if (active) {
-            setRecoveryError(authError);
-            setChecking(false);
-          }
-          return;
-        }
+    if (result.kind === "token") {
+      setPendingTokenHash(result.tokenHash);
+      setStatus("pending");
+      return;
+    }
+    if (result.kind === "error") {
+      setStatus(result.reason);
+      return;
+    }
+    setStatus("missing");
+  }, [enabled]);
 
-        const code = url.searchParams.get("code");
-        const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
-        const accessToken = hashParams.get("access_token");
-        const refreshToken = hashParams.get("refresh_token");
+  const verifyRecoveryLink = async () => {
+    if (!pendingTokenHash || status === "verifying") return;
+    setErrorMessage("");
+    setStatus("verifying");
 
-        if (code || (accessToken && refreshToken)) {
-          // El enlace de recuperación prevalece sobre cualquier sesión previa.
-          // No llamar signOut antes: eliminaría el code verifier PKCE.
-          if (code) {
-            const { error } = await supabase.auth.exchangeCodeForSession(code);
-            if (error) throw error;
-          } else if (accessToken && refreshToken) {
-            const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
-            if (error) throw error;
-          }
-
-          setRecoveryFlag();
-          cleanRecoveryUrl();
-          if (active) {
-            setRecoveryError("");
-            setReady(true);
-          }
-          return;
-        }
-
-        if (url.hash) {
-          const params = new URLSearchParams(url.hash.replace(/^#/, ""));
-          if (params.has("error") || params.has("error_code")) cleanRecoveryUrl();
-        }
-
-        // Sin parámetros en la URL: solo continuar si esta pestaña ya estaba en recuperación.
-        const { data } = await supabase.auth.getSession();
-        if (active) setReady(Boolean(data.session) && hasRecoveryFlag());
-      } catch (error) {
-        clearRecoveryFlag();
-        if (active) {
-          const message = error instanceof Error ? error.message.toLowerCase() : "";
-          setRecoveryError(
-            message.includes("expired")
-              ? "El enlace de recuperación expiró. Solicita uno nuevo."
-              : "El enlace de recuperación es inválido o ya fue utilizado.",
-          );
-          setReady(false);
-        }
-      } finally {
-        if (active) setChecking(false);
-      }
-    };
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!active) return;
-      if (event === "PASSWORD_RECOVERY" && session) {
-        setRecoveryFlag();
-        setRecoveryError("");
-        setReady(true);
-      } else if (event === "SIGNED_OUT") {
-        clearRecoveryFlag();
-        setReady(false);
-      }
+    const { data, error } = await recoveryClient.auth.verifyOtp({
+      token_hash: pendingTokenHash,
+      type: "recovery",
     });
 
-    void initializeRecovery();
-    return () => {
-      active = false;
-      subscription.unsubscribe();
-    };
-  }, [supabase]);
+    if (error) {
+      const code = error.code;
+      if (code) {
+        setPendingTokenHash(null);
+        setStatus(classifyRecoveryError(`${code} ${error.message}`));
+      } else {
+        setStatus("temporary-error");
+        setErrorMessage("No pudimos verificar el enlace. Comprueba tu conexión e inténtalo nuevamente.");
+      }
+      return;
+    }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    if (!data.user || !data.session || data.user.id !== data.session.user.id) {
+      setPendingTokenHash(null);
+      setStatus("invalid");
+      return;
+    }
+
+    setPendingTokenHash(null);
+    setVerifiedUserId(data.user.id);
+    setStatus("verified");
+  };
+
+  const updatePin = async (event: React.FormEvent) => {
+    event.preventDefault();
     setErrorMessage("");
-    if (!/^\d{4}$/.test(pin)) {
+
+    if (!isValidPin(pin)) {
       setErrorMessage("El PIN debe tener exactamente 4 dígitos.");
       return;
     }
@@ -155,53 +149,134 @@ export default function ResetPasswordPage() {
       setErrorMessage("Los PIN no coinciden.");
       return;
     }
+    if (!verifiedUserId) {
+      setStatus("invalid");
+      return;
+    }
 
-    setSaving(true);
-    try {
-      const { error } = await supabase.auth.updateUser({ password: ensureSupabasePassword(pin) });
-      if (error) throw error;
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("La sesión de recuperación finalizó.");
-      clearRecoveryFlag();
-      setSuccess(true);
-      await supabase.auth.signOut();
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "No pudimos actualizar el PIN.");
-    } finally {
-      setSaving(false);
+    setStatus("saving");
+    const result = await updateVerifiedRecoveryPin(recoveryClient, verifiedUserId, pin);
+    if (result === "invalid") {
+      setErrorMessage("La sesión de recuperación terminó. Solicita un enlace nuevo.");
+      setStatus("invalid");
+      return;
+    }
+
+    if (result === "failed") {
+      setErrorMessage("No pudimos actualizar el PIN. Solicita un enlace nuevo e inténtalo nuevamente.");
+      setStatus("verified");
+      return;
+    }
+
+    setVerifiedUserId(null);
+    setStatus("success");
+    const { error: signOutError } = await recoveryClient.auth.signOut({ scope: "local" });
+    if (signOutError) {
+      console.error("[reset-password] could not clear the local recovery session");
     }
   };
+
+  useEffect(() => {
+    if (status !== "success") return;
+    const timeout = window.setTimeout(() => {
+      void router.replace("/login");
+    }, 1800);
+    return () => window.clearTimeout(timeout);
+  }, [router, status]);
+
+  const requestNewLink = (
+    <button
+      type="button"
+      onClick={() => router.push("/forgot-password")}
+      className="mt-4 text-sm text-[#93C021]"
+    >
+      Solicitar un enlace nuevo
+    </button>
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-black text-white">
       <Seo title="Crear nuevo PIN — Masushi" canonicalPath="/reset-password" noIndex />
       <Navbar />
       <main className="flex flex-1 items-center justify-center p-4">
-        {checking ? (
-          <div className="w-full max-w-sm rounded-xl bg-[#111111] p-6 text-center">
-            <p className="text-gray-300">Validando enlace de recuperación...</p>
-          </div>
-        ) : success ? (
-          <div className="w-full max-w-sm space-y-4 rounded-xl bg-[#111111] p-6 text-center">
-            <h1 className="text-2xl font-bold">PIN actualizado</h1>
-            <p className="text-sm text-gray-300">Ya puedes iniciar sesión con tu nuevo PIN.</p>
-            <button type="button" onClick={() => router.replace("/login")} className="w-full rounded bg-[#D1933E] py-2 font-semibold">Ir a iniciar sesión</button>
-          </div>
-        ) : !ready ? (
-          <div className="w-full max-w-sm rounded-xl bg-[#111111] p-6 text-center">
-            <p className="text-gray-300">{recoveryError || "El enlace de recuperación no es válido o expiró."}</p>
-            {errorMessage && <p className="mt-2 text-sm text-red-400">{errorMessage}</p>}
-            <button type="button" onClick={() => router.push("/forgot-password")} className="mt-4 text-sm text-[#93C021]">Solicitar un enlace nuevo</button>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4 rounded-xl bg-[#111111] p-6 shadow">
-            <h1 className="text-center text-2xl font-bold">Crear nuevo PIN</h1>
-            <input type="password" inputMode="numeric" maxLength={4} placeholder="Nuevo PIN de 4 dígitos" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))} className="w-full rounded bg-[#1a1a1a] px-3 py-2 text-center tracking-widest" />
-            <input type="password" inputMode="numeric" maxLength={4} placeholder="Repite el nuevo PIN" value={confirmPin} onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, "").slice(0, 4))} className="w-full rounded bg-[#1a1a1a] px-3 py-2 text-center tracking-widest" />
-            {errorMessage && <p className="text-center text-sm text-red-400">{errorMessage}</p>}
-            <button type="submit" disabled={saving} className="w-full rounded bg-[#D1933E] py-2 font-semibold disabled:opacity-60">{saving ? "Guardando..." : "Actualizar PIN"}</button>
-          </form>
-        )}
+        <div className="w-full max-w-sm rounded-xl bg-[#111111] p-6 text-center shadow">
+          {status === "checking" ? (
+            <p className="text-gray-300">Preparando recuperación...</p>
+          ) : status === "disabled" ? (
+            <>
+              <h1 className="text-2xl font-bold">Recuperación no disponible</h1>
+              <p className="mt-2 text-sm text-gray-400">Intenta nuevamente más tarde.</p>
+            </>
+          ) : status === "pending" || status === "verifying" || status === "temporary-error" ? (
+            <>
+              <h1 className="text-2xl font-bold">Verificar enlace</h1>
+              <p className="mt-2 text-sm text-gray-400">Continúa para validar el enlace de recuperación.</p>
+              {errorMessage && <p className="mt-3 text-sm text-red-400">{errorMessage}</p>}
+              <button
+                type="button"
+                onClick={verifyRecoveryLink}
+                disabled={!pendingTokenHash || status === "verifying"}
+                className="mt-4 w-full rounded bg-[#D1933E] py-2 font-semibold disabled:opacity-60"
+              >
+                {status === "verifying" ? "Verificando..." : "Validar enlace"}
+              </button>
+            </>
+          ) : status === "expired" || status === "used" || status === "invalid" || status === "missing" ? (
+            <>
+              <h1 className="text-2xl font-bold">No se pudo validar el enlace</h1>
+              <p className="mt-2 text-sm text-gray-300">
+                {status === "missing"
+                  ? "El enlace no contiene una solicitud de recuperación válida."
+                  : recoveryErrorMessage(status)}
+              </p>
+              {requestNewLink}
+            </>
+          ) : status === "success" ? (
+            <>
+              <h1 className="text-2xl font-bold">PIN actualizado</h1>
+              <p className="mt-2 text-sm text-gray-300">Ya puedes iniciar sesión con tu nuevo PIN.</p>
+              <button
+                type="button"
+                onClick={() => void router.replace("/login")}
+                className="mt-4 w-full rounded bg-[#D1933E] py-2 font-semibold"
+              >
+                Ir a iniciar sesión
+              </button>
+            </>
+          ) : (
+            <form onSubmit={updatePin} className="space-y-4 text-left">
+              <h1 className="text-center text-2xl font-bold">Crear nuevo PIN</h1>
+              <input
+                type="password"
+                inputMode="numeric"
+                autoComplete="new-password"
+                maxLength={4}
+                placeholder="Nuevo PIN de 4 dígitos"
+                value={pin}
+                onChange={(event) => setPin(event.target.value.replace(/\D/g, "").slice(0, 4))}
+                className="w-full rounded bg-[#1a1a1a] px-3 py-2 text-center tracking-widest"
+              />
+              <input
+                type="password"
+                inputMode="numeric"
+                autoComplete="new-password"
+                maxLength={4}
+                placeholder="Repite el nuevo PIN"
+                value={confirmPin}
+                onChange={(event) => setConfirmPin(event.target.value.replace(/\D/g, "").slice(0, 4))}
+                className="w-full rounded bg-[#1a1a1a] px-3 py-2 text-center tracking-widest"
+              />
+              {errorMessage && <p className="text-center text-sm text-red-400">{errorMessage}</p>}
+              <button
+                type="submit"
+                disabled={status === "saving"}
+                className="w-full rounded bg-[#D1933E] py-2 font-semibold disabled:opacity-60"
+              >
+                {status === "saving" ? "Guardando..." : "Actualizar PIN"}
+              </button>
+            </form>
+          )}
+        </div>
       </main>
       <Footer />
     </div>

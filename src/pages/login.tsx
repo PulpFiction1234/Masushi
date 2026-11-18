@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import Seo from "@/components/Seo"; 
 import { getSupabasePasswordCandidates } from "@/utils/strings";
-import { PASSWORD_RECOVERY_ENABLED } from "@/utils/featureFlags";
+import { PIN_RECOVERY_ENABLED } from "@/utils/featureFlags";
 
 
 export default function LoginPage() {
@@ -213,7 +213,7 @@ export default function LoginPage() {
             Entrar
           </button>
           
-          {PASSWORD_RECOVERY_ENABLED && (
+          {PIN_RECOVERY_ENABLED && (
             <div className="text-right text-sm">
               <Link href="/forgot-password" className="text-[#93C021] hover:text-[#93C021]">
                 ¿Olvidaste tu PIN?

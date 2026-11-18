@@ -9,7 +9,7 @@
     "build:mobile": "set NEXT_CONFIG=mobile && next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "tsc src/utils/strings.ts src/utils/strings.test.ts --module commonjs --target ES2019 --outDir dist --rootDir src --esModuleInterop --skipLibCheck && node --test dist/utils/strings.test.js",
+    "test": "tsc src/utils/strings.ts src/utils/strings.test.ts src/utils/passwordRecovery.ts src/utils/passwordRecovery.test.ts src/utils/passwordRecoverySession.ts src/utils/passwordRecoverySession.test.ts src/utils/smtpTransportSecurity.ts src/utils/smtpTransportSecurity.test.ts src/server/passwordResetRateLimitCore.ts src/server/passwordResetRateLimitCore.test.ts src/server/passwordResetRequest.ts src/server/passwordResetRequest.test.ts --module commonjs --target ES2019 --outDir .next/masushi-test-dist --rootDir src --esModuleInterop --skipLibCheck && node --test .next/masushi-test-dist/utils/strings.test.js .next/masushi-test-dist/utils/passwordRecovery.test.js .next/masushi-test-dist/utils/passwordRecoverySession.test.js .next/masushi-test-dist/utils/smtpTransportSecurity.test.js .next/masushi-test-dist/server/passwordResetRateLimitCore.test.js .next/masushi-test-dist/server/passwordResetRequest.test.js",
     "img:png2webp": "node scripts/png2webp.mjs --quality 82 --alpha 90 --dirs public,src/assets",
     "img:favicon32": "node scripts/generate-favicon-32x32.mjs",
     "smoke:auth": "node --input-type=module scripts/smoke-auth.mjs"

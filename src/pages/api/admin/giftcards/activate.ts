@@ -4,7 +4,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
 import supabaseAdmin from '@/server/supabase';
 import sendEmail from '@/utils/sendEmail';
-import { buildFullName } from '@/utils/name';
+import { verifyAdminIdentity } from '@/server/adminAuthorizationCore';
 import type { GiftCard } from '@/types/giftcard';
 import { buildGiftcardEmailHtml, buildGiftcardEmailText } from '@/server/emails/giftcardEmail';
 
@@ -15,17 +15,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const supabase = createPagesServerClient({ req, res });
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return res.status(401).json({ error: 'Unauthorized' });
+  const identity = await verifyAdminIdentity(() => supabase.auth.getUser());
+  if (!identity.authenticated) return res.status(identity.status).json({ error: identity.status === 401 ? 'Unauthorized' : 'Authentication unavailable' });
 
   const { data: profile, error: profileErr } = await supabaseAdmin
     .from('profiles')
     .select('role, is_admin')
-    .eq('id', session.user.id)
+    .eq('id', identity.user.id)
     .maybeSingle();
 
   if (profileErr || !profile) return res.status(403).json({ error: 'Forbidden' });
-  const isAdmin = Boolean((profile as any).is_admin || (profile as any).role === 'admin');
+  const isAdmin = Boolean(profile.is_admin || profile.role === 'admin');
   if (!isAdmin) return res.status(403).json({ error: 'Forbidden' });
 
   const codeRaw = typeof req.body?.code === 'string' ? req.body.code.trim().toUpperCase() : '';
@@ -47,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const nowIso = new Date().toISOString();
     const { data: updated, error: updateErr } = await supabaseAdmin
       .from('gift_cards')
-      .update({ status: 'active', activated_at: nowIso, activated_by: session.user.id, updated_at: nowIso })
+      .update({ status: 'active', activated_at: nowIso, activated_by: identity.user.id, updated_at: nowIso })
       .eq('id', card.id)
       .select('*')
       .maybeSingle();
@@ -55,8 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (updateErr) throw updateErr;
     const finalCard = (updated || card) as GiftCard;
 
-    const targetEmail = finalCard.recipient_email || finalCard.purchaser_email || session.user.email || null;
-    const targetName = finalCard.recipient_name || finalCard.purchaser_name || buildFullName('', '', '');
+    const targetEmail = finalCard.recipient_email || finalCard.purchaser_email || identity.user.email || null;
 
     if (targetEmail) {
       const subject = 'Tu gift card Masushi fue activada';
@@ -70,7 +69,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     return res.status(200).json({ giftCard: finalCard, notified: Boolean(targetEmail) });
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('[admin/giftcards/activate] error', e);
     return res.status(500).json({ error: 'No se pudo activar la gift card' });
   }

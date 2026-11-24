@@ -18,8 +18,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const { data: usersData, error: listErr } = await supabaseAdmin.auth.admin.listUsers();
       if (listErr) throw listErr;
       // listUsers returns { users: [...] }
-      const users = (usersData as any).users || usersData;
-      const user = users.find((u: any) => u.email === email);
+      const users = usersData?.users || [];
+      const user = users.find((u) => u.email === email);
       if (!user) return res.status(404).json({ error: 'User not found' });
       targetUserId = user.id;
     }
@@ -68,8 +68,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Optionally mark profile as verified (if you added such field). For now we just return ok.
     return res.status(200).json({ ok: true, method: 'custom' });
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('verify-code error', e);
-    return res.status(500).json({ error: e?.message || String(e) });
+    const message = e && typeof e === 'object' && 'message' in e ? e.message : undefined;
+    return res.status(500).json({ error: message || String(e) });
   }
 }

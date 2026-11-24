@@ -1,5 +1,7 @@
+type VerifiedUser = { id: string; email?: string };
+
 type AuthResult = {
-  data: { user: { id: string } | null };
+  data: { user: VerifiedUser | null };
   error: { name: string; status?: number } | null;
 };
 
@@ -12,23 +14,35 @@ export type AdminAuthorization =
   | { authorized: true }
   | { authorized: false; status: 401 | 403 | 503 };
 
-export async function authorizeAdmin(
+export async function verifyAdminIdentity(
   getUser: () => Promise<AuthResult>,
-  getProfile: (userId: string) => Promise<ProfileResult>,
-): Promise<AdminAuthorization> {
+): Promise<{ authenticated: true; user: VerifiedUser } | { authenticated: false; status: 401 | 503 }> {
   try {
     const { data: { user }, error: authError } = await getUser();
     if (authError) {
       if (authError.name === "AuthSessionMissingError" ||
           (authError.status !== undefined && authError.status >= 400 && authError.status < 500)) {
-        return { authorized: false, status: 401 };
+        return { authenticated: false, status: 401 };
       }
       console.error("[admin-auth] Authentication service unavailable");
-      return { authorized: false, status: 503 };
+      return { authenticated: false, status: 503 };
     }
-    if (!user) return { authorized: false, status: 401 };
+    if (!user) return { authenticated: false, status: 401 };
+    return { authenticated: true, user };
+  } catch {
+    console.error("[admin-auth] Authentication service unavailable");
+    return { authenticated: false, status: 503 };
+  }
+}
 
-    const { data: profile, error: profileError } = await getProfile(user.id);
+export async function authorizeAdmin(
+  getUser: () => Promise<AuthResult>,
+  getProfile: (userId: string) => Promise<ProfileResult>,
+): Promise<AdminAuthorization> {
+  const identity = await verifyAdminIdentity(getUser);
+  if (identity.authenticated === false) return { authorized: false, status: identity.status };
+  try {
+    const { data: profile, error: profileError } = await getProfile(identity.user.id);
     if (profileError) {
       console.error("[admin-auth] Unable to check administrator profile");
       return { authorized: false, status: 503 };

@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { createPagesServerClient } from '@supabase/auth-helpers-nextjs'
 import supabaseAdmin from '@/server/supabase'
 import { sendWhatsAppMessage } from '@/utils/sendWhatsapp'
+import { verifyAdminIdentity } from '@/server/adminAuthorizationCore'
 
 export const runtime = 'nodejs'
 
@@ -18,16 +19,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const supabase = createPagesServerClient({ req, res })
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return res.status(401).json({ error: 'Unauthorized' })
+  const identity = await verifyAdminIdentity(() => supabase.auth.getUser())
+  if (!identity.authenticated) return res.status(identity.status).json({ error: identity.status === 401 ? 'Unauthorized' : 'Authentication unavailable' })
 
   const { data: profile, error: profileErr } = await supabaseAdmin
     .from('profiles')
     .select('is_admin, role')
-    .eq('id', session.user.id)
+    .eq('id', identity.user.id)
     .single()
   if (profileErr || !profile) return res.status(403).json({ error: 'Forbidden' })
-  const isAdmin = Boolean((profile as any).is_admin || (profile as any).role === 'admin')
+  const isAdmin = Boolean(profile.is_admin || profile.role === 'admin')
   if (!isAdmin) return res.status(403).json({ error: 'Forbidden' })
 
   const toRaw = typeof req.body?.to === 'string' ? req.body.to : ''
@@ -68,10 +69,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         body: JSON.stringify(body),
       })
       const respText = await resp.text()
-      let parsed: any = respText
-      try { parsed = JSON.parse(respText) } catch (e) { /* keep raw */ }
+      let parsed: unknown = respText
+      try { parsed = JSON.parse(respText) } catch { /* keep raw */ }
       sendResult = { ok: resp.ok, status: resp.status, body: parsed, error: resp.ok ? undefined : 'Provider returned error' }
-    } catch (err: any) {
+    } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
       return res.status(500).json({ error: msg })
     }
@@ -83,8 +84,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status((sendResult && sendResult.status) || 500).json({ error: sendResult?.error || 'Envio falló', body: sendResult?.body })
   }
 
-  const body: any = sendResult?.body
-  const waId = body?.messages?.[0]?.id || null
+  const body: unknown = sendResult?.body
+  const messages = body && typeof body === 'object' && 'messages' in body ? body.messages : null
+  const first: unknown = Array.isArray(messages) ? messages[0] : null
+  const waId = first && typeof first === 'object' && 'id' in first ? first.id : null
   const fromNumber = to // usamos el número del cliente como clave de conversación
   const phoneNumberId = extractPhoneNumberIdFromUrl(process.env.WHATSAPP_API_URL)
 
@@ -104,7 +107,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.error('[admin:whatsapp-send] failed to persist outgoing msg', error)
       return res.status(500).json({ error: 'Enviado pero no se pudo guardar en DB', body })
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[admin:whatsapp-send] exception persisting', err)
     return res.status(500).json({ error: 'Enviado pero error al guardar', body })
   }

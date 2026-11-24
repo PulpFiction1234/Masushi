@@ -13,7 +13,8 @@ const user = {
   aud: "authenticated",
   role: "authenticated",
 };
-const calls = { resends: 0, updates: 0, unexpected: 0 };
+let verifiedUser = user;
+const calls = { resends: 0, creates: 0, updates: 0, verifiedUsers: 0, unexpected: 0 };
 const buckets = new Map();
 let rpcUnavailable = false;
 let rpcMalformed = false;
@@ -23,6 +24,12 @@ const mock = createServer(async (req, res) => {
   res.setHeader("content-type", "application/json");
   if (req.method === "GET" && pathname === "/auth/v1/admin/users") {
     res.end(JSON.stringify({ users: [user] }));
+  } else if (req.method === "GET" && pathname === "/auth/v1/user") {
+    calls.verifiedUsers++;
+    res.end(JSON.stringify(verifiedUser));
+  } else if (req.method === "POST" && pathname === "/auth/v1/admin/users") {
+    calls.creates++;
+    res.end(JSON.stringify({ ...user, id: validUserId, email: "new@example.invalid" }));
   } else if (req.method === "GET" && pathname === `/auth/v1/admin/users/${userId}`) {
     res.end(JSON.stringify(user));
   } else if (req.method === "POST" && pathname === "/auth/v1/resend") {
@@ -57,6 +64,12 @@ const mock = createServer(async (req, res) => {
     const valid = url.searchParams.get("user_id") === `eq.${validUserId}` &&
       url.searchParams.get("code") === "eq.654321";
     res.end(JSON.stringify(valid ? [{ id: 1, user_id: validUserId }] : []));
+  } else if (req.method === "GET" && pathname === "/rest/v1/profiles") {
+    const url = new URL(req.url, "http://127.0.0.1");
+    const spoofedAdmin = url.searchParams.get("id") === `eq.${validUserId}`;
+    res.end(JSON.stringify({ role: spoofedAdmin ? "admin" : "user", is_admin: spoofedAdmin }));
+  } else if (req.method === "GET" && pathname === "/rest/v1/product_overrides") {
+    res.end("[]");
   } else if (req.method === "PATCH" && pathname === "/rest/v1/email_verifications") {
     res.end("[]");
   } else if (req.method === "PUT" && pathname === `/auth/v1/admin/users/${validUserId}`) {
@@ -111,6 +124,43 @@ try {
     assert.equal(response.status, 401, `${path} must reject anonymous requests`);
   }
 
+  const fakeToken = [
+    Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url"),
+    Buffer.from(JSON.stringify({ sub: validUserId, exp: Math.floor(Date.now() / 1000) + 3600 })).toString("base64url"),
+    "fake-signature",
+  ].join(".");
+  const forgedSession = {
+    access_token: fakeToken,
+    refresh_token: "synthetic-refresh",
+    expires_at: Math.floor(Date.now() / 1000) + 3600,
+    token_type: "bearer",
+    user: { ...user, id: validUserId },
+  };
+  const cookie = `sb-127-auth-token=${encodeURIComponent(JSON.stringify(forgedSession))}`;
+  for (const [path, method] of [
+    ["/api/admin/clientes", "GET"],
+    ["/api/admin/whatsapp-messages", "GET"],
+    ["/api/admin/closed", "GET"],
+    ["/api/admin/address-overrides", "GET"],
+    ["/api/admin/finance", "GET"],
+    ["/api/admin/mode", "GET"],
+    ["/api/admin/overrides", "GET"],
+    ["/api/admin/product-overrides", "GET"],
+    ["/api/admin/horarios", "GET"],
+    ["/api/admin/giftcards", "GET"],
+    ["/api/admin/giftcards/activate", "POST"],
+    ["/api/admin/whatsapp-send", "POST"],
+    ["/api/admin/test-whatsapp", "POST"],
+  ]) {
+    const response = await fetch(`${base}${path}`, { method, headers: { cookie } });
+    assert.equal(response.status, 403, `${path} must reject an unverified administrator identity`);
+  }
+  assert.equal(calls.verifiedUsers, 13);
+  verifiedUser = { ...user, id: validUserId };
+  const adminResponse = await fetch(`${base}/api/admin/product-overrides`, { headers: { cookie } });
+  assert.equal(adminResponse.status, 200, "a verified administrator must retain access");
+  verifiedUser = user;
+
   let response = await post("/api/auth/send-verification-code", {
     email: "other@example.invalid",
     userId,
@@ -144,6 +194,16 @@ try {
   assert.equal(response.status, 409);
   assert.equal(calls.resends, 2);
   assert.equal(calls.updates, 0);
+
+  response = await post("/api/auth/register", {
+    email: "new@example.invalid",
+    password: "4321",
+    name: "Synthetic",
+  });
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).status, "created");
+  assert.equal(calls.creates, 1);
+  assert.equal(calls.resends, 3);
 
   const verify = (id, ip) => post("/api/auth/verify-code", { userId: id, code: "123456" }, ip);
   response = await verify(userId);

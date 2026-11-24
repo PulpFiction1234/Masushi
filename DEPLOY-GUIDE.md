@@ -17,6 +17,18 @@ No introducir valores reales en el repositorio ni en comandos que los muestren.
 La rotación del secreto de firma de Supabase puede invalidar sesiones y requiere
 aprobación separada; no asumir que actualizar variables en Vercel revocó claves antiguas.
 
+Prioridad de respuesta, con autorización específica y sin publicar valores:
+1. Inventariar y revocar el token personal de Supabase expuesto; comprobar primero
+   qué automatizaciones dependen de él.
+2. Evaluar la `service_role` legacy y el secreto de firma de Supabase con un plan
+   coordinado: afectan servicios, tokens y posiblemente sesiones existentes.
+3. Rotar los tokens de WhatsApp y de verificación del webhook con una transición
+   coordinada en el proveedor y el servidor; comprobar entrega y webhook.
+4. Confirmar si el posible token secreto de Mapbox está activo y revocarlo o
+   restringirlo con una sustitución probada. Un token público no debe confundirse
+   con un token secreto. Revisar también el `JWT_SECRET` de la aplicación y sus
+   consumidores antes de rotarlo, porque puede invalidar tokens propios.
+
 ## 📋 Checklist Pre-Deployment
 
 ### ✅ Archivos Modificados Recientemente:

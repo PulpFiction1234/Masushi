@@ -197,6 +197,16 @@ el endpoint alternativo no funciona. Planificar también la limpieza periódica 
 contadores vencidos con `private.cleanup_verification_rate_limits`, limitada a
 una identidad autorizada. No registrar ni compartir el secreto.
 
+Secuencia propuesta, siempre con autorización separada para producción:
+1. Probar ambas migraciones de seguridad en un entorno aislado que reproduzca
+   los permisos y políticas reales, incluidos registro y actualización de perfil.
+2. Aplicar primero la protección de roles y la infraestructura del limitador;
+   verificar sus permisos y configurar las dos variables del limitador.
+3. Solo después desplegar el código y probar registro, verificación, login y
+   recuperación de PIN con cuentas ficticias controladas. Una Preview que no
+   tenga la infraestructura y variables propias responderá 503 en el endpoint
+   alternativo; no debe apuntar a producción para realizar pruebas de escritura.
+
 ## 🎨 Personalización
 
 ### Mensaje de Bienvenida

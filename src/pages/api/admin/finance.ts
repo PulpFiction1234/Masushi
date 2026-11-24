@@ -3,6 +3,7 @@ export const runtime = 'nodejs';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
 import supabaseAdmin from '@/server/supabase';
+import { verifyAdminIdentity } from '@/server/adminAuthorizationCore';
 
 const TIME_ZONE = 'America/Santiago';
 
@@ -26,17 +27,17 @@ function monthKey(d: Date) {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const supabase = createPagesServerClient({ req, res });
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return res.status(401).json({ error: 'Unauthorized' });
+    const identity = await verifyAdminIdentity(() => supabase.auth.getUser());
+    if (!identity.authenticated) return res.status(identity.status).json({ error: identity.status === 401 ? 'Unauthorized' : 'Authentication unavailable' });
 
     // verify admin
     const { data: profile, error: profileErr } = await supabaseAdmin
       .from('profiles')
       .select('is_admin, role')
-      .eq('id', session.user.id)
+      .eq('id', identity.user.id)
       .single();
     if (profileErr || !profile) return res.status(403).json({ error: 'Forbidden' });
-    const isAdmin = Boolean((profile as any).is_admin || (profile as any).role === 'admin');
+    const isAdmin = Boolean(profile.is_admin || profile.role === 'admin');
     if (!isAdmin) return res.status(403).json({ error: 'Forbidden' });
 
     if (req.method !== 'GET') {
@@ -87,7 +88,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     };
 
     // aggregate
-    (orders || []).forEach((o: any) => {
+    (orders || []).forEach((o) => {
       const dt = new Date(o.created_at);
       const key = monthKey(dt);
       const idx = monthsArr.indexOf(key);

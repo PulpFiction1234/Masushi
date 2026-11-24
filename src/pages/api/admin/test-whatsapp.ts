@@ -2,22 +2,23 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
 import supabaseAdmin from '@/server/supabase';
 import { sendWhatsAppTemplate, sendWhatsAppMessage } from '@/utils/sendWhatsapp';
+import { verifyAdminIdentity } from '@/server/adminAuthorizationCore';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const supabase = createPagesServerClient({ req, res });
-  const { data: { session } } = await supabase.auth.getSession();
+  const identity = await verifyAdminIdentity(() => supabase.auth.getUser());
 
-  if (!session) return res.status(401).json({ error: 'Unauthorized' });
+  if (!identity.authenticated) return res.status(identity.status).json({ error: identity.status === 401 ? 'Unauthorized' : 'Authentication unavailable' });
 
   // Check profile is admin
   try {
     const { data: profile, error: profileErr } = await supabaseAdmin
       .from('profiles')
       .select('is_admin')
-      .eq('id', session.user.id)
+      .eq('id', identity.user.id)
       .single();
 
-    if (profileErr || !profile || !(profile as any).is_admin) {
+    if (profileErr || !profile || !profile.is_admin) {
       return res.status(403).json({ error: 'Forbidden' });
     }
   } catch (e) {
@@ -27,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { to, example_order_id, name, eta, address, detail, total, use_template = true, headerLink } = req.body ?? {};
+  const { to, example_order_id, name, eta, address, use_template = true, headerLink } = req.body ?? {};
 
   if (!to) return res.status(400).json({ error: 'Missing "to" phone number (digits only or with +)' });
 
@@ -41,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     if (use_template && process.env.WHATSAPP_TEMPLATE_NAME) {
-      const components: any[] = [];
+      const components: unknown[] = [];
 
       // Header image can be supplied via request body `headerLink` or env var `WHATSAPP_TEMPLATE_HEADER_LINK`.
       const headerImageLink = headerLink || process.env.WHATSAPP_TEMPLATE_HEADER_LINK;

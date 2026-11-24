@@ -69,7 +69,7 @@ export default function RegisterPage() {
       }
 
       setResendMessage(json?.error || 'No se pudo reenviar el código');
-    } catch (err) {
+    } catch {
       setResendMessage('Error de conexión al reenviar el código');
     } finally {
       setResending(false);

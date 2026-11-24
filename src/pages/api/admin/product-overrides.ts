@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
+import { verifyAdminIdentity } from '@/server/adminAuthorizationCore';
 // Do not import supabaseAdmin at module load time because it throws if env is missing in some dev setups.
 let _supabaseAdmin: typeof import('@/server/supabase').default | null = null;
 
@@ -22,20 +23,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
     const supabaseAdmin = await getSupabaseAdmin();
 
-    // Ensure the requester is an authenticated admin. Use the pages server client
-    // to get the session from the cookies and then lookup the profile.
     const supa = createPagesServerClient({ req, res });
-    const { data: { session } } = await supa.auth.getSession();
-    if (!session?.user) return res.status(401).json({ error: 'not-authenticated' });
+    const identity = await verifyAdminIdentity(() => supa.auth.getUser());
+    if (!identity.authenticated) return res.status(identity.status).json({ error: identity.status === 401 ? 'not-authenticated' : 'authentication-unavailable' });
 
     const { data: profile, error: profErr } = await supabaseAdmin
       .from('profiles')
       .select('is_admin, role')
-      .eq('id', session.user.id)
+      .eq('id', identity.user.id)
       .single();
 
     if (profErr || !profile) return res.status(403).json({ error: 'forbidden' });
-    const isAdmin = Boolean((profile as any).is_admin || (profile as any).role === 'admin');
+    const isAdmin = Boolean(profile.is_admin || profile.role === 'admin');
     if (!isAdmin) return res.status(403).json({ error: 'forbidden' });
     if (req.method === 'GET') {
   const { data, error } = await supabaseAdmin.from('product_overrides').select('*');

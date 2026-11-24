@@ -3,24 +3,25 @@ export const runtime = 'nodejs';
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { getAdminModeWithReset, setAdminMode, type AdminMode } from "@/server/admin-state";
+import { verifyAdminIdentity } from "@/server/adminAuthorizationCore";
 
 type Res = { mode: AdminMode };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Res>) {
   try {
     const supabase = createPagesServerClient({ req, res });
-    const { data: { session } } = await supabase.auth.getSession();
+    const identity = await verifyAdminIdentity(() => supabase.auth.getUser());
     
     // Verificar autenticación
-    if (!session) {
-      return res.status(401).json({ mode: "normal" } as Res);
+    if (!identity.authenticated) {
+      return res.status(identity.status).json({ mode: "normal" } as Res);
     }
 
     // Verificar rol de admin
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
-      .eq('id', session.user.id)
+      .eq('id', identity.user.id)
       .single();
 
     if (!profile || profile.role !== 'admin') {

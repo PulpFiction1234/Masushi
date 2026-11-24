@@ -54,9 +54,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       while (true) {
         const { data, error } = await supabaseAdmin.auth.admin.listUsers({ perPage, page });
         if (error) throw error;
-        const collection = (data as any)?.users ?? data ?? [];
+        const collection = data?.users ?? [];
         if (Array.isArray(collection)) {
-          const match = collection.find((u: any) => (u?.email || '').toLowerCase() === normalizedEmail);
+          const match = collection.find((u) => (u.email || '').toLowerCase() === normalizedEmail);
           if (match) return match;
           if (collection.length < perPage) return null;
         } else {
@@ -98,7 +98,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ error: createErr.message || String(createErr) });
     }
 
-    const userId = (created as any)?.user?.id || (created as any)?.id || null;
+    const userId = created?.user?.id || null;
     if (!userId) {
       return res.status(500).json({ error: 'No pudimos crear tu usuario' });
     }
@@ -106,8 +106,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const verification = await attemptVerificationSend(userId, normalizedEmail);
 
     return res.status(200).json({ ok: true, userId, status: 'created', verification });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[register] unexpected error', err);
-    return res.status(500).json({ error: err?.message || 'Error registrando usuario' });
+    const message = err && typeof err === 'object' && 'message' in err ? err.message : undefined;
+    return res.status(500).json({ error: message || 'Error registrando usuario' });
   }
 }

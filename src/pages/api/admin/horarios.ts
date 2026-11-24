@@ -1,16 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
+import { verifyAdminIdentity } from '@/server/adminAuthorizationCore';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const supabase = createPagesServerClient({ req, res });
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return res.status(401).json({ error: 'Not authenticated' });
+  const identity = await verifyAdminIdentity(() => supabase.auth.getUser());
+  if (!identity.authenticated) return res.status(identity.status).json({ error: identity.status === 401 ? 'Not authenticated' : 'Authentication unavailable' });
 
   // check admin role in profiles
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
-    .eq('id', session.user.id)
+    .eq('id', identity.user.id)
     .single();
   if (!profile || profile.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
 
@@ -24,9 +25,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const { data, error } = await svc.from('app_settings').select('*').eq('key', 'horarios').maybeSingle();
       if (error) throw error;
       return res.status(200).json({ ok: true, settings: data?.value ?? null });
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      return res.status(500).json({ error: e.message ?? String(e) });
+      return res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
     }
   }
 
@@ -42,9 +43,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const { data, error } = await svc.from('app_settings').upsert({ key: 'horarios', value }).select('*');
       if (error) throw error;
       return res.status(200).json({ ok: true, data: data?.[0] ?? null });
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      return res.status(500).json({ error: e.message ?? String(e) });
+      return res.status(500).json({ error: e instanceof Error ? e.message : String(e) });
     }
   }
 

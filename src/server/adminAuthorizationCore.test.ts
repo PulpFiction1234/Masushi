@@ -1,6 +1,18 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { authorizeAdmin } from "./adminAuthorizationCore";
+import { authorizeAdmin, verifyAdminIdentity } from "./adminAuthorizationCore";
+
+test("administrative identity uses the verified auth response and fails closed on errors", async () => {
+  const verified = await verifyAdminIdentity(async () => ({
+    data: { user: { id: "verified-user", email: "test@example.invalid" } }, error: null,
+  }));
+  assert.deepEqual(verified, {
+    authenticated: true, user: { id: "verified-user", email: "test@example.invalid" },
+  });
+  assert.deepEqual(await verifyAdminIdentity(async () => {
+    throw new Error("unavailable");
+  }), { authenticated: false, status: 503 });
+});
 
 test("unauthenticated requests are rejected before looking up a profile", async () => {
   let profileLookups = 0;

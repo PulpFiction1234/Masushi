@@ -55,7 +55,7 @@ El servidor exige todas estas variables; no se incluyen secretos en el repositor
 - `PIN_RECOVERY_PREVIEW_ALLOWED_HOST`: allowlist independiente con un único hostname exacto, sin esquema, puerto, ruta ni wildcard. No se debe configurar hasta verificar externamente la pertenencia al proyecto de Vercel y la protección de la rama.
 - `VERCEL_BRANCH_URL`: hostname de la rama inyectado por Vercel. En Preview debe coincidir exactamente con `PIN_RECOVERY_PREVIEW_ALLOWED_HOST` y con el hostname de `PIN_RECOVERY_PREVIEW_URL`.
 
-La URL de la rama debe estar asociada al proyecto y protegida por Vercel Authentication. Si no coincide con la allowlist y el hostname del callback, el flujo falla cerrado. Verificar la asociación y la protección antes de autorizar ese callback exacto, sin wildcard.
+La URL de la rama debe estar asociada al proyecto y protegida por Vercel Authentication. Para la prueba temporal desde `main` también se admite exclusivamente `masushi-pin-recovery-test-44de1c64.vercel.app` en el proyecto Vercel `prj_fXKR37FTOrL5XNCGswLD9plJFXr9`. En ambos casos debe coincidir con la allowlist y el hostname del callback. Verificar la asociación y la protección antes de autorizar ese callback exacto, sin wildcard.
 
 El resolver valida también `VERCEL=1` y `PIN_RECOVERY_SERVER_ENABLED=true`. `isPasswordResetRequestConfigured()` usa esa comprobación, así que las páginas/API quedan no configuradas si falta la allowlist, la URL de la rama o el flag server-side. La constante `PIN_RECOVERY_ENABLED` es una compuerta de código independiente.
 
@@ -95,7 +95,7 @@ En staging, ejecutar además [20261113_password_reset_rate_limit_window_test.sql
 
 ### Flags
 
-La interfaz requiere `PIN_RECOVERY_ENABLED=true`; la API también exige ese flag y `PIN_RECOVERY_SERVER_ENABLED=true`. Las páginas solo muestran los formularios si la configuración completa del limitador está presente. Cambiar flags no sustituye la migración, la configuración ni la validación de IP.
+La interfaz requiere `NEXT_PUBLIC_PIN_RECOVERY_ENABLED=true` al construir el deployment; si falta o tiene otro valor, el enlace queda oculto. La API también exige ese flag y `PIN_RECOVERY_SERVER_ENABLED=true`. Las páginas solo muestran los formularios si la configuración completa del limitador está presente. Para probar, activar la variable pública solo en Preview y mantener ambas compuertas cerradas en producción hasta completar las pruebas. Cambiar flags no sustituye la migración, la configuración ni la validación de IP.
 
 El cambio de PIN desde perfil conserva su flag independiente `PASSWORD_RECOVERY_ENABLED=false` y no se activa al habilitar la recuperación.
 

@@ -1,6 +1,8 @@
 /* eslint-env node */
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { PIN_RECOVERY_ENABLED } from './featureFlags';
 import {
   buildPasswordRecoveryUrl,
   classifyRecoveryError,
@@ -29,6 +31,40 @@ const previewEnvironment = {
   PIN_RECOVERY_PREVIEW_URL: `https://${previewHost}/reset-password`,
   PIN_RECOVERY_PREVIEW_ALLOWED_HOST: previewHost,
 };
+
+test('public recovery flag defaults to off and requires the exact true value', () => {
+  const flagModule = require.resolve('./featureFlags');
+  const checkFlag = (value?: string) => {
+    const env = { ...process.env };
+    if (value === undefined) delete env.NEXT_PUBLIC_PIN_RECOVERY_ENABLED;
+    else env.NEXT_PUBLIC_PIN_RECOVERY_ENABLED = value;
+    return execFileSync(
+      process.execPath,
+      ['-e', 'process.stdout.write(String(require(process.argv[1]).PIN_RECOVERY_ENABLED))', flagModule],
+      { env, encoding: 'utf8' },
+    );
+  };
+  assert.equal(PIN_RECOVERY_ENABLED, process.env.NEXT_PUBLIC_PIN_RECOVERY_ENABLED === 'true');
+  assert.equal(checkFlag(), 'false');
+  assert.equal(checkFlag('false'), 'false');
+  assert.equal(checkFlag('TRUE'), 'false');
+  assert.equal(checkFlag('true'), 'true');
+});
+
+test('dedicated protected preview requires the verified project and exact host', () => {
+  const host = 'masushi-pin-recovery-test-44de1c64.vercel.app';
+  const dedicated = {
+    ...previewEnvironment,
+    VERCEL_BRANCH_URL: 'production-branch.vercel.app',
+    VERCEL_PROJECT_ID: 'prj_fXKR37FTOrL5XNCGswLD9plJFXr9',
+    PIN_RECOVERY_PREVIEW_ALLOWED_HOST: host,
+    PIN_RECOVERY_PREVIEW_URL: `https://${host}/reset-password`,
+  };
+  assert.equal(resolvePasswordRecoveryCallbackUrl(dedicated), dedicated.PIN_RECOVERY_PREVIEW_URL);
+  assert.throws(() => resolvePasswordRecoveryCallbackUrl({ ...dedicated, VERCEL_PROJECT_ID: undefined }), /not configured/);
+  assert.throws(() => resolvePasswordRecoveryCallbackUrl({ ...dedicated, VERCEL_PROJECT_ID: 'other' }), /not configured/);
+  assert.throws(() => resolvePasswordRecoveryCallbackUrl({ ...dedicated, PIN_RECOVERY_PREVIEW_URL: 'https://other.vercel.app/reset-password' }), /not configured/);
+});
 
 test('production callback is fixed to the approved production recovery page', () => {
   assert.equal(

@@ -10,6 +10,7 @@ export const isPasswordResetRequestConfigured = () =>
     VERCEL: process.env.VERCEL,
     VERCEL_ENV: process.env.VERCEL_ENV,
     VERCEL_BRANCH_URL: process.env.VERCEL_BRANCH_URL,
+    VERCEL_PROJECT_ID: process.env.VERCEL_PROJECT_ID,
     PIN_RECOVERY_SERVER_ENABLED: process.env.PIN_RECOVERY_SERVER_ENABLED,
     PIN_RECOVERY_PREVIEW_URL: process.env.PIN_RECOVERY_PREVIEW_URL,
     PIN_RECOVERY_PREVIEW_ALLOWED_HOST:

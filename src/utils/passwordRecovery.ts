@@ -6,11 +6,14 @@ export type RecoveryLinkResult =
   | { kind: "missing" };
 
 const PRODUCTION_RECOVERY_URL = "https://www.masushi.cl/reset-password";
+const DEDICATED_PREVIEW_HOST = "masushi-pin-recovery-test-44de1c64.vercel.app";
+const DEDICATED_PREVIEW_PROJECT_ID = "prj_fXKR37FTOrL5XNCGswLD9plJFXr9";
 
 export type PasswordRecoveryRedirectEnvironment = {
   VERCEL?: string;
   VERCEL_ENV?: string;
   VERCEL_BRANCH_URL?: string;
+  VERCEL_PROJECT_ID?: string;
   PIN_RECOVERY_SERVER_ENABLED?: string;
   PIN_RECOVERY_PREVIEW_URL?: string;
   PIN_RECOVERY_PREVIEW_ALLOWED_HOST?: string;
@@ -74,10 +77,13 @@ const getPasswordRecoveryCallbackUrl = (
     env.PIN_RECOVERY_PREVIEW_ALLOWED_HOST,
   );
   const deploymentHostname = parseExactHostname(env.VERCEL_BRANCH_URL);
+  const isDedicatedPreview =
+    allowedHostname === DEDICATED_PREVIEW_HOST &&
+    env.VERCEL_PROJECT_ID === DEDICATED_PREVIEW_PROJECT_ID;
   if (
     !allowedHostname ||
-    !deploymentHostname ||
-    allowedHostname !== deploymentHostname
+    (!isDedicatedPreview &&
+      (!deploymentHostname || allowedHostname !== deploymentHostname))
   ) {
     return null;
   }

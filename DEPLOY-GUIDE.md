@@ -28,7 +28,7 @@ Debes agregar estas variables de entorno en tu proyecto de Vercel:
 
 #### **Mapbox (Públicas)**
 ```
-NEXT_PUBLIC_MAPBOX_TOKEN=pk.eyJ1IjoicHVscGZpY3Rpb24iLCJhIjoiY21lNmdiaGMyMTR6MTJtcHpudmhidmxjZyJ9.kAB0xAK2lBEKMkGhVzDtcA
+NEXT_PUBLIC_MAPBOX_TOKEN=YOUR_MAPBOX_TOKEN
 ```
 
 #### **JWT Secret (Privada)**
@@ -39,13 +39,13 @@ JWT_SECRET=KOToEkXppt3oquPxDE9yU4+UOk83AhuE6Rscq6bovciwEzkZu16vmSomfdNgqOyBQTa4w
 #### **Supabase (Públicas)**
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://kvsygskfoclasrhgxpul.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2c3lnc2tmb2NsYXNyaGd4cHVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5NTU3MzcsImV4cCI6MjA3MzUzMTczN30.OFTMep-WcQ5ynq8C6ulHRtZ8eIUFF5yDLUrZe-T1pJg
+NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
 ```
 
 #### **Supabase (Privadas - Service Role)**
 ```
 SUPABASE_URL=https://kvsygskfoclasrhgxpul.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt2c3lnc2tmb2NsYXNyaGd4cHVsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Nzk1NTczNywiZXhwIjoyMDczNTMxNzM3fQ.BQM1RbLKAknb1pTtdm2aDbd3WRUPCiCkILsX22i2GDE
+SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY
 ```
 
 #### **WhatsApp (Privadas)**

@@ -10,7 +10,7 @@ const PRODUCTION_RECOVERY_URL = "https://www.masushi.cl/reset-password";
 export type PasswordRecoveryRedirectEnvironment = {
   VERCEL?: string;
   VERCEL_ENV?: string;
-  VERCEL_URL?: string;
+  VERCEL_BRANCH_URL?: string;
   PIN_RECOVERY_SERVER_ENABLED?: string;
   PIN_RECOVERY_PREVIEW_URL?: string;
   PIN_RECOVERY_PREVIEW_ALLOWED_HOST?: string;
@@ -73,7 +73,7 @@ const getPasswordRecoveryCallbackUrl = (
   const allowedHostname = parseExactHostname(
     env.PIN_RECOVERY_PREVIEW_ALLOWED_HOST,
   );
-  const deploymentHostname = parseExactHostname(env.VERCEL_URL);
+  const deploymentHostname = parseExactHostname(env.VERCEL_BRANCH_URL);
   if (
     !allowedHostname ||
     !deploymentHostname ||

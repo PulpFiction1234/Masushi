@@ -61,6 +61,18 @@ políticas RLS y triggers efectivos antes de desplegar; el esquema histórico
 incluye una política de actualización del perfil propio. No modificar la base
 productiva sin autorización separada.
 
+La revisión de solo lectura de producción encontró permisos de INSERT y UPDATE
+para los roles de navegador, políticas que permiten insertar y actualizar el
+perfil propio, y un trigger que solo actualiza la fecha. Ninguno protege por sí
+solo `role` o `is_admin`. La migración aún no se ha aplicado en producción.
+
+La migración `migrations/20261124_protect_profile_roles.sql` está preparada para
+retirar INSERT y UPDATE de `role` e `is_admin` a `anon` y `authenticated`,
+manteniendo los permisos existentes sobre las demás columnas. Es necesario
+revisarla y probarla antes de autorizar su aplicación. Si hay permisos heredados
+o de PUBLIC que permiten modificar esas columnas, cancela toda la transacción.
+Al agregar columnas de perfil en el futuro, revisar sus permisos explícitos.
+
 ### Nivel Frontend (`/admin/index.tsx`)
 - Verifica que el usuario esté autenticado
 - Verifica que `profile.role === 'admin'`
@@ -90,7 +102,8 @@ productiva sin autorización separada.
 
 Después de compilar localmente, `npm run test:registration-security` utiliza
 un servicio Supabase simulado en localhost para probar el rechazo de solicitudes
-anónimas y las comprobaciones de registro; no conecta con usuarios reales.
+anónimas, identidades administrativas manipuladas y las comprobaciones de
+registro; no conecta con usuarios reales.
 
 ### Verificar que funciona correctamente:
 

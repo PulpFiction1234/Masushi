@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import supabaseAdmin from '@/server/supabase';
+import { requireAdmin } from '@/server/adminAuthorization';
 
 /**
  * GET  /api/admin/address-overrides  — lista todos los overrides
@@ -10,6 +11,9 @@ import supabaseAdmin from '@/server/supabase';
  * Protegido por middleware (requiere sesión) y solo accesible por admins.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const authorization = await requireAdmin(req, res);
+  if (!authorization.authorized) return res.status(authorization.status).end();
+
   if (req.method === 'GET') {
     const { data, error } = await supabaseAdmin
       .from('address_overrides')

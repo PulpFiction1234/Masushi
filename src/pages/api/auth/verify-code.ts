@@ -1,23 +1,41 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import supabaseAdmin from '@/server/supabase';
+import { limitVerification } from '@/server/verificationRateLimit';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   const { email, userId, code } = req.body;
   if ((!email && !userId) || !code) return res.status(400).json({ error: 'email or userId, and code required' });
+  if ((email && typeof email !== 'string') || (userId && typeof userId !== 'string')) {
+    return res.status(400).json({ error: 'Datos de verificación inválidos' });
+  }
 
   try {
     let targetUserId = userId;
-    console.log('[verify-code] request', { email, userId, code });
+    console.log('[verify-code] request received');
     if (!targetUserId) {
       // find user id by email
       const { data: usersData, error: listErr } = await supabaseAdmin.auth.admin.listUsers();
       if (listErr) throw listErr;
       // listUsers returns { users: [...] }
-      const users = (usersData as any).users || usersData;
-      const user = users.find((u: any) => u.email === email);
+      const users = usersData?.users || [];
+      const user = users.find((u) => u.email === email);
       if (!user) return res.status(404).json({ error: 'User not found' });
       targetUserId = user.id;
+    }
+
+    if (typeof targetUserId !== 'string' ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetUserId)) {
+      return res.status(400).json({ error: 'Datos de verificación inválidos' });
+    }
+    const limit = await limitVerification(targetUserId, req.headers);
+    if (limit.status === 'unavailable') {
+      console.error('[verify-code] Verification rate limiter unavailable');
+      return res.status(503).json({ error: 'La verificación no está disponible temporalmente' });
+    }
+    if (limit.status === 'limited') {
+      res.setHeader('Retry-After', String(limit.retryAfterSeconds));
+      return res.status(429).json({ error: 'Demasiados intentos. Inténtalo más tarde' });
     }
 
     const now = new Date().toISOString();
@@ -50,8 +68,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Optionally mark profile as verified (if you added such field). For now we just return ok.
     return res.status(200).json({ ok: true, method: 'custom' });
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('verify-code error', e);
-    return res.status(500).json({ error: e?.message || String(e) });
+    const message = e && typeof e === 'object' && 'message' in e ? e.message : undefined;
+    return res.status(500).json({ error: message || String(e) });
   }
 }

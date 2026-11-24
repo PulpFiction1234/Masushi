@@ -9,7 +9,7 @@ const attemptVerificationSend = async (userId: string, email: string) => {
   try {
     const { error: resendErr } = await supabaseAdmin.auth.resend({ type: 'signup', email: normalized });
     if (!resendErr) {
-      console.log('[register] Supabase resend succeeded', { userId });
+      console.log('[register] Supabase resend succeeded');
       return { method: 'supabase' as const };
     }
     console.warn('[register] Supabase resend reported error, using fallback', resendErr);
@@ -18,7 +18,7 @@ const attemptVerificationSend = async (userId: string, email: string) => {
   }
 
   const fallback = await createAndSendCustomVerification(userId, normalized);
-  console.log('[register] custom verification dispatched', { userId, expires_at: fallback.expiresAt.toISOString() });
+  console.log('[register] custom verification dispatched');
   return { method: 'custom' as const, expires_at: fallback.expiresAt.toISOString() };
 };
 
@@ -54,9 +54,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       while (true) {
         const { data, error } = await supabaseAdmin.auth.admin.listUsers({ perPage, page });
         if (error) throw error;
-        const collection = (data as any)?.users ?? data ?? [];
+        const collection = data?.users ?? [];
         if (Array.isArray(collection)) {
-          const match = collection.find((u: any) => (u?.email || '').toLowerCase() === normalizedEmail);
+          const match = collection.find((u) => (u.email || '').toLowerCase() === normalizedEmail);
           if (match) return match;
           if (collection.length < perPage) return null;
         } else {
@@ -71,25 +71,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (existingUser) {
       if (existingUser?.email_confirmed_at) {
         return res.status(409).json({ error: 'El correo ya está registrado y verificado' });
-      }
-
-      // Construir nombre completo de forma segura evitando duplicados
-      const nombreCompleto = buildFullName(name?.trim() || '', apellidoPaterno?.trim() || '', apellidoMaterno?.trim() || '') || 'Usuario';
-
-      const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
-        password: safePassword,
-        email_confirm: false,
-        user_metadata: {
-          full_name: nombreCompleto,
-          phone: phone || existingUser?.user_metadata?.phone || '',
-          apellido_paterno: apellidoPaterno || existingUser?.user_metadata?.apellido_paterno || '',
-          apellido_materno: apellidoMaterno || existingUser?.user_metadata?.apellido_materno || '',
-        },
-      });
-
-      if (updateErr) {
-        console.error('[register] update existing user error', updateErr);
-        return res.status(500).json({ error: 'No pudimos actualizar el usuario existente' });
       }
 
       const verification = await attemptVerificationSend(existingUser.id, existingUser.email || normalizedEmail);
@@ -117,7 +98,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ error: createErr.message || String(createErr) });
     }
 
-    const userId = (created as any)?.user?.id || (created as any)?.id || null;
+    const userId = created?.user?.id || null;
     if (!userId) {
       return res.status(500).json({ error: 'No pudimos crear tu usuario' });
     }
@@ -125,8 +106,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const verification = await attemptVerificationSend(userId, normalizedEmail);
 
     return res.status(200).json({ ok: true, userId, status: 'created', verification });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[register] unexpected error', err);
-    return res.status(500).json({ error: err?.message || 'Error registrando usuario' });
+    const message = err && typeof err === 'object' && 'message' in err ? err.message : undefined;
+    return res.status(500).json({ error: message || 'Error registrando usuario' });
   }
 }

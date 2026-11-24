@@ -3,6 +3,7 @@ export const runtime = 'nodejs';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createPagesServerClient } from '@supabase/auth-helpers-nextjs';
 import supabaseAdmin from '@/server/supabase';
+import { verifyAdminIdentity } from '@/server/adminAuthorizationCore';
 
 const isAdminUser = async (userId: string): Promise<boolean> => {
   const { data: profile, error } = await supabaseAdmin
@@ -12,15 +13,15 @@ const isAdminUser = async (userId: string): Promise<boolean> => {
     .maybeSingle();
 
   if (error || !profile) return false;
-  return Boolean((profile as any).is_admin || (profile as any).role === 'admin');
+  return Boolean(profile.is_admin || profile.role === 'admin');
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const supabase = createPagesServerClient({ req, res });
-  const { data: { session } } = await supabase.auth.getSession();
+  const identity = await verifyAdminIdentity(() => supabase.auth.getUser());
 
-  if (!session) return res.status(401).json({ error: 'Unauthorized' });
-  const userId = session.user.id;
+  if (!identity.authenticated) return res.status(identity.status).json({ error: identity.status === 401 ? 'Unauthorized' : 'Authentication unavailable' });
+  const userId = identity.user.id;
 
   const isAdmin = await isAdminUser(userId);
   if (!isAdmin) return res.status(403).json({ error: 'Forbidden' });
@@ -38,7 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         : supabaseAdmin.from('gift_cards').delete().eq('id', idRaw));
       if (delErr) throw delErr;
       return res.status(200).json({ ok: true });
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('[admin/giftcards DELETE] error', e);
       return res.status(500).json({ error: 'No se pudo eliminar la gift card' });
     }
@@ -98,7 +99,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     return res.status(200).json({ giftCards: enriched });
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('[admin/giftcards] error', e);
     return res.status(500).json({ error: 'No se pudieron obtener las gift cards' });
   }

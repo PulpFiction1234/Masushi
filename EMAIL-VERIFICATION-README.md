@@ -179,6 +179,34 @@ Supabase tiene rate limiting incorporado para prevenir spam:
 - Máximo de intentos de verificación por IP
 - Máximo de reenvíos de código por período de tiempo
 
+El endpoint alternativo `/api/auth/verify-code` utiliza un limitador independiente:
+8 intentos por cuenta y 20 por IP en una ventana de una hora. Los intentos
+agotados responden 429; si el limitador o la IP confiable no están disponibles,
+responde 503. Esto no cambia el limitador de recuperación de PIN ni el flujo OTP
+de Supabase. Varias personas pueden compartir una IP y un tercero puede agotar
+el límite de una cuenta.
+
+Antes de desplegar este cambio, revisar y probar de forma aislada
+`migrations/20261124_verification_rate_limit.sql`, y obtener autorización
+separada para aplicarla y configurar el entorno. Requiere
+el esquema `private` existente con permiso `USAGE` para `service_role`,
+`VERIFICATION_RATE_LIMIT_HMAC_SECRET` (secreto privado independiente de al menos
+32 bytes) y `VERIFICATION_TRUST_VERCEL_IP=true` solo cuando se haya verificado
+que Vercel proporciona el encabezado `x-real-ip` confiable. Sin estos requisitos
+el endpoint alternativo no funciona. Planificar también la limpieza periódica de
+contadores vencidos con `private.cleanup_verification_rate_limits`, limitada a
+una identidad autorizada. No registrar ni compartir el secreto.
+
+Secuencia propuesta, siempre con autorización separada para producción:
+1. Probar ambas migraciones de seguridad en un entorno aislado que reproduzca
+   los permisos y políticas reales, incluidos registro y actualización de perfil.
+2. Aplicar primero la protección de roles y la infraestructura del limitador;
+   verificar sus permisos y configurar las dos variables del limitador.
+3. Solo después desplegar el código y probar registro, verificación, login y
+   recuperación de PIN con cuentas ficticias controladas. Una Preview que no
+   tenga la infraestructura y variables propias responderá 503 en el endpoint
+   alternativo; no debe apuntar a producción para realizar pruebas de escritura.
+
 ## 🎨 Personalización
 
 ### Mensaje de Bienvenida

@@ -1,18 +1,16 @@
 export const runtime = 'nodejs';
 
 import type { NextApiRequest, NextApiResponse } from "next";
-import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { getForceClosedWithReset, setForceClosed } from "@/server/admin-state";
+import { requireAdmin } from "@/server/adminAuthorization";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<{ forceClosed: boolean }>
 ) {
   try {
-    const supabase = createPagesServerClient({ req, res });
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (!session) return res.status(401).end();
+    const authorization = await requireAdmin(req, res);
+    if (!authorization.authorized) return res.status(authorization.status).end();
 
     if (req.method === "GET") {
       const closed = await getForceClosedWithReset();

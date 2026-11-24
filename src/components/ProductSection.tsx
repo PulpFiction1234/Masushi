@@ -233,26 +233,28 @@ export default function ProductSection({ title, productIds, linkBase }: ProductS
                 className="bg-[#1a1a1a] rounded-lg overflow-hidden shadow flex flex-col h-full min-h-[480px]"
               >
                 <div className="overflow-hidden bg-black h-72 sm:h-80">
-                  <Image
-                    src={p.imagen}
-                    alt={p.nombre}
-                    width={500}
-                    height={300}
-                    className="w-full h-full object-cover"
-                    style={{
-                      objectFit: (p.imageObjectFit as CSSProperties['objectFit']) ?? 'cover',
-                      ...(p.imageObjectPosition ? { objectPosition: p.imageObjectPosition } : {}),
-                    }}
-                    quality={60}
-                    placeholder={
-                      typeof p.imagen === "string"
-                        ? p.blurDataUrl
-                          ? "blur"
-                          : undefined
-                        : "blur"
-                    }
-                    blurDataURL={typeof p.imagen === "string" ? p.blurDataUrl : undefined}
-                  />
+                  {p.imagen && (
+                    <Image
+                      src={p.imagen}
+                      alt={p.nombre}
+                      width={500}
+                      height={300}
+                      className="w-full h-full object-cover"
+                      style={{
+                        objectFit: (p.imageObjectFit as CSSProperties['objectFit']) ?? 'cover',
+                        ...(p.imageObjectPosition ? { objectPosition: p.imageObjectPosition } : {}),
+                      }}
+                      quality={60}
+                      placeholder={
+                        typeof p.imagen === "string"
+                          ? p.blurDataUrl
+                            ? "blur"
+                            : undefined
+                          : "blur"
+                      }
+                      blurDataURL={typeof p.imagen === "string" ? p.blurDataUrl : undefined}
+                    />
+                  )}
                 </div>
                 <div className="p-3 flex flex-col flex-1">
                   <h3 className="font-semibold text-sm">{p.nombre}</h3>

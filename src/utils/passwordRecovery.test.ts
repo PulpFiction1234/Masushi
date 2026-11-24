@@ -24,7 +24,7 @@ const previewHost = 'masushi-preview.invalid';
 const previewEnvironment = {
   VERCEL: '1',
   VERCEL_ENV: 'preview',
-  VERCEL_URL: previewHost,
+  VERCEL_BRANCH_URL: previewHost,
   PIN_RECOVERY_SERVER_ENABLED: 'true',
   PIN_RECOVERY_PREVIEW_URL: `https://${previewHost}/reset-password`,
   PIN_RECOVERY_PREVIEW_ALLOWED_HOST: previewHost,
@@ -40,12 +40,21 @@ test('production callback is fixed to the approved production recovery page', ()
   );
 });
 
-test('preview callback requires the exact independent allowlisted deployment host', () => {
+test('preview callback requires the exact independent allowlisted branch host', () => {
   assert.equal(
     resolvePasswordRecoveryCallbackUrl(previewEnvironment),
     previewEnvironment.PIN_RECOVERY_PREVIEW_URL,
   );
   assert.equal(isPasswordRecoveryCallbackConfigured(previewEnvironment), true);
+
+  const withUniqueDeploymentHost = {
+    ...previewEnvironment,
+    VERCEL_URL: 'unique-deployment.vercel.app',
+  };
+  assert.equal(
+    resolvePasswordRecoveryCallbackUrl(withUniqueDeploymentHost),
+    previewEnvironment.PIN_RECOVERY_PREVIEW_URL,
+  );
 
   const withSpoofedHost = {
     ...previewEnvironment,
@@ -87,13 +96,12 @@ test('fails closed when Preview callback configuration is absent or points to pr
     }),
     /not configured/,
   );
-  assert.throws(
-    () => resolvePasswordRecoveryCallbackUrl({
-      ...previewEnvironment,
-      VERCEL_URL: undefined,
-    }),
-    /not configured/,
-  );
+  const missingBranchHost = {
+    ...previewEnvironment,
+    VERCEL_BRANCH_URL: undefined,
+    VERCEL_URL: previewHost,
+  };
+  assert.throws(() => resolvePasswordRecoveryCallbackUrl(missingBranchHost), /not configured/);
   assert.throws(
     () => resolvePasswordRecoveryCallbackUrl({
       ...previewEnvironment,
@@ -122,7 +130,7 @@ test('rejects third-party Vercel hosts, malicious subdomains, and deployment mis
       PIN_RECOVERY_PREVIEW_URL: 'https://www.masushi.cl/reset-password',
     },
     {
-      VERCEL_URL: 'deployment-specific.vercel.app',
+      VERCEL_BRANCH_URL: 'another-branch.vercel.app',
     },
     {
       PIN_RECOVERY_PREVIEW_ALLOWED_HOST: 'other-project.vercel.app',

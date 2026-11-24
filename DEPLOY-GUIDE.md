@@ -2,6 +2,21 @@
 
 Esta guía te ayudará a subir los cambios al repositorio y configurar las variables de entorno en Vercel.
 
+## Incidentes de credenciales pendientes
+
+Las versiones anteriores de esta guía contenían credenciales reales. Sustituirlas
+por marcadores aquí no las revoca ni las elimina del historial de Git.
+Revisar y revocar o rotar, con autorización específica y un plan de continuidad:
+
+- La clave legacy de Supabase `service_role` y el secreto de firma JWT asociado.
+- El token personal de Supabase expuesto anteriormente y el posible token secreto de Mapbox.
+- Los valores anteriormente documentados para `JWT_SECRET`, `WHATSAPP_TOKEN` y
+  `WHATSAPP_WEBHOOK_VERIFY_TOKEN`.
+
+No introducir valores reales en el repositorio ni en comandos que los muestren.
+La rotación del secreto de firma de Supabase puede invalidar sesiones y requiere
+aprobación separada; no asumir que actualizar variables en Vercel revocó claves antiguas.
+
 ## 📋 Checklist Pre-Deployment
 
 ### ✅ Archivos Modificados Recientemente:
@@ -11,7 +26,6 @@ Esta guía te ayudará a subir los cambios al repositorio y configurar las varia
 - `src/pages/checkout.tsx` - Modal de confirmación mejorado
 - `src/utils/estimateTimes.ts` - Sistema de tiempos de entrega
 - `scripts/manage-users.sql` - Script de gestión de usuarios
-- `scripts/delete-all-users.sql` - Script de limpieza masiva
 
 ---
 
@@ -33,7 +47,7 @@ NEXT_PUBLIC_MAPBOX_TOKEN=YOUR_MAPBOX_TOKEN
 
 #### **JWT Secret (Privada)**
 ```
-JWT_SECRET=KOToEkXppt3oquPxDE9yU4+UOk83AhuE6Rscq6bovciwEzkZu16vmSomfdNgqOyBQTa4w2YmPwLAS7YfgVwPhQ==
+JWT_SECRET=YOUR_JWT_SECRET
 ```
 
 #### **Supabase (Públicas)**
@@ -51,13 +65,13 @@ SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY
 #### **WhatsApp (Privadas)**
 ```
 WHATSAPP_API_URL=https://graph.facebook.com/v16.0/860006433861553/messages
-WHATSAPP_TOKEN=EAAZApZAYHKmFIBPZCDu9KIlxQu5n9eZCtYz6mnyJXAX10o50mElIuTa4kUlNtgnyMPd4x5uFq0fIZB8ks3Mgl5UFibYhFbAzw3ZCOf4WWwXzaWTdX7a4yvF8u7E21ETloK50ZBOMTb6DaqoBOegOOshQOPovKuaz9kgaiVZAKzpFFjyPbLLxB2ZBMivflD2oWcQZDZD
+WHATSAPP_TOKEN=YOUR_WHATSAPP_TOKEN
 WHATSAPP_TEMPLATE_NAME=confirmacion_cliente
 WHATSAPP_TEMPLATE_LANG=es_CL
 WHATSAPP_TEMPLATE_HEADER_LINK=https://www.masushi.cl/images/FotoMensajeWsp.png
-WHATSAPP_WEBHOOK_VERIFY_TOKEN=masushi-verify-2025
+WHATSAPP_WEBHOOK_VERIFY_TOKEN=YOUR_WHATSAPP_WEBHOOK_VERIFY_TOKEN
 LOCAL_WHATSAPP_TEMPLATE=nuevo_pedido_local
-LOCAL_WHATSAPP_NUMBER=56951869402
+LOCAL_WHATSAPP_NUMBER=YOUR_LOCAL_WHATSAPP_NUMBER
 ```
 
 ### **⚠️ IMPORTANTE: Actualizar Template Name**
@@ -83,8 +97,8 @@ Para cada variable, selecciona los ambientes donde aplica:
 # 1. Ver qué archivos cambiaron
 git status
 
-# 2. Agregar todos los cambios
-git add .
+# 2. Agregar únicamente los archivos revisados
+git add <archivos-revisados>
 
 # 3. Crear commit con mensaje descriptivo
 git commit -m "feat: actualizar template WhatsApp y mejorar modal de confirmación
@@ -95,8 +109,8 @@ git commit -m "feat: actualizar template WhatsApp y mejorar modal de confirmaci�
 - Agregar scripts de gestión de usuarios
 - Actualizar validaciones de direcciones"
 
-# 4. Subir al repositorio remoto
-git push origin main
+# 4. Subir la rama revisada; no publicar directamente en main
+git push -u origin <rama>
 ```
 
 ### **Opción B: Desde GitHub Desktop**
@@ -105,7 +119,7 @@ git push origin main
 2. Verás todos los archivos modificados en el panel izquierdo
 3. Revisa los cambios (panel derecho)
 4. Escribe un mensaje de commit descriptivo
-5. Click en **Commit to main**
+5. Confirma los cambios en la rama revisada
 6. Click en **Push origin**
 
 ---
@@ -178,7 +192,7 @@ El webhook permite que tu aplicación reciba notificaciones en tiempo real cuand
 
    **Verify Token:**
    ```
-   masushi-verify-2025
+   YOUR_WHATSAPP_WEBHOOK_VERIFY_TOKEN
    ```
    ⚠️ Este token debe coincidir exactamente con `WHATSAPP_WEBHOOK_VERIFY_TOKEN` en Vercel
 
@@ -200,7 +214,7 @@ Puedes probar el webhook manualmente:
 
 ```powershell
 # Test desde PowerShell (reemplaza TU_VERIFY_TOKEN)
-Invoke-WebRequest -Uri "https://www.masushi.cl/api/webhooks/whatsapp?hub.mode=subscribe&hub.verify_token=masushi-verify-2025&hub.challenge=TEST123"
+Invoke-WebRequest -Uri "https://www.masushi.cl/api/webhooks/whatsapp?hub.mode=subscribe&hub.verify_token=YOUR_WHATSAPP_WEBHOOK_VERIFY_TOKEN&hub.challenge=TEST123"
 ```
 
 Debería devolver: `TEST123`
@@ -302,9 +316,9 @@ git diff
 
 ### **Subir cambios:**
 ```powershell
-git add .
+git add <archivos-revisados>
 git commit -m "tu mensaje"
-git push origin main
+git push -u origin <rama>
 ```
 
 ### **Ver último commit:**

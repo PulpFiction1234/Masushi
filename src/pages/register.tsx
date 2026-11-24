@@ -21,6 +21,7 @@ export default function RegisterPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [existingAccount, setExistingAccount] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [verifying, setVerifying] = useState(false);
   const [createdUserId, setCreatedUserId] = useState<string | null>(null);
@@ -157,6 +158,7 @@ export default function RegisterPage() {
 
       const createdId = json?.userId || null;
       if (createdId) setCreatedUserId(createdId);
+      setExistingAccount(json?.status === 'existing');
 
       const verificationInfo = json?.verification;
       if (verificationInfo?.method === 'custom') {
@@ -168,7 +170,9 @@ export default function RegisterPage() {
       }
 
       setWelcomeEmailSent(false);
-      setSuccessMessage("Cuenta creada. Revisa tu email para el código de verificación.");
+      setSuccessMessage(json?.status === 'existing'
+        ? "La cuenta ya existe y conserva su PIN original. Revisa tu correo para verificarla."
+        : "Cuenta creada. Revisa tu email para el código de verificación.");
       setLoading(false);
       setShowVerificationModal(true);
     } catch (err: unknown) {
@@ -431,6 +435,22 @@ export default function RegisterPage() {
             </div>
 
             <div className="mt-4 space-y-3">
+              {existingAccount && (
+                <div>
+                  <label htmlFor="existing-pin" className="text-sm text-gray-300">
+                    Esta cuenta conserva su PIN original. Ingrésalo para continuar.
+                  </label>
+                  <input
+                    id="existing-pin"
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={4}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value.replace(/[^0-9]/g, ''))}
+                    className="mt-2 w-full rounded-xl border border-white/10 bg-[#1a1a1a] px-3 py-2 text-center text-lg text-white"
+                  />
+                </div>
+              )}
               <input
                 autoFocus
                 inputMode="numeric"

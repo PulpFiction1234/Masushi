@@ -53,6 +53,14 @@ ORDER BY p.created_at DESC;
 
 ## 🛡️ Protección Implementada
 
+Los handlers de clientes, mensajes de WhatsApp, cierre y address overrides
+verifican el usuario con Supabase Auth y consultan `role`/`is_admin` antes de
+acceder a datos o modificar controles. Esta protección depende de que usuarios
+no privilegiados no puedan asignarse esos campos. Revisar privilegios de columnas,
+políticas RLS y triggers efectivos antes de desplegar; el esquema histórico
+incluye una política de actualización del perfil propio. No modificar la base
+productiva sin autorización separada.
+
 ### Nivel Frontend (`/admin/index.tsx`)
 - Verifica que el usuario esté autenticado
 - Verifica que `profile.role === 'admin'`
@@ -79,6 +87,10 @@ ORDER BY p.created_at DESC;
 - Los admins también pueden hacer pedidos normales
 
 ## 🧪 Pruebas
+
+Después de compilar localmente, `npm run test:registration-security` utiliza
+un servicio Supabase simulado en localhost para probar el rechazo de solicitudes
+anónimas y las comprobaciones de registro; no conecta con usuarios reales.
 
 ### Verificar que funciona correctamente:
 

@@ -9,7 +9,7 @@ const attemptVerificationSend = async (userId: string, email: string) => {
   try {
     const { error: resendErr } = await supabaseAdmin.auth.resend({ type: 'signup', email: normalized });
     if (!resendErr) {
-      console.log('[register] Supabase resend succeeded', { userId });
+      console.log('[register] Supabase resend succeeded');
       return { method: 'supabase' as const };
     }
     console.warn('[register] Supabase resend reported error, using fallback', resendErr);
@@ -18,7 +18,7 @@ const attemptVerificationSend = async (userId: string, email: string) => {
   }
 
   const fallback = await createAndSendCustomVerification(userId, normalized);
-  console.log('[register] custom verification dispatched', { userId, expires_at: fallback.expiresAt.toISOString() });
+  console.log('[register] custom verification dispatched');
   return { method: 'custom' as const, expires_at: fallback.expiresAt.toISOString() };
 };
 
@@ -71,25 +71,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (existingUser) {
       if (existingUser?.email_confirmed_at) {
         return res.status(409).json({ error: 'El correo ya está registrado y verificado' });
-      }
-
-      // Construir nombre completo de forma segura evitando duplicados
-      const nombreCompleto = buildFullName(name?.trim() || '', apellidoPaterno?.trim() || '', apellidoMaterno?.trim() || '') || 'Usuario';
-
-      const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
-        password: safePassword,
-        email_confirm: false,
-        user_metadata: {
-          full_name: nombreCompleto,
-          phone: phone || existingUser?.user_metadata?.phone || '',
-          apellido_paterno: apellidoPaterno || existingUser?.user_metadata?.apellido_paterno || '',
-          apellido_materno: apellidoMaterno || existingUser?.user_metadata?.apellido_materno || '',
-        },
-      });
-
-      if (updateErr) {
-        console.error('[register] update existing user error', updateErr);
-        return res.status(500).json({ error: 'No pudimos actualizar el usuario existente' });
       }
 
       const verification = await attemptVerificationSend(existingUser.id, existingUser.email || normalizedEmail);

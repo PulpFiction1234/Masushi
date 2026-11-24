@@ -5,6 +5,7 @@ import { buildFullName } from '@/utils/name';
 import { normalize } from '@/utils/strings';
 import { isWithinBirthdayWindow, BIRTHDAY_MIN_MONTHS, BIRTHDAY_MIN_ORDERS } from '@/utils/birthday';
 import { monthsBetween } from '@/utils/birthday';
+import { requireAdmin } from '@/server/adminAuthorization';
 
 type VerificationRow = {
   user_id: string;
@@ -193,6 +194,9 @@ const enrichUsers = async (users: User[]) => {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+
+  const authorization = await requireAdmin(req, res);
+  if (!authorization.authorized) return res.status(authorization.status).end();
 
   try {
     const parsedPage = Number(req.query.page || 1);

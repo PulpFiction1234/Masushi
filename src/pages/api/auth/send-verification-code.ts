@@ -6,10 +6,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   const { email, userId } = req.body;
   if (!email && !userId) return res.status(400).json({ error: 'email or userId required' });
+  if ((email && typeof email !== 'string') || (userId && typeof userId !== 'string')) {
+    return res.status(400).json({ error: 'email or userId invalid' });
+  }
 
   try {
     let targetUserId = userId as string | null;
     let targetEmail = typeof email === 'string' ? email.trim().toLowerCase() : null;
+
+    if (targetUserId && targetEmail) {
+      const { data: userInfo, error: fetchErr } = await supabaseAdmin.auth.admin.getUserById(targetUserId);
+      if (fetchErr) throw fetchErr;
+      const registeredEmail = userInfo.user?.email?.trim().toLowerCase();
+      if (!registeredEmail || registeredEmail !== targetEmail) {
+        return res.status(400).json({ error: 'email and userId do not match' });
+      }
+      targetEmail = registeredEmail;
+    }
 
     if (!targetUserId) {
       const { data: listResult, error: listErr } = await supabaseAdmin.auth.admin.listUsers();
@@ -33,8 +46,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.error('[send-verification-code] could not resolve user id or email');
       return res.status(400).json({ error: 'No pudimos encontrar al usuario o email' });
     }
-
-    console.log('[send-verification-code] targetUserId=', targetUserId);
 
     // Prefer Supabase's own email OTP flow. If it fails with a rate limit, inform
     // the caller so they can esperar; only fall back to the custom path for other

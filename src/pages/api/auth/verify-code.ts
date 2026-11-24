@@ -8,7 +8,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     let targetUserId = userId;
-    console.log('[verify-code] request', { email, userId, code });
+    console.log('[verify-code] request received');
     if (!targetUserId) {
       // find user id by email
       const { data: usersData, error: listErr } = await supabaseAdmin.auth.admin.listUsers();

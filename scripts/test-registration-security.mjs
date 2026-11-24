@@ -4,6 +4,7 @@ import { once } from "node:events";
 import next from "next";
 
 const userId = "10000000-0000-4000-8000-000000000001";
+const validUserId = "10000000-0000-4000-8000-000000000002";
 const user = {
   id: userId,
   email: "test@example.invalid",
@@ -13,8 +14,11 @@ const user = {
   role: "authenticated",
 };
 const calls = { resends: 0, updates: 0, unexpected: 0 };
+const buckets = new Map();
+let rpcUnavailable = false;
+let rpcMalformed = false;
 
-const mock = createServer((req, res) => {
+const mock = createServer(async (req, res) => {
   const { pathname } = new URL(req.url, "http://127.0.0.1");
   res.setHeader("content-type", "application/json");
   if (req.method === "GET" && pathname === "/auth/v1/admin/users") {
@@ -23,6 +27,40 @@ const mock = createServer((req, res) => {
     res.end(JSON.stringify(user));
   } else if (req.method === "POST" && pathname === "/auth/v1/resend") {
     calls.resends++;
+    res.end("{}");
+  } else if (req.method === "POST" && pathname === "/rest/v1/rpc/consume_verification_rate_limit") {
+    if (rpcUnavailable) {
+      res.statusCode = 503;
+      res.end("{}");
+      return;
+    }
+    if (rpcMalformed) {
+      res.end(JSON.stringify({ allowed: false }));
+      return;
+    }
+    let body = "";
+    for await (const chunk of req) body += chunk;
+    const params = JSON.parse(body);
+    assert.match(params.p_account_hash, /^[0-9a-f]{64}$/);
+    assert.match(params.p_ip_hash, /^[0-9a-f]{64}$/);
+    const account = `account:${params.p_account_hash}`;
+    const ip = `ip:${params.p_ip_hash}`;
+    if ((buckets.get(account) ?? 0) >= 8 || (buckets.get(ip) ?? 0) >= 20) {
+      res.end(JSON.stringify({ allowed: false, retry_after_seconds: 3600 }));
+    } else {
+      buckets.set(account, (buckets.get(account) ?? 0) + 1);
+      buckets.set(ip, (buckets.get(ip) ?? 0) + 1);
+      res.end(JSON.stringify({ allowed: true, retry_after_seconds: 0 }));
+    }
+  } else if (req.method === "GET" && pathname === "/rest/v1/email_verifications") {
+    const url = new URL(req.url, "http://127.0.0.1");
+    const valid = url.searchParams.get("user_id") === `eq.${validUserId}` &&
+      url.searchParams.get("code") === "eq.654321";
+    res.end(JSON.stringify(valid ? [{ id: 1, user_id: validUserId }] : []));
+  } else if (req.method === "PATCH" && pathname === "/rest/v1/email_verifications") {
+    res.end("[]");
+  } else if (req.method === "PUT" && pathname === `/auth/v1/admin/users/${validUserId}`) {
+    calls.updates++;
     res.end("{}");
   } else if (req.method === "PUT" && pathname === `/auth/v1/admin/users/${userId}`) {
     calls.updates++;
@@ -43,6 +81,9 @@ process.env.SUPABASE_SERVICE_ROLE_KEY = "test-placeholder";
 process.env.NEXT_PUBLIC_SUPABASE_URL = mockUrl;
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-placeholder";
 process.env.NEXT_TELEMETRY_DISABLED = "1";
+process.env.VERCEL = "1";
+process.env.VERIFICATION_TRUST_VERCEL_IP = "true";
+process.env.VERIFICATION_RATE_LIMIT_HMAC_SECRET = "test-only-verification-secret-32-bytes";
 
 const app = next({ dev: false, dir: process.cwd() });
 let server;
@@ -52,9 +93,9 @@ try {
   server.listen(0, "127.0.0.1");
   await once(server, "listening");
   const base = `http://127.0.0.1:${server.address().port}`;
-  const post = (path, body) => fetch(`${base}${path}`, {
+  const post = (path, body, ip) => fetch(`${base}${path}`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", ...(ip ? { "x-real-ip": ip } : {}) },
     body: JSON.stringify(body),
   });
 
@@ -103,6 +144,44 @@ try {
   assert.equal(response.status, 409);
   assert.equal(calls.resends, 2);
   assert.equal(calls.updates, 0);
+
+  const verify = (id, ip) => post("/api/auth/verify-code", { userId: id, code: "123456" }, ip);
+  response = await verify(userId);
+  assert.equal(response.status, 503, "an untrusted/missing IP must fail closed");
+  rpcUnavailable = true;
+  response = await verify(userId, "203.0.113.1");
+  assert.equal(response.status, 503, "an unavailable limiter must fail closed");
+  rpcUnavailable = false;
+  rpcMalformed = true;
+  response = await verify(userId, "203.0.113.1");
+  assert.equal(response.status, 503, "a malformed limiter response must fail closed");
+  rpcMalformed = false;
+  process.env.VERIFICATION_RATE_LIMIT_HMAC_SECRET = "short";
+  response = await verify(userId, "203.0.113.1");
+  assert.equal(response.status, 503, "a weak limiter secret must fail closed");
+  process.env.VERIFICATION_RATE_LIMIT_HMAC_SECRET = "test-only-verification-secret-32-bytes";
+
+  for (let i = 0; i < 7; i++) {
+    response = await verify(userId, `203.0.113.${i + 1}`);
+    assert.equal(response.status, 400, "invalid codes must consume the account budget");
+  }
+  response = await post("/api/auth/verify-code", { email: user.email, code: "123456" }, "203.0.113.8");
+  assert.equal(response.status, 400, "email and UUID must share an account budget");
+  response = await verify(userId, "203.0.113.9");
+  assert.equal(response.status, 429);
+  assert.equal(response.headers.get("retry-after"), "3600");
+
+  for (let i = 0; i < 20; i++) {
+    const id = `20000000-0000-4000-8000-${String(i).padStart(12, "0")}`;
+    response = await verify(id, "198.51.100.1");
+    assert.equal(response.status, 400, "invalid codes must consume the IP budget");
+  }
+  response = await verify("20000000-0000-4000-8000-000000000020", "198.51.100.1");
+  assert.equal(response.status, 429);
+
+  response = await post("/api/auth/verify-code", { userId: validUserId, code: "654321" }, "198.51.100.2");
+  assert.equal(response.status, 200, "a valid code must still confirm the synthetic account");
+  assert.equal(calls.updates, 1);
   assert.equal(calls.unexpected, 0);
   console.log("Registration security checks passed with a synthetic local service.");
 } finally {

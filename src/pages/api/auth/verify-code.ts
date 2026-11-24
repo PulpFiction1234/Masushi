@@ -1,10 +1,14 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import supabaseAdmin from '@/server/supabase';
+import { limitVerification } from '@/server/verificationRateLimit';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   const { email, userId, code } = req.body;
   if ((!email && !userId) || !code) return res.status(400).json({ error: 'email or userId, and code required' });
+  if ((email && typeof email !== 'string') || (userId && typeof userId !== 'string')) {
+    return res.status(400).json({ error: 'Datos de verificación inválidos' });
+  }
 
   try {
     let targetUserId = userId;
@@ -18,6 +22,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const user = users.find((u: any) => u.email === email);
       if (!user) return res.status(404).json({ error: 'User not found' });
       targetUserId = user.id;
+    }
+
+    if (typeof targetUserId !== 'string' ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetUserId)) {
+      return res.status(400).json({ error: 'Datos de verificación inválidos' });
+    }
+    const limit = await limitVerification(targetUserId, req.headers);
+    if (limit.status === 'unavailable') {
+      console.error('[verify-code] Verification rate limiter unavailable');
+      return res.status(503).json({ error: 'La verificación no está disponible temporalmente' });
+    }
+    if (limit.status === 'limited') {
+      res.setHeader('Retry-After', String(limit.retryAfterSeconds));
+      return res.status(429).json({ error: 'Demasiados intentos. Inténtalo más tarde' });
     }
 
     const now = new Date().toISOString();

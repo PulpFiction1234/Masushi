@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto';
 import supabaseAdmin from '@/server/supabase';
 import sendEmail from '@/utils/sendEmail';
 
@@ -8,7 +9,7 @@ const BRAND_NAME = process.env.APP_BRAND_NAME || 'Masushi';
 const generateNumericCode = (length: number = DEFAULT_CODE_LENGTH): string => {
   const digits: string[] = [];
   for (let i = 0; i < length; i += 1) {
-    digits.push(Math.floor(Math.random() * 10).toString());
+    digits.push(randomInt(10).toString());
   }
   return digits.join('');
 };
